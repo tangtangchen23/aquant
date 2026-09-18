@@ -35,10 +35,10 @@ class MarketFragment : Fragment() {
         loadWatch()
         loadHistory()
 
-        // 自选股列表
-        val watchAdapter = ArrayAdapter(requireContext(), android.R.layout.simple_list_item_1,
-            watchSymbols.map { displayName(it) })
+        // 自选股列表：显示名称 + 代码 + 实时行情
+        val watchAdapter = WatchAdapter(requireContext(), watchSymbols)
         list.adapter = watchAdapter
+        watchAdapter.refresh()
 
         // 查询历史自动补全
         val historyAdapter = ArrayAdapter(requireContext(),
@@ -62,7 +62,8 @@ class MarketFragment : Fragment() {
                         val code = MarketService.resolveCode(raw)
                         if (code != raw) etCode.setText(code)
                         val quote = withContext(Dispatchers.IO) { MarketService.fetchQuote(code) }
-                        putHistory(code)
+                        // 查询历史保留用户原始输入（名称就存名称，代码就存代码）
+                        putHistory(raw)
                         refreshHistory(etCode)
                         tvQuote.text = formatQuote(quote, code)
                     } catch (e: Exception) {
@@ -75,18 +76,28 @@ class MarketFragment : Fragment() {
         }
 
         fun addWatch() {
-            val code = etCode.text.toString().trim()
-            if (code.isEmpty()) { Toast.makeText(requireContext(), "请输入代码", Toast.LENGTH_SHORT).show(); return }
-            if (!watchSymbols.contains(code)) {
-                watchSymbols.add(code)
-                saveWatch()
-                // 重新设置适配器以刷新列表
-                list.adapter = ArrayAdapter(requireContext(), android.R.layout.simple_list_item_1,
-                    watchSymbols.map { displayName(it) })
+            val raw = etCode.text.toString().trim()
+            if (raw.isEmpty()) { Toast.makeText(requireContext(), "请输入代码或名称", Toast.LENGTH_SHORT).show(); return }
+            btnAdd.isEnabled = false
+            AppScope.launch {
+                try {
+                    // 解析成代码存储，保证点击跳转K线用代码
+                    val code = MarketService.resolveCode(raw)
+                    if (code != raw) etCode.setText(code)
+                    if (!watchSymbols.contains(code)) {
+                        watchSymbols.add(code)
+                        saveWatch()
+                        watchAdapter.refresh()
+                    }
+                    putHistory(raw)
+                    refreshHistory(etCode)
+                    Toast.makeText(requireContext(), "已加入自选：$code（点击自选股查看K线）", Toast.LENGTH_SHORT).show()
+                } catch (e: Exception) {
+                    Toast.makeText(requireContext(), "加入自选失败：${e.message}", Toast.LENGTH_SHORT).show()
+                } finally {
+                    btnAdd.isEnabled = true
+                }
             }
-            putHistory(code)
-            refreshHistory(etCode)
-            Toast.makeText(requireContext(), "已加入自选：$code（可在下方点击查看行情）", Toast.LENGTH_SHORT).show()
         }
 
         btnAdd.setOnClickListener { addWatch() }
@@ -103,8 +114,7 @@ class MarketFragment : Fragment() {
             if (position in watchSymbols.indices) {
                 val code = watchSymbols.removeAt(position)
                 saveWatch()
-                list.adapter = ArrayAdapter(requireContext(), android.R.layout.simple_list_item_1,
-                    watchSymbols.map { displayName(it) })
+                watchAdapter.refresh()
                 Toast.makeText(requireContext(), "已移除自选 $code", Toast.LENGTH_SHORT).show()
             }
             true
@@ -116,8 +126,6 @@ class MarketFragment : Fragment() {
         etCode.setAdapter(ArrayAdapter(requireContext(),
             android.R.layout.simple_dropdown_item_1line, queryHistory))
     }
-
-    private fun displayName(symbol: String): String = symbol
 
     // ---------- 持久化：自选 ----------
     private fun prefs() = App.context.getSharedPreferences("watch", 0)
