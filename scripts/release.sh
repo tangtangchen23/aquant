@@ -30,7 +30,9 @@ fi
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 GRADLE_FILE="$ROOT_DIR/app/build.gradle.kts"
 REPO="tangtangchen23/aquant"
-APK_ASSET_NAME="aquant-${NEW_VERSION}-release.apk"
+# 统一使用固定资产名，保证直链 /releases/latest/download/aquant-release.apk 永远指向最新版，
+# 应用内 DEFAULT_UPDATE_URL 只需设置一次、每次发布无需改动。
+APK_ASSET_NAME="aquant-release.apk"
 BUILD_OUT="$ROOT_DIR/app/build/outputs/apk/release/app-release.apk"
 
 # ---------- 自动探测 JDK 17（AGP 需要；本项目历史证明 Java25 会失败）----------

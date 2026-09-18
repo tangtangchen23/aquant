@@ -5,8 +5,8 @@ import android.content.SharedPreferences
 import org.json.JSONArray
 import org.json.JSONObject
 
-/** 默认更新/下载链接：GitHub Releases 永久直链（任何人可访问、可直接下载 APK）。 */
-const val DEFAULT_UPDATE_URL = "https://github.com/tangtangchen23/aquant/releases/latest/download/aquant-v1.3.0-release.apk"
+/** 默认更新/下载链接：GitHub Releases 永久直链（资产名固定，始终指向最新版，可直接下载 APK）。 */
+const val DEFAULT_UPDATE_URL = "https://github.com/tangtangchen23/aquant/releases/latest/download/aquant-release.apk"
 
 /** 某标的当前运行中的策略 + 最近一次信号（幂等去重需要）。 */
 data class ActiveStrategy(
