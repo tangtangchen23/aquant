@@ -46,10 +46,7 @@
             android:layout_height="wrap_content" android:textSize="14sp" />
 
         <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
-            android:layout_marginTop="10dp" android:text="更新/下载链接(飞书分享或APK直链,可选，无需version.json)" android:textStyle="bold" />
-        <EditText android:id="@+id/et_update_url" android:layout_width="match_parent"
-            android:layout_height="wrap_content" android:inputType="textUri"
-            android:hint="https://xxx.feishu.cn/share/link 或 https://.../app.apk" />
+            android:layout_marginTop="10dp" android:text="新版本将直接从内置升级地址下载安装" android:textStyle="bold" />
         <Button android:id="@+id/btn_check_update" android:layout_width="match_parent"
             android:layout_height="wrap_content" android:layout_marginTop="6dp" android:text="检查更新" />
 

@@ -43,7 +43,6 @@ class SettingsFragment : Fragment() {
         val tvModeHint = root.findViewById<TextView>(R.id.tv_mode_hint)
         val tvInfo = root.findViewById<TextView>(R.id.tv_info)
         val tvVersion = root.findViewById<TextView>(R.id.tv_version)
-        val etUpdateUrl = root.findViewById<EditText>(R.id.et_update_url)
         val btnCheckUpdate = root.findViewById<Button>(R.id.btn_check_update)
         val btnSave = root.findViewById<Button>(R.id.btn_save)
 
@@ -59,15 +58,13 @@ class SettingsFragment : Fragment() {
 
         // 版本信息
         tvVersion.text = "v${BuildConfig.VERSION_NAME} (${BuildConfig.VERSION_CODE})"
-        etUpdateUrl.setText(st.updateUrl)
 
         btnCheckUpdate.setOnClickListener {
-            val url = etUpdateUrl.text.toString().trim()
+            val url = st.updateUrl
             if (url.isEmpty()) {
-                Toast.makeText(requireContext(), "请先填入更新/下载链接（飞书分享链接或APK直链）", Toast.LENGTH_SHORT).show()
+                Toast.makeText(requireContext(), "未配置升级地址", Toast.LENGTH_SHORT).show()
                 return@setOnClickListener
             }
-            st.updateUrl = url
             btnCheckUpdate.isEnabled = false
             btnCheckUpdate.text = "检查中..."
             scope.launch {
