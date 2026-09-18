@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android">
+    <item android:id="@+id/nav_market" android:title="@string/tab_market" android:icon="@drawable/ic_quote" />
+    <item android:id="@+id/nav_chart" android:title="@string/tab_chart" android:icon="@drawable/ic_chart" />
+    <item android:id="@+id/nav_strategy" android:title="@string/tab_strategy" android:icon="@drawable/ic_strategy" />
+    <item android:id="@+id/nav_account" android:title="@string/tab_account" android:icon="@drawable/ic_account" />
+    <item android:id="@+id/nav_settings" android:title="@string/tab_settings" android:icon="@drawable/ic_settings" />
+</menu>

@@ -1,0 +1,1 @@
+# No special rules required for a debug/demo APK.
