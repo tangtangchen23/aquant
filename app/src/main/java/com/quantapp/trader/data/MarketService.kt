@@ -213,6 +213,16 @@ object MarketService {
     }
 
     /**
+     * 用东财搜索接口解析股票名称（不依赖 push2 实时行情接口，更稳定）。
+     * 传入股票代码返回名称，失败返回空串。
+     */
+    suspend fun fetchName(code: String): String = withContext(Dispatchers.IO) {
+        try {
+            search(code).firstOrNull { it.code == code }?.name ?: ""
+        } catch (e: Exception) { "" }
+    }
+
+    /**
      * 把用户输入解析成股票代码：纯数字（如 "600000"）直接返回；
      * 否则当作股票名称/关键字，通过东方财富搜索解析为代码（如 "浦发银行" -> "600000"）。
      */

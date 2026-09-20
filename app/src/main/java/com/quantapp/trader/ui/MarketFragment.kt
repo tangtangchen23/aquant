@@ -24,11 +24,13 @@ import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import org.json.JSONArray
+import org.json.JSONObject
 
 class MarketFragment : Fragment() {
 
     private val watchSymbols = mutableListOf<String>()
     private val queryHistory = mutableListOf<String>()
+    private val watchNames = mutableMapOf<String, String>() // 自选股名称本地缓存，不依赖实时行情接口
     private var quoteSymbol: String? = null // 当前报价卡片展示的股票代码
 
     private var tvQName: TextView? = null
@@ -73,9 +75,10 @@ class MarketFragment : Fragment() {
 
         loadWatch()
         loadHistory()
+        loadNames()
 
         // 自选股列表：显示名称 + 代码 + 实时行情（红涨绿跌）
-        val watchAdapter = WatchAdapter(requireContext(), watchSymbols)
+        val watchAdapter = WatchAdapter(requireContext(), watchSymbols, watchNames)
         list.adapter = watchAdapter
         list.emptyView = root.findViewById(R.id.tv_watch_empty)
         watchAdapter.refresh()
@@ -130,7 +133,18 @@ class MarketFragment : Fragment() {
                         fillQuoteCard(quote)
                     } catch (e: Exception) {
                         resetQuoteCard()
-                        tvQName?.text = "查询失败"
+                        // 实时行情接口暂不可用：退回用搜索接口展示名称，价格留空
+                        val code = try { MarketService.resolveCode(raw) } catch (e2: Exception) { "" }
+                        val nm = if (code.isNotEmpty())
+                            try { withContext(Dispatchers.IO) { MarketService.fetchName(code) } }
+                            catch (e3: Exception) { "" } else ""
+                        if (nm.isNotEmpty()) {
+                            fillQuoteFallback(code, nm)
+                            putHistory(if (code != raw) raw else nm)
+                            refreshHistory(etCode)
+                        } else {
+                            tvQName?.text = "查询失败"
+                        }
                     } finally {
                         q.isEnabled = true
                     }
@@ -147,17 +161,19 @@ class MarketFragment : Fragment() {
                     // 解析成代码存储，保证点击跳转K线用代码
                     val code = MarketService.resolveCode(raw)
                     if (code != raw) etCode.setText(code)
+                    // 名称走搜索接口（稳），不依赖实时行情；输入名称直接用原词
+                    val displayName = if (code != raw) raw
+                        else withContext(Dispatchers.IO) { MarketService.fetchName(code) }.ifEmpty { code }
+                    watchNames[code] = displayName
+                    saveNames()
                     if (!watchSymbols.contains(code)) {
                         watchSymbols.add(code)
                         saveWatch()
                         watchAdapter.refresh()
                     }
-                    // 历史统一存名称；若输入的是代码，则从行情结果取名称
-                    val historyName = if (code != raw) raw else
-                        withContext(Dispatchers.IO) { MarketService.fetchQuote(code) }.name
-                    putHistory(historyName)
+                    putHistory(displayName)
                     refreshHistory(etCode)
-                    Toast.makeText(requireContext(), "已加入自选：$code（点击自选股查看K线）", Toast.LENGTH_SHORT).show()
+                    Toast.makeText(requireContext(), "已加入自选：$displayName($code)", Toast.LENGTH_SHORT).show()
                 } catch (e: Exception) {
                     Toast.makeText(requireContext(), "加入自选失败：${e.message}", Toast.LENGTH_SHORT).show()
                 } finally {
@@ -212,7 +228,7 @@ class MarketFragment : Fragment() {
     }
 
     private fun requireWatchAdapter(): WatchAdapter {
-        val list = view?.findViewById<ListView>(R.id.list_watch) ?: return WatchAdapter(requireContext(), watchSymbols)
+        val list = view?.findViewById<ListView>(R.id.list_watch) ?: return WatchAdapter(requireContext(), watchSymbols, watchNames)
         return list.adapter as WatchAdapter
     }
 
@@ -258,6 +274,22 @@ class MarketFragment : Fragment() {
         tvQTime?.text = q.time
     }
 
+    /** 实时行情接口暂不可用时，用搜索到的名称填充报价卡片，价格留空。 */
+    private fun fillQuoteFallback(code: String, name: String) {
+        quoteSymbol = code
+        cardQuote?.visibility = View.VISIBLE
+        btnAddWatch?.visibility = View.VISIBLE
+        tvQName?.text = "$name  $code"
+        tvQChange?.text = ""
+        tvQPrice?.text = "--"
+        tvQOpen?.text = "--"
+        tvQPrev?.text = "--"
+        tvQHigh?.text = "--"
+        tvQLow?.text = "--"
+        tvQVolume?.text = "行情接口暂不可用"
+        tvQTime?.text = ""
+    }
+
     private fun refreshHistory(etCode: AutoCompleteTextView) {
         etCode.setAdapter(ArrayAdapter(requireContext(),
             android.R.layout.simple_dropdown_item_1line, queryHistory))
@@ -278,6 +310,25 @@ class MarketFragment : Fragment() {
         val arr = JSONArray()
         watchSymbols.forEach { arr.put(it) }
         prefs().edit().putString("list", arr.toString()).apply()
+    }
+
+    // ---------- 持久化：自选股名称缓存 ----------
+    private fun loadNames() {
+        try {
+            val obj = JSONObject(prefs().getString("names", "{}") ?: "{}")
+            watchNames.clear()
+            val it = obj.keys()
+            while (it.hasNext()) {
+                val k = it.next()
+                watchNames[k] = obj.optString(k, "")
+            }
+        } catch (e: Exception) { }
+    }
+
+    private fun saveNames() {
+        val obj = JSONObject()
+        watchNames.forEach { (k, v) -> if (v.isNotEmpty()) obj.put(k, v) }
+        prefs().edit().putString("names", obj.toString()).apply()
     }
 
     // ---------- 持久化：查询历史 ----------
