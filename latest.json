@@ -1,8 +1,8 @@
 {
   "latest": {
-    "version": "1.4.7",
-    "versionCode": 18,
+    "version": "1.4.8",
+    "versionCode": 19,
     "apkUrl": "https://github.com/tangtangchen23/aquant/releases/latest/download/aquant-release.apk",
-    "changelog": "v1.4.7：行情页卡片/加入自选按钮按需显隐、自选股与分时图自动实时刷新；K线图新增周期切换(分时/日/周/年/120分)、返回回到行情页；策略页三按钮对齐；修复浅色/深色主题字体对比度；模拟盘页签更名“交易”"
+    "changelog": "v1.4.8：修复成交记录筛选按钮浅色主题白底看不清(改白字+品牌底、选中加粗)；策略页3按钮与K线图周期胶囊按钮统一单行等宽；120分时更名120分；分时图新增成交量与MACD显示"
   }
 }

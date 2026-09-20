@@ -155,9 +155,9 @@ class AccountFragment : Fragment() {
     private fun updateFilterUi(listTrades: ListView) {
         fun style(id: Int, active: Boolean) {
             val btn = view?.findViewById<Button>(id) ?: listTrades.rootView.findViewById(id)
-            btn.setTextColor(if (active)
-                ContextCompat.getColor(requireContext(), R.color.brand)
-            else ContextCompat.getColor(requireContext(), R.color.text_secondary))
+            // 保持白色文字（置于品牌色底上），用 alpha/加粗区分选中态，浅色/深色主题均清晰
+            btn.setTextColor(android.graphics.Color.WHITE)
+            btn.alpha = if (active) 1f else 0.55f
             btn.setTypeface(null, if (active) android.graphics.Typeface.BOLD else android.graphics.Typeface.NORMAL)
         }
         style(R.id.btn_trade_all, filterSide == null)

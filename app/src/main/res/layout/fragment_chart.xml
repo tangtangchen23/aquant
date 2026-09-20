@@ -11,26 +11,26 @@
         android:layout_marginTop="8dp" android:orientation="horizontal" android:gravity="center_vertical">
         <TextView android:id="@+id/tv_period_minute" android:layout_width="0dp"
             android:layout_height="wrap_content" android:layout_weight="1" android:gravity="center"
-            android:text="分时" android:padding="6dp" android:textSize="14sp" android:textStyle="bold"
+            android:text="分时" android:singleLine="true" android:padding="6dp" android:textSize="14sp" android:textStyle="bold"
             android:textColor="#E53935" android:background="@drawable/bg_indicator_on" />
         <TextView android:id="@+id/tv_period_day" android:layout_width="0dp"
             android:layout_height="wrap_content" android:layout_weight="1" android:gravity="center"
-            android:layout_marginStart="6dp" android:text="日线" android:padding="6dp"
+            android:layout_marginStart="6dp" android:text="日线" android:singleLine="true" android:padding="6dp"
             android:textSize="14sp" android:textStyle="bold" android:textColor="#E53935"
             android:background="@drawable/bg_indicator_on" />
         <TextView android:id="@+id/tv_period_week" android:layout_width="0dp"
             android:layout_height="wrap_content" android:layout_weight="1" android:gravity="center"
-            android:layout_marginStart="6dp" android:text="周线" android:padding="6dp"
+            android:layout_marginStart="6dp" android:text="周线" android:singleLine="true" android:padding="6dp"
             android:textSize="14sp" android:textStyle="bold" android:textColor="#E53935"
             android:background="@drawable/bg_indicator_on" />
         <TextView android:id="@+id/tv_period_year" android:layout_width="0dp"
             android:layout_height="wrap_content" android:layout_weight="1" android:gravity="center"
-            android:layout_marginStart="6dp" android:text="年线" android:padding="6dp"
+            android:layout_marginStart="6dp" android:text="年线" android:singleLine="true" android:padding="6dp"
             android:textSize="14sp" android:textStyle="bold" android:textColor="#E53935"
             android:background="@drawable/bg_indicator_on" />
         <TextView android:id="@+id/tv_period_120" android:layout_width="0dp"
             android:layout_height="wrap_content" android:layout_weight="1" android:gravity="center"
-            android:layout_marginStart="6dp" android:text="120分时" android:padding="6dp"
+            android:layout_marginStart="6dp" android:text="120分" android:singleLine="true" android:padding="6dp"
             android:textSize="14sp" android:textStyle="bold" android:textColor="#E53935"
             android:background="@drawable/bg_indicator_on" />
     </LinearLayout>

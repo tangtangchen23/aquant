@@ -108,8 +108,8 @@ object MarketService {
         out
     }
 
-    /** 分时数据点：时间 + 现价。 */
-    data class TrendPoint(val time: String, val price: Double)
+    /** 分时数据点：时间 + 现价 + 成交量。 */
+    data class TrendPoint(val time: String, val price: Double, val volume: Double = 0.0)
 
     /**
      * 当日分时行情（trends2 接口）。返回当日每分钟的价格序列，用于分时图。
@@ -127,7 +127,10 @@ object MarketService {
             val parts = arr.getString(i).split(",")
             if (parts.size >= 2) {
                 val price = parts[1].toDoubleOrNull() ?: continue
-                if (price > 0) out.add(TrendPoint(parts[0], price))
+                if (price > 0) {
+                    val volume = if (parts.size >= 3) parts[2].toDoubleOrNull() ?: 0.0 else 0.0
+                    out.add(TrendPoint(parts[0], price, volume))
+                }
             }
         }
         out

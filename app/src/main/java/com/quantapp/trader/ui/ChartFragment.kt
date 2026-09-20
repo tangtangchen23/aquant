@@ -215,8 +215,93 @@ class ChartFragment : Fragment() {
             setPinchZoom(true)
             invalidate()
         }
-        volChart.visibility = View.GONE
-        macdChart.visibility = View.GONE
+        volChart.visibility = View.VISIBLE
+        macdChart.visibility = View.VISIBLE
+        renderTrendVolume()
+        renderTrendMacd()
+    }
+
+    /** 分时成交量柱状图：现价较上一点上涨显红，下跌显绿。 */
+    private fun renderTrendVolume() {
+        if (!showVOL) { volChart.visibility = View.GONE; return }
+        volChart.visibility = View.VISIBLE
+        val colors = ArrayList<Int>()
+        val entries = ArrayList<BarEntry>()
+        var prev = trend.firstOrNull()?.price ?: 0.0
+        trend.forEachIndexed { i, t ->
+            val up = if (i == 0) t.price >= prev else t.price >= prev
+            prev = t.price
+            entries.add(BarEntry(i.toFloat(), (t.volume / 100f).toFloat()))
+            colors.add(Color.parseColor(if (up) UP_COLOR else DOWN_COLOR))
+        }
+        val set = BarDataSet(entries, "成交量").apply {
+            setColors(colors)
+            setDrawValues(false)
+        }
+        volChart.apply {
+            data = BarData(set)
+            description.isEnabled = false
+            legend.isEnabled = false
+            xAxis.position = XAxis.XAxisPosition.BOTTOM
+            xAxis.labelCount = 6
+            xAxis.valueFormatter = trendFormatter()
+            axisRight.isEnabled = false
+            axisLeft.axisMinimum = 0f
+            setScaleEnabled(true)
+            setPinchZoom(true)
+            invalidate()
+        }
+    }
+
+    /** 分时 MACD：基于分时价格序列计算并绘制。 */
+    private fun renderTrendMacd() {
+        if (!showMACD) { macdChart.visibility = View.GONE; return }
+        // 数据点不足(需>=26以计算EMA)时暂不绘制
+        if (trend.size < 26) { macdChart.visibility = View.GONE; return }
+        macdChart.visibility = View.VISIBLE
+        val (dif, dea, hist) = macd(trend.map { it.price })
+
+        val colors = ArrayList<Int>()
+        val histEntries = ArrayList<BarEntry>()
+        hist.forEachIndexed { i, v ->
+            histEntries.add(BarEntry(i.toFloat(), v.toFloat()))
+            colors.add(Color.parseColor(if (v >= 0) UP_COLOR else DOWN_COLOR))
+        }
+        val histSet = BarDataSet(histEntries, "MACD柱").apply {
+            setColors(colors)
+            setDrawValues(false)
+        }
+        val difSet = LineDataSet(LineEntries(dif), "DIF").apply {
+            color = Color.parseColor("#F1C40F")
+            lineWidth = 1.4f
+            setDrawCircles(false)
+            setDrawValues(false)
+        }
+        val deaSet = LineDataSet(LineEntries(dea), "DEA").apply {
+            color = Color.parseColor("#E74C3C")
+            lineWidth = 1.4f
+            setDrawCircles(false)
+            setDrawValues(false)
+        }
+        val data = CombinedData()
+        data.setData(BarData(histSet))
+        val line = LineData(difSet, deaSet)
+        line.setDrawValues(false)
+        data.setData(line)
+
+        macdChart.apply {
+            this.data = data
+            description.isEnabled = false
+            legend.isEnabled = true
+            legend.textSize = 10f
+            xAxis.position = XAxis.XAxisPosition.BOTTOM
+            xAxis.labelCount = 6
+            xAxis.valueFormatter = trendFormatter()
+            axisRight.isEnabled = false
+            setScaleEnabled(true)
+            setPinchZoom(true)
+            invalidate()
+        }
     }
 
     private fun renderCharts() {
