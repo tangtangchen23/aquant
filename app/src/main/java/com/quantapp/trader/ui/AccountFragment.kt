@@ -46,7 +46,8 @@ class AccountFragment : Fragment() {
         }
 
         // 一键清仓：按当前行情价卖出全部持仓（未拉到行情时按成本价）
-        root.findViewById<Button>(R.id.btn_clear_positions).setOnClickListener {
+        // 注意：btn_clear_positions 在布局中是 TextView，不能按 Button 强转，否则打开页签即 ClassCastException 闪退
+        root.findViewById<TextView>(R.id.btn_clear_positions).setOnClickListener {
             val positions = App.appStore.paper.positions.values.toList()
             if (positions.isEmpty()) {
                 Toast.makeText(requireContext(), "当前无持仓", Toast.LENGTH_SHORT).show()

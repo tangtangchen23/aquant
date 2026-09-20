@@ -43,7 +43,6 @@ class MainActivity : AppCompatActivity() {
 
         nav.setOnItemSelectedListener { item ->
             val f: Fragment = when (item.itemId) {
-                R.id.nav_chart -> ChartFragment()
                 R.id.nav_strategy -> StrategyFragment()
                 R.id.nav_account -> AccountFragment()
                 R.id.nav_settings -> SettingsFragment()
@@ -54,10 +53,12 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
-    /** 切换到图表页并加载指定股票的K线。 */
+    /** 打开K线图并加载指定股票（由行情页点击自选股/查询卡片触发，无需底部导航页签）。 */
     fun openChart(symbol: String) {
         pendingChartSymbol = symbol
-        nav.selectedItemId = R.id.nav_chart
+        supportFragmentManager.beginTransaction()
+            .replace(R.id.container, ChartFragment())
+            .commit()
     }
 }
 

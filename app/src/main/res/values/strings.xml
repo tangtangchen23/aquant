@@ -1,7 +1,6 @@
 <resources>
     <string name="app_name">A股量化机器人</string>
     <string name="tab_market">行情</string>
-    <string name="tab_chart">图表</string>
     <string name="tab_strategy">策略</string>
     <string name="tab_account">模拟盘</string>
     <string name="tab_settings">设置</string>

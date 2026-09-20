@@ -25,6 +25,7 @@ class MarketFragment : Fragment() {
 
     private val watchSymbols = mutableListOf<String>()
     private val queryHistory = mutableListOf<String>()
+    private var quoteSymbol: String? = null // 当前报价卡片展示的股票代码
 
     private var tvQName: TextView? = null
     private var tvQChange: TextView? = null
@@ -55,6 +56,12 @@ class MarketFragment : Fragment() {
         tvQLow = root.findViewById(R.id.tv_q_low)
         tvQVolume = root.findViewById(R.id.tv_q_volume)
         tvQTime = root.findViewById(R.id.tv_q_time)
+
+        // 点击查询股票卡片：自动跳转到K线图
+        root.findViewById<View>(R.id.card_quote).setOnClickListener {
+            val code = quoteSymbol
+            if (!code.isNullOrBlank()) (activity as? MainActivity)?.openChart(code)
+        }
 
         loadWatch()
         loadHistory()
@@ -206,6 +213,7 @@ class MarketFragment : Fragment() {
     }
 
     private fun resetQuoteCard() {
+        quoteSymbol = null
         tvQName?.text = "未查询"
         tvQChange?.text = ""
         tvQPrice?.text = "--"
@@ -219,6 +227,7 @@ class MarketFragment : Fragment() {
 
     /** 用实时行情填充报价卡片，价格与涨跌幅红涨绿跌。 */
     private fun fillQuoteCard(q: Quote) {
+        quoteSymbol = q.symbol
         val textColor = if (q.changePct >= 0) R.color.up else R.color.down
         val changeText = "${if (q.changePct >= 0) "+" else ""}${String.format("%.2f", q.changePct)}%"
         tvQName?.text = "${q.name}  ${q.symbol}"
