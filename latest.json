@@ -1,8 +1,8 @@
 {
   "latest": {
-    "version": "1.4.9",
-    "versionCode": 20,
+    "version": "1.5.0",
+    "versionCode": 21,
     "apkUrl": "https://github.com/tangtangchen23/aquant/releases/latest/download/aquant-release.apk",
-    "changelog": "v1.4.9：引擎改常驻前台服务(退后台仍自动交易与到价提醒)；策略页新增信号与成交日志面板；新增风控(单票止损止盈/回撤熔断)；回测支持手续费与滑点；实盘网关连通性检测；自选股空状态引导"
+    "changelog": "v1.5.0：K线/分时图新增BOLL布林带与KDJ摆荡指标开关；指标开关横向可滑动不遮挡；策略页表单、回测结果、权益曲线、运行策略与日志统一卡片化排版"
   }
 }

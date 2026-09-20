@@ -49,13 +49,18 @@ class ChartFragment : Fragment() {
     private var showMA = true
     private var showVOL = true
     private var showMACD = true
+    private var showBOLL = false
+    private var showKDJ = false
 
     private lateinit var chart: CombinedChart
     private lateinit var volChart: BarChart
     private lateinit var macdChart: CombinedChart
+    private lateinit var kdjChart: CombinedChart
     private lateinit var tvMA: TextView
     private lateinit var tvVOL: TextView
     private lateinit var tvMACD: TextView
+    private lateinit var tvBOLL: TextView
+    private lateinit var tvKDJ: TextView
     private lateinit var tvInfo: TextView
 
     private val UP_COLOR = "#E53935"
@@ -68,9 +73,12 @@ class ChartFragment : Fragment() {
         chart = root.findViewById(R.id.kline_chart)
         volChart = root.findViewById(R.id.vol_chart)
         macdChart = root.findViewById(R.id.macd_chart)
+        kdjChart = root.findViewById(R.id.kdj_chart)
         tvMA = root.findViewById(R.id.tv_ma)
         tvVOL = root.findViewById(R.id.tv_vol)
         tvMACD = root.findViewById(R.id.tv_macd)
+        tvBOLL = root.findViewById(R.id.tv_boll)
+        tvKDJ = root.findViewById(R.id.tv_kdj)
         tvInfo = root.findViewById(R.id.tv_chart_info)
 
         periodButtons[Period.MINUTE] = root.findViewById(R.id.tv_period_minute)
@@ -80,8 +88,10 @@ class ChartFragment : Fragment() {
         periodButtons[Period.M120] = root.findViewById(R.id.tv_period_120)
 
         tvMA.setOnClickListener { showMA = !showMA; refreshIndicatorAppearance(); if (period != Period.MINUTE) renderCharts() }
-        tvVOL.setOnClickListener { showVOL = !showVOL; refreshIndicatorAppearance(); if (period != Period.MINUTE) renderCharts() }
-        tvMACD.setOnClickListener { showMACD = !showMACD; refreshIndicatorAppearance(); if (period != Period.MINUTE) renderCharts() }
+        tvVOL.setOnClickListener { showVOL = !showVOL; refreshIndicatorAppearance(); if (period != Period.MINUTE) renderCharts() else renderTrendVolume() }
+        tvMACD.setOnClickListener { showMACD = !showMACD; refreshIndicatorAppearance(); if (period != Period.MINUTE) renderCharts() else renderTrendMacd() }
+        tvBOLL.setOnClickListener { showBOLL = !showBOLL; refreshIndicatorAppearance(); if (period != Period.MINUTE) renderCharts() }
+        tvKDJ.setOnClickListener { showKDJ = !showKDJ; refreshIndicatorAppearance(); if (period != Period.MINUTE) renderCharts() else renderTrendKdj() }
         refreshIndicatorAppearance()
 
         // 去除了输入股票代码加载——该功能与行情页重复。symbol 由行情页点击自选股/卡片时注入。
@@ -188,6 +198,8 @@ class ChartFragment : Fragment() {
         tvMA.setBackgroundResource(if (showMA) R.drawable.bg_indicator_on else R.drawable.bg_indicator_off)
         tvVOL.setBackgroundResource(if (showVOL) R.drawable.bg_indicator_on else R.drawable.bg_indicator_off)
         tvMACD.setBackgroundResource(if (showMACD) R.drawable.bg_indicator_on else R.drawable.bg_indicator_off)
+        tvBOLL.setBackgroundResource(if (showBOLL) R.drawable.bg_indicator_on else R.drawable.bg_indicator_off)
+        tvKDJ.setBackgroundResource(if (showKDJ) R.drawable.bg_indicator_on else R.drawable.bg_indicator_off)
     }
 
     /** 分时图：以折线绘制每分钟价格。 */
@@ -219,6 +231,7 @@ class ChartFragment : Fragment() {
         macdChart.visibility = View.VISIBLE
         renderTrendVolume()
         renderTrendMacd()
+        renderTrendKdj()
     }
 
     /** 分时成交量柱状图：现价较上一点上涨显红，下跌显绿。 */
@@ -309,6 +322,7 @@ class ChartFragment : Fragment() {
         renderPriceChart()
         renderVolume()
         renderMacd()
+        renderKdj()
     }
 
     private fun renderPriceChart() {
@@ -342,6 +356,24 @@ class ChartFragment : Fragment() {
             val lineData = LineData(maSets)
             lineData.setDrawValues(false)
             data.setData(lineData)
+        }
+        if (showBOLL) {
+            val (mid, up, low) = boll(bars.map { it.close })
+            val bollSets = listOf(
+                Triple(mid, "#E8B04A", "MID"),
+                Triple(up, "#E74C3C", "UP"),
+                Triple(low, "#27AE60", "LOW")
+            ).map { (v, c, label) ->
+                LineDataSet(LineEntries(v), label).apply {
+                    color = Color.parseColor(c)
+                    lineWidth = 1.2f
+                    setDrawCircles(false)
+                    setDrawValues(false)
+                }
+            }
+            val bollLine = LineData(bollSets)
+            bollLine.setDrawValues(false)
+            data.setData(bollLine)
         }
         chart.apply {
             this.data = data
@@ -437,6 +469,99 @@ class ChartFragment : Fragment() {
     // ---------- 指标计算 ----------
     private fun barEntries() = bars.mapIndexed { i, b ->
         CandleEntry(i.toFloat(), b.high.toFloat(), b.low.toFloat(), b.open.toFloat(), b.close.toFloat())
+    }
+
+    private fun renderKdj() {
+        if (!showKDJ) { kdjChart.visibility = View.GONE; return }
+        kdjChart.visibility = View.VISIBLE
+        val (k, d, j) = kdj(bars.map { it.high }.toDoubleArray(), bars.map { it.low }.toDoubleArray(), bars.map { it.close }.toDoubleArray())
+        renderKdjChart(k, d, j)
+    }
+
+    private fun renderTrendKdj() {
+        if (!showKDJ) { kdjChart.visibility = View.GONE; return }
+        kdjChart.visibility = View.VISIBLE
+        val highs = trend.map { it.price }.toDoubleArray()
+        val lows = trend.map { it.price }.toDoubleArray()
+        val closes = trend.map { it.price }.toDoubleArray()
+        val (k, d, j) = kdj(highs, lows, closes)
+        renderKdjChart(k, d, j)
+    }
+
+    private fun renderKdjChart(k: List<Double>, d: List<Double>, j: List<Double>) {
+        val kSet = LineDataSet(LineEntries(k), "K").apply {
+            color = Color.parseColor("#F1C40F"); lineWidth = 1.4f; setDrawCircles(false); setDrawValues(false)
+        }
+        val dSet = LineDataSet(LineEntries(d), "D").apply {
+            color = Color.parseColor("#4A90E8"); lineWidth = 1.4f; setDrawCircles(false); setDrawValues(false)
+        }
+        val jSet = LineDataSet(LineEntries(j), "J").apply {
+            color = Color.parseColor("#9B59B6"); lineWidth = 1.2f; setDrawCircles(false); setDrawValues(false)
+        }
+        val data = CombinedData()
+        val line = LineData(kSet, dSet, jSet)
+        line.setDrawValues(false)
+        data.setData(line)
+        kdjChart.apply {
+            this.data = data
+            description.isEnabled = false
+            legend.isEnabled = true
+            legend.textSize = 10f
+            xAxis.position = XAxis.XAxisPosition.BOTTOM
+            xAxis.labelCount = 6
+            xAxis.valueFormatter = if (bars.isNotEmpty()) dateFormatter() else trendFormatter()
+            axisRight.isEnabled = false
+            axisLeft.axisMinimum = 0f
+            axisLeft.axisMaximum = 100f
+            setScaleEnabled(true)
+            setPinchZoom(true)
+            invalidate()
+        }
+    }
+
+    /** 布林带(20,2)：返回 MID/UP/LOW 三序列。 */
+    private fun boll(closes: List<Double>): Triple<List<Double>, List<Double>, List<Double>> {
+        val n = closes.size
+        val mid = ArrayList<Double>(n)
+        val up = ArrayList<Double>(n)
+        val low = ArrayList<Double>(n)
+        var sum = 0.0
+        val p = 20
+        for (i in 0 until n) {
+            sum += closes[i]
+            if (i < p - 1) { mid.add(Double.NaN); up.add(Double.NaN); low.add(Double.NaN); continue }
+            if (i >= p) sum -= closes[i - p]
+            val m = sum / p
+            var ss = 0.0
+            for (j in (i - p + 1)..i) { val d = closes[j] - m; ss += d * d }
+            val sd = Math.sqrt(ss / p)
+            mid.add(m); up.add(m + 2 * sd); low.add(m - 2 * sd)
+        }
+        return Triple(mid, up, low)
+    }
+
+    /** KDJ(9,3,3)：返回 K/D/J 三序列(0~100)。 */
+    private fun kdj(h: DoubleArray, l: DoubleArray, c: DoubleArray): Triple<List<Double>, List<Double>, List<Double>> {
+        val n = c.size
+        val p = 9
+        val k = ArrayList<Double>(n)
+        val d = ArrayList<Double>(n)
+        val j = ArrayList<Double>(n)
+        var prevK = 50.0
+        var prevD = 50.0
+        for (i in 0 until n) {
+            val start = (i - p + 1).coerceAtLeast(0)
+            var hh = Double.MIN_VALUE
+            var ll = Double.MAX_VALUE
+            for (x in start..i) { if (h[x] > hh) hh = h[x]; if (l[x] < ll) ll = l[x] }
+            val rsv = if (hh == ll) 50.0 else (c[i] - ll) / (hh - ll) * 100
+            val curK = (2.0 / 3) * prevK + (1.0 / 3) * rsv
+            val curD = (2.0 / 3) * prevD + (1.0 / 3) * curK
+            prevK = curK
+            prevD = curD
+            k.add(curK); d.add(curD); j.add(3 * curK - 2 * curD)
+        }
+        return Triple(k, d, j)
     }
 
     private fun maLine(period: Int): List<Entry> {
