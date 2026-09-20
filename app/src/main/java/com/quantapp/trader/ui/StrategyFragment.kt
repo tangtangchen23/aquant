@@ -27,9 +27,14 @@ import com.github.mikephil.charting.data.LineData
 import com.github.mikephil.charting.data.LineDataSet
 import com.github.mikephil.charting.formatter.ValueFormatter
 import com.quantapp.trader.R
+import com.quantapp.trader.data.KLine
 import com.quantapp.trader.data.MarketService
 import com.quantapp.trader.strategy.Backtester
 import com.quantapp.trader.strategy.buildStrategy
+import com.quantapp.trader.strategy.characterize
+import com.quantapp.trader.strategy.interpretBacktest
+import com.quantapp.trader.strategy.optimizeParams
+import com.quantapp.trader.strategy.recommendStrategy
 import com.quantapp.trader.strategy.strategies
 import com.quantapp.trader.strategy.strategyParams
 import com.quantapp.trader.trading.ActiveStrategy
@@ -231,6 +236,66 @@ class StrategyFragment : Fragment() {
             Toast.makeText(requireContext(), "出场纪律参数已保存", Toast.LENGTH_SHORT).show()
         }
 
+        // ---------- 通用：回测结果展示（含 AI 白话解读） ----------
+        fun backtestText(result: com.quantapp.trader.strategy.BacktestResult, fee: Double, slip: Double): String {
+            val feeLine = if (fee > 0 || slip > 0)
+                "\n成本假设：手续费 ${String.format("%.4f", fee)} / 滑点 ${String.format("%.4f", slip)}"
+                else ""
+            return buildString {
+                append("回测(${result.tradeCount}笔)$feeLine\n")
+                append("策略收益：${String.format("%.2f", result.returnPct)}%\n")
+                append("基准(买入持有)：${String.format("%.2f", result.benchmarkReturnPct)}%\n")
+                append("最终权益：${String.format("%.0f", result.finalEquity)} / 初始 ${String.format("%.0f", result.initialCapital)}\n")
+                append("胜率：${String.format("%.1f", result.winRate)}%\n")
+                append("最大回撤：${String.format("%.1f", result.maxDrawdown)}%\n")
+                val avgPnl = if (result.trades.isEmpty()) 0.0
+                else result.trades.map { it.pnlPct }.average()
+                append("平均单笔收益：${String.format("%.2f", avgPnl)}%\n")
+                append("\n【AI 解读】\n")
+                append(interpretBacktest(result))
+            }
+        }
+
+        // 同一标的在页面会话内只拉一次 K 线
+        var cachedCode: String? = null
+        var cachedBars: List<KLine>? = null
+        suspend fun fetchBars(raw: String): Pair<String, List<KLine>>? {
+            val code = try { withContext(Dispatchers.IO) { MarketService.resolveCode(raw) } }
+                catch (e: Exception) { raw }
+            if (code == cachedCode && cachedBars != null) return code to cachedBars!!
+            val bars = withContext(Dispatchers.IO) { MarketService.fetchKline(code, 260) }
+            cachedCode = code; cachedBars = bars
+            return code to bars
+        }
+
+        suspend fun showBacktestResult(strategyId: String, cfg: Map<String, Double>,
+                                       bars: List<KLine>, fee: Double, slip: Double,
+                                       header: String? = null) {
+            val result = withContext(Dispatchers.IO) {
+                Backtester.run(buildStrategy(strategyId, cfg), bars, feeRate = fee, slippagePct = slip)
+            }
+            val base = backtestText(result, fee, slip)
+            tvBacktest.text = if (header != null) "$header\n\n$base" else base
+            renderEquity(chartEquity, result, bars)
+        }
+
+        // 切换策略选择（会触发参数区重建）
+        fun selectStrategy(id: String) {
+            val idx = strategyList.indexOfFirst { it.id == id }
+            if (idx >= 0) spinner.setSelection(idx)
+        }
+
+        // 把一组参数写进参数输入框
+        fun fillParams(params: Map<String, Double>) {
+            strategyParams(selectedStrategyId()).forEach { p ->
+                val v = params[p.key]
+                if (v != null) {
+                    paramEdits[p.key]?.setText(
+                        if (p.int) v.toInt().toString() else String.format("%.2f", v))
+                }
+            }
+        }
+
         btnBacktest.setOnClickListener { b ->
             val raw = etSymbol.text.toString().trim()
             if (raw.isEmpty()) return@setOnClickListener
@@ -238,41 +303,95 @@ class StrategyFragment : Fragment() {
             tvBacktest.text = "回测中..."
             AppScope.launch {
                 try {
-                    val code = try { withContext(Dispatchers.IO) { MarketService.resolveCode(raw) } }
-                        catch (e: Exception) { raw }
                     val fee = (etFee.text.toString().toDoubleOrNull() ?: 0.0)
                         .coerceIn(0.0, 0.1)
                     val slip = (etSlip.text.toString().toDoubleOrNull() ?: 0.0)
                         .coerceIn(0.0, 0.1)
                     App.appStore.feeRate = fee
                     App.appStore.slippagePct = slip
-                    val bars = withContext(Dispatchers.IO) { MarketService.fetchKline(code, 260) }
+                    val (_, bars) = fetchBars(raw) ?: return@launch
                     if (bars.size < 40) { tvBacktest.text = "数据不足，无法回测"; return@launch }
-                    val result = withContext(Dispatchers.IO) {
-                        Backtester.run(buildStrategy(selectedStrategyId(), readParams()), bars,
-                            feeRate = fee, slippagePct = slip)
-                    }
-                    val feeLine = if (fee > 0 || slip > 0)
-                        "\n成本假设：手续费 ${String.format("%.4f", fee)} / 滑点 ${String.format("%.4f", slip)}"
-                        else ""
-                    tvBacktest.text = buildString {
-                        append("回测(${result.tradeCount}笔)$feeLine\n")
-                        append("策略收益：${String.format("%.2f", result.returnPct)}%\n")
-                        append("基准(买入持有)：${String.format("%.2f", result.benchmarkReturnPct)}%\n")
-                        append("最终权益：${String.format("%.0f", result.finalEquity)} / 初始 ${String.format("%.0f", result.initialCapital)}\n")
-                        append("胜率：${String.format("%.1f", result.winRate)}%\n")
-                        append("最大回撤：${String.format("%.1f", result.maxDrawdown)}%\n")
-                        val avgPnl = if (result.trades.isEmpty()) 0.0
-                        else result.trades.map { it.pnlPct }.average()
-                        append("平均单笔收益：${String.format("%.2f", avgPnl)}%")
-                    }
-                    renderEquity(chartEquity, result, bars)
+                    showBacktestResult(selectedStrategyId(), readParams(), bars, fee, slip)
                 } catch (e: Exception) {
                     tvBacktest.text = "回测失败：${e.message}"
                 } finally {
                     b.isEnabled = true
                 }
             }
+        }
+
+        // ---------- AI 智能推荐：识别标的特征 → 推荐策略并填入参数 ----------
+        root.findViewById<Button>(R.id.btn_ai_recommend).setOnClickListener { b ->
+            val raw = etSymbol.text.toString().trim()
+            if (raw.isEmpty()) {
+                Toast.makeText(requireContext(), "请先输入股票代码或名称", Toast.LENGTH_SHORT).show()
+                return@setOnClickListener
+            }
+            b.isEnabled = false
+            tvBacktest.text = "AI 识别走势中..."
+            AppScope.launch {
+                try {
+                    val (_, bars) = fetchBars(raw) ?: return@launch
+                    if (bars.size < 40) { tvBacktest.text = "数据不足，无法分析"; return@launch }
+                    val c = characterize(bars)
+                    val rec = recommendStrategy(bars)
+                    selectStrategy(rec.strategyId)
+                    fillParams(rec.params)
+                    App.appStore.setStrategyConfig(rec.strategyId, rec.params)
+                    tvBacktest.text = "【AI 智能推荐 · ${c.summary}】\n${rec.reason}\n\n已自动切换到对应策略并填入参数，可点“回测”验证，或再点“AI 一键配参”微调。"
+                } catch (e: Exception) {
+                    tvBacktest.text = "AI 分析失败：${e.message}"
+                } finally {
+                    b.isEnabled = true
+                }
+            }
+        }
+
+        // ---------- AI 一键配参：按风险偏好寻优参数并自动回测 ----------
+        root.findViewById<Button>(R.id.btn_ai_optimize).setOnClickListener { b ->
+            val raw = etSymbol.text.toString().trim()
+            if (raw.isEmpty()) {
+                Toast.makeText(requireContext(), "请先输入股票代码或名称", Toast.LENGTH_SHORT).show()
+                return@setOnClickListener
+            }
+            val sid = selectedStrategyId()
+            val modes = arrayOf("保守", "均衡", "激进")
+            android.app.AlertDialog.Builder(requireContext())
+                .setTitle("AI 一键配参 · 选择风险偏好")
+                .setSingleChoiceItems(modes, 1) { d, which ->
+                    d.dismiss()
+                    b.isEnabled = false
+                    tvBacktest.text = "AI 寻优中（网格搜索）..."
+                    AppScope.launch {
+                        try {
+                            val fee = (etFee.text.toString().toDoubleOrNull() ?: 0.0)
+                                .coerceIn(0.0, 0.1)
+                            val slip = (etSlip.text.toString().toDoubleOrNull() ?: 0.0)
+                                .coerceIn(0.0, 0.1)
+                            val (_, bars) = fetchBars(raw) ?: return@launch
+                            if (bars.size < 40) { tvBacktest.text = "数据不足，无法寻优"; return@launch }
+                            val modeKey = arrayOf("conservative", "balanced", "aggressive")[which]
+                            val best = optimizeParams(sid, bars, modeKey, feeRate = fee,
+                                slippagePct = slip) { done, total ->
+                                activity?.runOnUiThread { tvBacktest.text = "AI 寻优中... $done/$total" }
+                            }
+                            if (best == null) {
+                                tvBacktest.text = "该策略在此区间没有找到合格参数（交易次数偏少）"
+                                return@launch
+                            }
+                            fillParams(best.params)
+                            App.appStore.setStrategyConfig(sid, best.params)
+                            showBacktestResult(sid, best.params, bars, fee, slip,
+                                "【AI 一键配参 · ${modes[which]}】已选 ${best.paramsText}（综合分 ${String.format("%.1f", best.score)}）")
+                        } catch (e: Exception) {
+                            tvBacktest.text = "AI 配参失败：${e.message}"
+                        } finally {
+                            b.isEnabled = true
+                        }
+                    }
+                }
+                .setNegativeButton("取消", null)
+                .show()
         }
 
         btnStart.setOnClickListener {

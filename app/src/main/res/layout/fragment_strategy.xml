@@ -33,6 +33,17 @@
 
             <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content"
                 android:orientation="horizontal" android:layout_marginTop="8dp">
+                <Button android:id="@+id/btn_ai_recommend" android:layout_width="0dp"
+                    android:layout_height="wrap_content" android:layout_weight="1"
+                    android:singleLine="true" android:text="AI 智能推荐" />
+                <Button android:id="@+id/btn_ai_optimize" android:layout_width="0dp"
+                    android:layout_height="wrap_content" android:layout_weight="1"
+                    android:layout_marginStart="6dp"
+                    android:singleLine="true" android:text="AI 一键配参" />
+            </LinearLayout>
+
+            <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content"
+                android:orientation="horizontal" android:layout_marginTop="8dp">
                 <Button android:id="@+id/btn_backtest" android:layout_width="0dp"
                     android:layout_height="wrap_content" android:layout_weight="1"
                     android:singleLine="true" android:text="回测" />
