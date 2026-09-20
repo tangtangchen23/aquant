@@ -5,7 +5,9 @@ import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.widget.Button
 import android.widget.TextView
+import android.widget.Toast
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.lifecycleScope
 import com.github.mikephil.charting.charts.BarChart
@@ -27,6 +29,7 @@ import com.quantapp.trader.R
 import com.quantapp.trader.data.KLine
 import com.quantapp.trader.data.MarketService
 import com.quantapp.trader.data.MarketService.TrendPoint
+import com.quantapp.trader.trading.App
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.isActive
@@ -104,6 +107,10 @@ class ChartFragment : Fragment() {
         }
 
         updatePeriodButtonAppearance()
+
+        // 手动买入/卖出（操作模拟盘账户）
+        root.findViewById<Button>(R.id.btn_manual_buy).setOnClickListener { manualTrade(isBuy = true) }
+        root.findViewById<Button>(R.id.btn_manual_sell).setOnClickListener { manualTrade(isBuy = false) }
 
         if (symbol.isBlank()) {
             tvInfo.text = "未指定股票"
@@ -192,6 +199,42 @@ class ChartFragment : Fragment() {
                 if (t.isNotEmpty()) { trend = t; renderTrend() }
             } catch (e: Exception) { /* 静默失败，等待下轮 */ }
         }
+    }
+
+    /**
+     * 手动买入 / 卖出。以最近实时价成交，操作模拟盘账户（paper）并持久化。
+     * 买入按目标仓位整取100股；卖出平掉当前全部持仓。
+     */
+    private fun manualTrade(isBuy: Boolean) {
+        if (symbol.isBlank()) { toast("未指定股票"); return }
+        val nameOf = symbol
+        AppScope.launch {
+            val quote = try {
+                withContext(Dispatchers.IO) { MarketService.fetchQuote(nameOf) }
+            } catch (e: Exception) { null }
+            if (quote == null || quote.price <= 0) { toast("获取行情失败，请稍后重试"); return@launch }
+            val store = App.appStore
+            val name = quote.name.ifEmpty { nameOf }
+            if (isBuy) {
+                // 与引擎一致：目标仓位 = 现金×仓位比例，受单票上限约束
+                val base = store.paper.cash * store.positionPct
+                val cap = store.maxPositionPct
+                val target = if (cap > 0) base.coerceAtMost(store.initialCapital() * cap) else base
+                val t = store.paper.buy(nameOf, name, quote.price, target)
+                if (t == null) toast("买入失败：现金不足或不足一手")
+                else toast("已手动买入 $name ${t.qty}股 @ ${"%.2f".format(quote.price)}")
+            } else {
+                if (!store.paper.positions.containsKey(nameOf)) { toast("当前无 $nameOf 持仓"); return@launch }
+                val t = store.paper.sell(nameOf, name, quote.price)
+                if (t == null) toast("卖出失败")
+                else toast("已手动卖出 $name ${t.qty}股 @ ${"%.2f".format(quote.price)}")
+            }
+            store.save()
+        }
+    }
+
+    private fun toast(msg: String) {
+        Toast.makeText(requireContext(), msg, Toast.LENGTH_SHORT).show()
     }
 
     private fun refreshIndicatorAppearance() {

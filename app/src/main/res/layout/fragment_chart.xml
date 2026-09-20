@@ -83,4 +83,16 @@
 
     <TextView android:id="@+id/tv_chart_info" android:layout_width="match_parent"
         android:layout_height="wrap_content" android:layout_marginTop="4dp" />
+
+    <!-- 手动买入/卖出入口 -->
+    <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content"
+        android:layout_marginTop="10dp" android:orientation="horizontal"
+        android:gravity="center_horizontal">
+        <Button android:id="@+id/btn_manual_buy" android:layout_width="0dp"
+            android:layout_height="46dp" android:layout_weight="1" android:layout_marginEnd="4dp"
+            android:text="手动买入" android:textColor="@color/text_primary" />
+        <Button android:id="@+id/btn_manual_sell" android:layout_width="0dp"
+            android:layout_height="46dp" android:layout_weight="1" android:layout_marginStart="4dp"
+            android:text="手动卖出" android:textColor="@color/text_primary" />
+    </LinearLayout>
 </LinearLayout>

@@ -1,8 +1,8 @@
 {
   "latest": {
-    "version": "1.7.0",
-    "versionCode": 24,
+    "version": "1.8.0",
+    "versionCode": 25,
     "apkUrl": "https://github.com/tangtangchen23/aquant/releases/latest/download/aquant-release.apk",
-    "changelog": "v1.7.0：多源实时行情自动切换。①新增新浪财经、腾讯股票实时行情源作为东财的备份；②东财接口被限流（52/429）时自动切换到无限流的其他行情源，行情获取更稳定；③单个行情源波动不再导致自选股/搜索卡死，行情自动降级恢复。"
+    "changelog": "v1.8.0：K线图新增手动买入/卖出入口。①在K线图下方新增“手动买入/卖出”按钮，按当前实时价对模拟盘账户下单；②买入按目标仓位整取100股、卖出平掉全部持仓，支持手动建仓后交给策略/风控管理；③操作结果实时提示并持久化到模拟盘账户。"
   }
 }
