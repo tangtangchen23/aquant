@@ -2,12 +2,17 @@ package com.quantapp.trader.ui
 
 import android.graphics.Color
 import android.os.Bundle
+import android.text.InputType
+import android.view.Gravity
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.Button
+import android.widget.EditText
+import android.widget.LinearLayout
 import android.widget.TextView
 import android.widget.Toast
+import androidx.appcompat.app.AlertDialog
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.lifecycleScope
 import com.github.mikephil.charting.charts.BarChart
@@ -202,35 +207,120 @@ class ChartFragment : Fragment() {
     }
 
     /**
-     * 手动买入 / 卖出。以最近实时价成交，操作模拟盘账户（paper）并持久化。
-     * 买入按目标仓位整取100股；卖出平掉当前全部持仓。
+     * 手动买入 / 卖出：弹出输入框，可填写成交价、金额、股数，对模拟盘账户下单。
+     * 买入：填写股数（100整数倍）或金额其一；卖出：可输入股数部分平仓，留空=全部。
      */
     private fun manualTrade(isBuy: Boolean) {
         if (symbol.isBlank()) { toast("未指定股票"); return }
-        val nameOf = symbol
+        val code = symbol
         AppScope.launch {
             val quote = try {
-                withContext(Dispatchers.IO) { MarketService.fetchQuote(nameOf) }
+                withContext(Dispatchers.IO) { MarketService.fetchQuote(code) }
             } catch (e: Exception) { null }
             if (quote == null || quote.price <= 0) { toast("获取行情失败，请稍后重试"); return@launch }
-            val store = App.appStore
-            val name = quote.name.ifEmpty { nameOf }
-            if (isBuy) {
-                // 与引擎一致：目标仓位 = 现金×仓位比例，受单票上限约束
-                val base = store.paper.cash * store.positionPct
-                val cap = store.maxPositionPct
-                val target = if (cap > 0) base.coerceAtMost(store.initialCapital() * cap) else base
-                val t = store.paper.buy(nameOf, name, quote.price, target)
-                if (t == null) toast("买入失败：现金不足或不足一手")
-                else toast("已手动买入 $name ${t.qty}股 @ ${"%.2f".format(quote.price)}")
-            } else {
-                if (!store.paper.positions.containsKey(nameOf)) { toast("当前无 $nameOf 持仓"); return@launch }
-                val t = store.paper.sell(nameOf, name, quote.price)
-                if (t == null) toast("卖出失败")
-                else toast("已手动卖出 $name ${t.qty}股 @ ${"%.2f".format(quote.price)}")
-            }
-            store.save()
+            showManualDialog(isBuy, code, quote.price, quote.name)
         }
+    }
+
+    private fun showManualDialog(isBuy: Boolean, code: String, price: Double, quoteName: String) {
+        val store = App.appStore
+        val pos = store.paper.positions[code]
+        val name = quoteName.ifEmpty { code }
+        val ctx = requireContext()
+
+        val priceEt = EditText(ctx).apply {
+            setText(String.format("%.2f", price))
+            inputType = InputType.TYPE_CLASS_NUMBER or InputType.TYPE_NUMBER_FLAG_DECIMAL
+        }
+        val qtyHint = if (isBuy) "买入股数，100的整数倍（留空则按金额算）" else "卖出股数，留空=全部"
+        val qtyEt = EditText(ctx).apply {
+            hint = qtyHint
+            inputType = InputType.TYPE_CLASS_NUMBER
+        }
+        // 金额输入框（仅买入时显示）
+        val amountEt = if (isBuy) EditText(ctx).apply {
+            hint = "或输入买入金额（元），按100股取整"
+            inputType = InputType.TYPE_CLASS_NUMBER or InputType.TYPE_NUMBER_FLAG_DECIMAL
+        } else null
+
+        val cur = if (!isBuy && pos != null) "(持仓 ${pos.qty}股)" else ""
+        val dialog = AlertDialog.Builder(ctx)
+            .setTitle(if (isBuy) "手动买入 $name" else "手动卖出 $name $cur")
+            .setView(buildTradeForm(priceEt to "成交价", qtyEt to (if (isBuy) "买入股数" else "卖出股数"), amountEt))
+            .setPositiveButton("确认", null) // null: 手动校验后再 dismiss
+            .setNegativeButton("取消", null)
+            .create()
+        dialog.setOnShowListener {
+            dialog.getButton(AlertDialog.BUTTON_POSITIVE).setOnClickListener {
+                val p = priceEt.text.toString().toDoubleOrNull()
+                if (p == null || p <= 0) { toast("成交价无效"); return@setOnClickListener }
+                var qty = qtyEt.text.toString().toIntOrNull() ?: 0
+                if (isBuy) {
+                    if (qty <= 0) {
+                        val amt = (amountEt?.text?.toString())?.toDoubleOrNull() ?: 0.0
+                        if (amt <= 0) { toast("请填写买入股数或买入金额"); return@setOnClickListener }
+                        qty = (amt / p / 100.0).toInt() * 100
+                    }
+                    if (qty < 100) { toast("买入股数需为100的整数倍且≥100股"); return@setOnClickListener }
+                } else {
+                    // 留空=全部；超出持仓则平到所持数量
+                    if (qty <= 0) qty = pos?.qty ?: 0
+                }
+                executeManual(isBuy, code, name, p, qty)
+                dialog.dismiss()
+            }
+        }
+        dialog.show()
+    }
+
+    private fun buildTradeForm(
+        priceTo: Pair<EditText, String>,
+        qtyTo: Pair<EditText, String>,
+        amountOptional: EditText?
+    ): View {
+        val ctx = requireContext()
+        val col = LinearLayout(ctx).apply {
+            orientation = LinearLayout.VERTICAL
+            setPadding(54, 8, 54, 0)
+        }
+        fun addRow(et: EditText?, label: String, isSecond: Boolean = false) {
+            val tv = TextView(ctx).apply {
+                text = label
+                setTextSize(13f)
+                gravity = Gravity.START
+                val lp = LinearLayout.LayoutParams(
+                    LinearLayout.LayoutParams.MATCH_PARENT,
+                    LinearLayout.LayoutParams.WRAP_CONTENT
+                )
+                if (isSecond) lp.topMargin = 24
+                layoutParams = lp
+            }
+            col.addView(tv)
+            col.addView(et)
+        }
+        addRow(priceTo.first, priceTo.second)
+        addRow(qtyTo.first, qtyTo.second, isSecond = true)
+        if (amountOptional != null) addRow(amountOptional, "第二项：买入金额", isSecond = true)
+        return col
+    }
+
+    private fun executeManual(isBuy: Boolean, code: String, name: String, price: Double, qty: Int) {
+        val store = App.appStore
+        if (isBuy) {
+            val q = (qty.coerceAtLeast(0))
+            val target = q * price
+            val t = store.paper.buy(code, name, price, target)
+            if (t == null) toast("买入失败：现金不足或不足一手")
+            else toast("已买入 $name ${t.qty}股 @ ${"%.2f".format(price)}")
+        } else {
+            val pos = store.paper.positions[code]
+            if (pos == null) { toast("当前无 $code 持仓"); return }
+            val q = if (pos.qty == 0) 0 else qty.coerceIn(1, pos.qty)
+            val t = store.paper.sell(code, name, price, q)
+            if (t == null) toast("卖出失败")
+            else toast("已卖出 $name ${t.qty}股 @ ${"%.2f".format(price)}")
+        }
+        store.save()
     }
 
     private fun toast(msg: String) {

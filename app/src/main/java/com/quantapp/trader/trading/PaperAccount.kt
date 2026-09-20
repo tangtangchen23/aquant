@@ -77,14 +77,20 @@ class PaperAccount(initialCapital: Double = 100000.0) {
         return t
     }
 
-    /** 卖出当前全部持仓。 */
-    fun sell(symbol: String, name: String, price: Double): Trade? {
+    /** 卖出持仓。默认卖出全部；传入 [qty] 可部分平仓（不足100股的零股可一次卖出）。 */
+    fun sell(symbol: String, name: String, price: Double, qty: Int = Int.MAX_VALUE): Trade? {
         val pos = positions[symbol] ?: return null
         if (price <= 0 || pos.qty <= 0) return null
-        val amount = pos.qty * price
+        val sellQty = qty.coerceIn(1, pos.qty)
+        val amount = sellQty * price
         cash += amount
-        positions.remove(symbol)
-        val t = Trade(System.currentTimeMillis(), symbol, name, "卖出", price, pos.qty, amount)
+        if (sellQty >= pos.qty) {
+            positions.remove(symbol)
+        } else {
+            // 部分平仓：成本价不变，仅扣减数量
+            positions[symbol] = pos.copy(qty = pos.qty - sellQty)
+        }
+        val t = Trade(System.currentTimeMillis(), symbol, name, "卖出", price, sellQty, amount)
         trades.add(t)
         return t
     }
