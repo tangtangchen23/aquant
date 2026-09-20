@@ -1,8 +1,8 @@
 {
   "latest": {
-    "version": "2.1.0",
-    "versionCode": 28,
+    "version": "2.2.0",
+    "versionCode": 29,
     "apkUrl": "https://github.com/tangtangchen23/aquant/releases/latest/download/aquant-release.apk",
-    "changelog": "v2.1.0：新图标与应用改名。①更换应用图标：红色渐变背景+三根上涨白色/金色K线，突出量化交易与上涨趋势，整体保持红色基调；②应用名称改为“AI量化”，通知栏与升级提示文案同步更新。"
+    "changelog": "v2.2.0：新增布林带(BOLL)策略。跌破下轨或回穿下轨买入，突破/跌破上轨卖出（均值回归），支持调整布林周期(默认20)与标准差倍数(默认2)；可在策略页下拉框选用并参与回测与自动交易。"
   }
 }

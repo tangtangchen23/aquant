@@ -195,10 +195,52 @@ class MacdStrategy(val fast: Int = 12, val slow: Int = 26, val signal: Int = 9) 
     }
 }
 
+/** 布林带策略（均值回归）：跌破下轨买入，突破上轨卖出。 */
+class BollStrategy(val period: Int = 20, val mult: Double = 2.0) : Strategy {
+    override val id = "boll"
+    override val name = "布林带策略"
+    override val description = "跌破下轨或回穿下轨买入，突破/跌破上轨卖出。"
+    override fun paramsSummary() = "BOLL($period,$mult)"
+
+    override fun evaluate(bars: List<KLine>, lastPrice: Double): Signal {
+        val closes = bars.map { it.close } + lastPrice
+        val n = closes.size
+        if (n < period + 1) return Signal(Action.HOLD, "数据不足")
+        val mid = Indicators.sma(closes, period)
+
+        // 返回某根K线的 [中轨, 下轨, 上轨]
+        fun band(i: Int): DoubleArray {
+            val base = mid[i]
+            if (base.isNaN()) return doubleArrayOf(Double.NaN, Double.NaN, Double.NaN)
+            var s = 0.0
+            for (k in i - period + 1..i) { val d = closes[k] - base; s += d * d }
+            val std = kotlin.math.sqrt(s / period)
+            return doubleArrayOf(base, base - mult * std, base + mult * std)
+        }
+
+        val prevB = band(n - 2)
+        val curB = band(n - 1)
+        if (prevB[0].isNaN() || curB[0].isNaN()) return Signal(Action.HOLD, "数据不足")
+        val prev = closes[n - 2]
+        val cur = closes[n - 1]
+        val lowerP = prevB[1]; val lower = curB[1]
+        val upperP = prevB[2]; val upper = curB[2]
+
+        return when {
+            prev <= lowerP && cur > lower -> Signal(Action.BUY, "回穿下轨(${"%.2f".format(lower)})")
+            cur < lower -> Signal(Action.BUY, "跌破下轨超卖(${"%.2f".format(lower)})")
+            prev >= upperP && cur < upper -> Signal(Action.SELL, "跌破上轨(${"%.2f".format(upper)})")
+            cur > upper -> Signal(Action.SELL, "突破上轨超买(${"%.2f".format(upper)})")
+            else -> Signal(Action.HOLD, "区间运行，观望")
+        }
+    }
+}
+
 fun strategies(): List<Strategy> = listOf(
     MaCrossStrategy(),
     RsiStrategy(),
-    MacdStrategy()
+    MacdStrategy(),
+    BollStrategy()
 )
 
 /** 策略可编辑参数定义：key 供持久化/构建使用，label 用于 UI。 */
@@ -225,6 +267,10 @@ fun strategyParams(id: String): List<StrategyParam> = when (id) {
         StrategyParam("slow", "慢线EMA", "26", true),
         StrategyParam("signal", "信号EMA", "9", true)
     )
+    "boll" -> listOf(
+        StrategyParam("period", "布林周期", "20", true),
+        StrategyParam("mult", "标准差倍数", "2", false)
+    )
     else -> emptyList()
 }
 
@@ -235,5 +281,7 @@ fun buildStrategy(id: String, v: Map<String, Double>): Strategy = when (id) {
         v["period"]?.toInt() ?: 14, v["oversold"] ?: 30.0, v["overbought"] ?: 70.0)
     "macd" -> MacdStrategy(
         v["fast"]?.toInt() ?: 12, v["slow"]?.toInt() ?: 26, v["signal"]?.toInt() ?: 9)
+    "boll" -> BollStrategy(
+        v["period"]?.toInt() ?: 20, v["mult"] ?: 2.0)
     else -> MaCrossStrategy()
 }
