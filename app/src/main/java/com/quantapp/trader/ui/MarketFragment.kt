@@ -31,6 +31,7 @@ class MarketFragment : Fragment() {
         val tvQuote = root.findViewById<TextView>(R.id.tv_quote)
         val btnAdd = root.findViewById<Button>(R.id.btn_add_watch)
         val list = root.findViewById<ListView>(R.id.list_watch)
+        val btnClearHistory = root.findViewById<TextView>(R.id.btn_clear_history)
 
         loadWatch()
         loadHistory()
@@ -51,6 +52,20 @@ class MarketFragment : Fragment() {
             if (hasFocus && queryHistory.isNotEmpty()) etCode.showDropDown()
         }
 
+        // 清除查询历史
+        btnClearHistory.setOnClickListener {
+            if (queryHistory.isEmpty()) {
+                Toast.makeText(requireContext(), "暂无可清除的查询历史", Toast.LENGTH_SHORT).show()
+                return@setOnClickListener
+            }
+            clearHistory()
+            etCode.setAdapter(ArrayAdapter(requireContext(),
+                android.R.layout.simple_dropdown_item_1line, queryHistory))
+            etCode.dismissDropDown()
+            etCode.setText("")
+            Toast.makeText(requireContext(), "查询历史已清除", Toast.LENGTH_SHORT).show()
+        }
+
         btnQuery.setOnClickListener { q ->
             val raw = etCode.text.toString().trim()
             if (raw.isNotEmpty()) {
@@ -62,8 +77,8 @@ class MarketFragment : Fragment() {
                         val code = MarketService.resolveCode(raw)
                         if (code != raw) etCode.setText(code)
                         val quote = withContext(Dispatchers.IO) { MarketService.fetchQuote(code) }
-                        // 查询历史保留用户原始输入（名称就存名称，代码就存代码）
-                        putHistory(raw)
+                        // 查询历史统一存股票名称（查名称或代码都显示为名称）
+                        putHistory(quote.name)
                         refreshHistory(etCode)
                         tvQuote.text = formatQuote(quote, code)
                     } catch (e: Exception) {
@@ -89,7 +104,10 @@ class MarketFragment : Fragment() {
                         saveWatch()
                         watchAdapter.refresh()
                     }
-                    putHistory(raw)
+                    // 历史统一存名称；若输入的是代码，则从行情结果取名称
+                    val historyName = if (code != raw) raw else
+                        withContext(Dispatchers.IO) { MarketService.fetchQuote(code) }.name
+                    putHistory(historyName)
                     refreshHistory(etCode)
                     Toast.makeText(requireContext(), "已加入自选：$code（点击自选股查看K线）", Toast.LENGTH_SHORT).show()
                 } catch (e: Exception) {
@@ -160,6 +178,11 @@ class MarketFragment : Fragment() {
         val arr = JSONArray()
         queryHistory.forEach { arr.put(it) }
         prefs().edit().putString("history", arr.toString()).apply()
+    }
+
+    private fun clearHistory() {
+        queryHistory.clear()
+        prefs().edit().putString("history", "[]").apply()
     }
 
     private fun formatQuote(q: Quote, code: String): String {

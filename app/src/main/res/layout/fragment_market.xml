@@ -16,6 +16,10 @@
             android:text="查询" />
     </LinearLayout>
 
+    <TextView android:id="@+id/btn_clear_history" android:layout_width="wrap_content"
+        android:layout_height="wrap_content" android:layout_marginTop="2dp"
+        android:padding="6dp" android:textColor="#E53935" android:text="清除查询历史" />
+
     <TextView android:id="@+id/tv_quote"
         android:layout_width="match_parent" android:layout_height="wrap_content"
         android:layout_marginTop="12dp" android:padding="14dp" android:background="#FFFFFF"
