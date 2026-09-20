@@ -459,5 +459,5 @@ object TradingEngine {
             ?: com.quantapp.trader.data.MarketService.fetchQuote(symbol).name
     } catch (e: Exception) { "" }
 
-    private fun strategyLabel(id: String) = when (id) { "rsi" -> "RSI"; "macd" -> "MACD"; else -> "双均线" }
+    private fun strategyLabel(id: String) = when (id) { "rsi" -> "RSI"; "macd" -> "MACD"; "boll" -> "布林带"; else -> "双均线" }
 }

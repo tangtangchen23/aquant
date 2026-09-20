@@ -5,15 +5,48 @@
     android:viewportWidth="108"
     android:viewportHeight="108">
 
-    <!-- 中间金色K线（加仓/主升） -->
-    <path android:fillColor="#FFD54F" android:pathData="M53,38 L55,38 L55,64 L53,64 Z" />
-    <path android:fillColor="#FFD54F" android:pathData="M50,46 L58,46 L58,58 L50,58 Z" />
+    <!-- 白色进攻公牛剪影（证券所前铜牛造型） -->
+    <path android:fillColor="#FFFFFF" android:pathData="
+        M33 62
+        C31 54, 31 46, 34 40
+        C36 35, 39 31, 43 29
+        C49 26, 57 25, 62 24
+        C68 23, 72 21, 74 23
+        C78 26, 80 31, 80 37
+        C82 41, 85 45, 87 47
+        C91 51, 93 57, 92 62
+        C91 67, 88 71, 84 73
+        C81 75, 80 77, 80 80
+        C80 84, 79 88, 78 92
+        C77 95, 74 94, 74 91
+        C74 88, 74 85, 74 83
+        C73 86, 72 89, 72 92
+        C71 95, 68 94, 68 91
+        C68 87, 68 84, 67 82
+        C63 83, 57 83, 52 82
+        C51 85, 50 88, 50 91
+        C49 94, 46 93, 46 91
+        C46 88, 46 85, 45 83
+        C43 85, 41 87, 40 91
+        C39 94, 36 93, 36 90
+        C36 86, 37 82, 37 79
+        C34 76, 32 71, 32 66
+        Z" />
 
-    <!-- 左侧白色K线（首仓） -->
-    <path android:fillColor="#FFFFFF" android:pathData="M33,56 L35,56 L35,80 L33,80 Z" />
-    <path android:fillColor="#FFFFFF" android:pathData="M30,64 L38,64 L38,76 L30,76 Z" />
+    <!-- 后侧牛角 -->
+    <path android:fillColor="#FFFFFF" android:pathData="
+        M81 41
+        C78 35, 77 28, 81 23
+        C83 22, 84 25, 83 28
+        C82 32, 82 36, 84 41
+        Z" />
 
-    <!-- 右侧白色K线（突破新高） -->
-    <path android:fillColor="#FFFFFF" android:pathData="M73,22 L75,22 L75,46 L73,46 Z" />
-    <path android:fillColor="#FFFFFF" android:pathData="M70,30 L78,30 L78,40 L70,40 Z" />
+    <!-- 前侧牛角 -->
+    <path android:fillColor="#FFFFFF" android:pathData="
+        M86 44
+        C84 38, 83 32, 86 28
+        C88 26, 90 28, 89 31
+        C87 35, 87 39, 89 44
+        Z" />
+
 </vector>

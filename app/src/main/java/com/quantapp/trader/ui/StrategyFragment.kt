@@ -87,7 +87,10 @@ class StrategyFragment : Fragment() {
             override fun onTextChanged(s: CharSequence?, a: Int, b: Int, c: Int) {}
         })
         etSymbol.setOnItemClickListener { _, _, pos, _ ->
-            if (pos in searchCodes.indices) etSymbol.setText(searchCodes[pos])
+            if (pos in searchCodes.indices) {
+                etSymbol.setText(searchCodes[pos])
+                etSymbol.dismissDropDown()
+            }
         }
 
         // 从自选股列表选择
@@ -514,10 +517,12 @@ class StrategyFragment : Fragment() {
         val list_ = App.appStore.activeStrategies()
         list.adapter = ArrayAdapter(requireContext(), android.R.layout.simple_list_item_1,
             if (list_.isEmpty()) listOf("（暂无运行中策略，点“启动自动交易”添加）")
-            else list_.map { "${it.symbol}  ${it.name}  ${strategyLabel(it.strategyId)}  [${it.lastAction}] ${it.lastReason}" })
+            else list_.map { "${it.symbol}  ${it.name}  ${strategyLabel(it.strategyId)}  [${it.lastAction.ifEmpty { "未触发" }}] ${it.lastReason}" })
     }
 
-    private fun strategyLabel(id: String) = when (id) { "rsi" -> "RSI"; "macd" -> "MACD"; else -> "双均线" }
+    private fun strategyLabel(id: String) = when (id) {
+        "rsi" -> "RSI"; "macd" -> "MACD"; "boll" -> "布林带"; else -> "双均线"
+    }
 
     /** 绘制策略权益曲线与基准曲线。 */
     private fun renderEquity(chart: LineChart, r: com.quantapp.trader.strategy.BacktestResult, bars: List<com.quantapp.trader.data.KLine>) {

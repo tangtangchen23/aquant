@@ -85,15 +85,10 @@ class MarketFragment : Fragment() {
         watchAdapter.refresh()
         startAutoRefresh(list)
 
-        // 查询历史自动补全（始终显示全部历史，不按已填文本过滤）
+        // 查询历史自动补全（输入时弹出，仅作为联想，不随聚焦自动展开）
         val historyAdapter = historyAdapter()
         etCode.setAdapter(historyAdapter)
         if (queryHistory.isNotEmpty()) etCode.setText(queryHistory.lastOrNull() ?: "")
-
-        // 弹出历史下拉（直接展示，方便点击重选）
-        etCode.setOnFocusChangeListener { v, hasFocus ->
-            if (hasFocus && queryHistory.isNotEmpty() && v is AutoCompleteTextView) v.showDropDown()
-        }
 
         // 清除查询历史
         btnClearHistory.setOnClickListener {
@@ -116,6 +111,7 @@ class MarketFragment : Fragment() {
         }
 
         btnQuery.setOnClickListener { q ->
+            etCode.dismissDropDown()
             val raw = etCode.text.toString().trim()
             if (raw.isNotEmpty()) {
                 q.isEnabled = false
