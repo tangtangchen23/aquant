@@ -1,8 +1,8 @@
 {
   "latest": {
-    "version": "2.0.0",
-    "versionCode": 27,
+    "version": "2.1.0",
+    "versionCode": 28,
     "apkUrl": "https://github.com/tangtangchen23/aquant/releases/latest/download/aquant-release.apk",
-    "changelog": "v2.0.0：优化手动交易与按钮显示。①K线图“手动买入/卖出”按钮改为红/绿实色背景+白色文字，任何主题下都清晰；②手动下单框体验升级：输入股数自动换算金额、输入金额自动换算股数（按100股取整），底部实时显示约需资金/可用资金/手数；③提示词改小并缩短，买入金额标签直接显示“买入金额”，去掉多余标题。"
+    "changelog": "v2.1.0：新图标与应用改名。①更换应用图标：红色渐变背景+三根上涨白色/金色K线，突出量化交易与上涨趋势，整体保持红色基调；②应用名称改为“AI量化”，通知栏与升级提示文案同步更新。"
   }
 }

@@ -36,7 +36,7 @@ object DownloadHelper {
             val downloadUrl = withContext(Dispatchers.IO) { resolveFinalUrl(url) }
             val dm = ctx.getSystemService(Context.DOWNLOAD_SERVICE) as DownloadManager
             val req = DownloadManager.Request(Uri.parse(downloadUrl))
-                .setTitle("A股量化机器人·升级")
+                .setTitle("AI量化·升级")
                 .setDescription("正在下载最新版本，请稍候…")
                 .setNotificationVisibility(DownloadManager.Request.VISIBILITY_VISIBLE_NOTIFY_COMPLETED)
                 .setMimeType("application/vnd.android.package-archive")

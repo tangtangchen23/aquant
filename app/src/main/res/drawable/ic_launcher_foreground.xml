@@ -1,18 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
 <vector xmlns:android="http://schemas.android.com/apk/res/android"
     android:width="108dp"
     android:height="108dp"
     android:viewportWidth="108"
     android:viewportHeight="108">
-    <path
-        android:fillColor="#FFFFFF"
-        android:pathData="M30,72 L46,72 L46,56 L30,56 Z" />
-    <path
-        android:fillColor="#FFFFFF"
-        android:pathData="M52,72 L68,72 L68,44 L52,44 Z" />
-    <path
-        android:fillColor="#FFEB3B"
-        android:pathData="M52,44 L68,44 L60,30 Z" />
-    <path
-        android:fillColor="#FFFFFF"
-        android:pathData="M74,72 L88,72 L88,32 L74,32 Z" />
+
+    <!-- 中间金色K线（加仓/主升） -->
+    <path android:fillColor="#FFD54F" android:pathData="M53,38 L55,38 L55,64 L53,64 Z" />
+    <path android:fillColor="#FFD54F" android:pathData="M50,46 L58,46 L58,58 L50,58 Z" />
+
+    <!-- 左侧白色K线（首仓） -->
+    <path android:fillColor="#FFFFFF" android:pathData="M33,56 L35,56 L35,80 L33,80 Z" />
+    <path android:fillColor="#FFFFFF" android:pathData="M30,64 L38,64 L38,76 L30,76 Z" />
+
+    <!-- 右侧白色K线（突破新高） -->
+    <path android:fillColor="#FFFFFF" android:pathData="M73,22 L75,22 L75,46 L73,46 Z" />
+    <path android:fillColor="#FFFFFF" android:pathData="M70,30 L78,30 L78,40 L70,40 Z" />
 </vector>

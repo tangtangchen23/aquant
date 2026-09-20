@@ -112,7 +112,7 @@ class EngineService : Service() {
             PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT)
         return NotificationCompat.Builder(this, CHANNEL_ID)
             .setSmallIcon(android.R.drawable.stat_notify_sync)
-            .setContentTitle("A股量化引擎")
+            .setContentTitle("AI量化引擎")
             .setContentText(text)
             .setContentIntent(openPi)
             .setOngoing(true)

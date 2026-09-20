@@ -1,5 +1,5 @@
 <resources>
-    <string name="app_name">A股量化机器人</string>
+    <string name="app_name">AI量化</string>
     <string name="tab_market">行情</string>
     <string name="tab_strategy">策略</string>
     <string name="tab_account">交易</string>
