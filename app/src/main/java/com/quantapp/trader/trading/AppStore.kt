@@ -20,17 +20,19 @@ data class ActiveStrategy(
     val strategyId: String,
     var lastAction: String = "",     // 最近触发的信号："买入"/"卖出"
     var lastReason: String = "",
-    var lastProcessedClose: Double = 0.0
+    var lastProcessedClose: Double = 0.0,
+    /** 已执行信号的K线标识（用于“每根K线只交易一次”避免盘中抖动重复交易）。 */
+    var lastBarKey: String = ""
 ) {
     fun toJson() = JSONObject()
         .put("symbol", symbol).put("name", name).put("strategyId", strategyId)
         .put("lastAction", lastAction).put("lastReason", lastReason)
-        .put("lastClose", lastProcessedClose).toString()
+        .put("lastClose", lastProcessedClose).put("lastBar", lastBarKey).toString()
     companion object {
         fun fromJson(o: JSONObject) = ActiveStrategy(
             o.getString("symbol"), o.optString("name", ""), o.getString("strategyId"),
             o.optString("lastAction", ""), o.optString("lastReason", ""),
-            o.optDouble("lastClose", 0.0)
+            o.optDouble("lastClose", 0.0), o.optString("lastBar", "")
         )
     }
 }
@@ -96,6 +98,80 @@ class AppStore(context: Context) {
     var maxDrawdownPct: Double
         get() = prefs.getFloat("max_dd_pct", 0f).toDouble()
         set(v) { prefs.edit().putFloat("max_dd_pct", v.toFloat().coerceIn(0f, 100f)).apply() }
+
+    // ---------- 组合层参数 ----------
+    /** 单票最大资金占用比例（相对初始资金），0 表示不限。 */
+    var maxPositionPct: Double
+        get() = prefs.getFloat("max_pos_pct", 0f).toDouble()
+        set(v) { prefs.edit().putFloat("max_pos_pct", v.toFloat().coerceIn(0f, 1f)).apply() }
+
+    /** 最大同时持仓数量，0 表示不限。 */
+    var maxHoldings: Int
+        get() = prefs.getInt("max_holdings", 0)
+        set(v) { prefs.edit().putInt("max_holdings", v.coerceIn(0, 100)).apply() }
+
+    /** 单笔最大可承受亏损金额（相对初始资金比，如 0.02 表示2%），0 表示关闭。 */
+    var riskPerTradePct: Double
+        get() = prefs.getFloat("risk_per_trade_pct", 0f).toDouble()
+        set(v) { prefs.edit().putFloat("risk_per_trade_pct", v.toFloat().coerceIn(0f, 1f)).apply() }
+
+    // ---------- 出场纪律：移动止盈 / 保本 / ATR 止损 ----------
+    /** 启动移动止盈的盈利阈值(%)：持仓盈利达到该比例后开始跟踪回撤离场，0 关闭。 */
+    var trailingActivatePct: Double
+        get() = prefs.getFloat("trailing_activate_pct", 0f).toDouble()
+        set(v) { prefs.edit().putFloat("trailing_activate_pct", v.toFloat().coerceIn(0f, 100f)).apply() }
+
+    /** 移动止盈回撤止损比例(%)：启动后从持仓最高价回撤该比例即离场。 */
+    var trailingStopPct: Double
+        get() = prefs.getFloat("trailing_stop_pct", 8f).toDouble()
+        set(v) { prefs.edit().putFloat("trailing_stop_pct", v.toFloat().coerceIn(0f, 100f)).apply() }
+
+    /** 保本止损触发阈值(%)：盈利达到该比例后止损线抬至成本价，0 关闭。 */
+    var breakEvenPct: Double
+        get() = prefs.getFloat("break_even_pct", 0f).toDouble()
+        set(v) { prefs.edit().putFloat("break_even_pct", v.toFloat().coerceIn(0f, 100f)).apply() }
+
+    /** ATR 止损开关：1 启用 0 关闭。 */
+    var atrStopEnabled: Int
+        get() = prefs.getInt("atr_stop_enabled", 0)
+        set(v) { prefs.edit().putInt("atr_stop_enabled", v.coerceIn(0, 1)).apply() }
+
+    /** ATR 计算周期。 */
+    var atrPeriod: Int
+        get() = prefs.getInt("atr_period", 14)
+        set(v) { prefs.edit().putInt("atr_period", v.coerceIn(2, 60)).apply() }
+
+    /** ATR 止损倍数（止损距离 = ATR × 该倍数）。 */
+    var atrMultiplier: Double
+        get() = prefs.getFloat("atr_multiplier", 2f).toDouble()
+        set(v) { prefs.edit().putFloat("atr_multiplier", v.toFloat().coerceIn(0.1f, 10f)).apply() }
+
+    // ---------- 分批建仓 / 盈利加仓 ----------
+    /** 首仓占目标仓位的比例(0~1)：<1 表示拆分建仓，1 为一次满仓。 */
+    var firstBuyPct: Double
+        get() = prefs.getFloat("first_buy_pct", 1f).toDouble()
+        set(v) { prefs.edit().putFloat("first_buy_pct", v.toFloat().coerceIn(0.1f, 1f)).apply() }
+
+    /** 每档加仓占目标仓位的比例(0~1)，0 表示关闭加仓。 */
+    var addPositionPct: Double
+        get() = prefs.getFloat("add_position_pct", 0f).toDouble()
+        set(v) { prefs.edit().putFloat("add_position_pct", v.toFloat().coerceIn(0f, 1f)).apply() }
+
+    /** 盈利加仓档位(%)：持仓盈利每达到一个该档位加仓一次。 */
+    var addThresholdPct: Double
+        get() = prefs.getFloat("add_threshold_pct", 0f).toDouble()
+        set(v) { prefs.edit().putFloat("add_threshold_pct", v.toFloat().coerceIn(0f, 100f)).apply() }
+
+    /** 最大加仓次数，0 表示无数量限制（需配合 addPositionPct>0 生效）。 */
+    var maxAdds: Int
+        get() = prefs.getInt("max_adds", 0)
+        set(v) { prefs.edit().putInt("max_adds", v.coerceIn(0, 20)).apply() }
+
+    // ---------- 信号确认 / 趋势过滤 ----------
+    /** 仅当大盘或个股趋势向上时才允许开多（0 关闭；1 用个股均线过滤；2 用上证趋势过滤）。 */
+    var requireTrend: Int
+        get() = prefs.getInt("require_trend", 0)
+        set(v) { prefs.edit().putInt("require_trend", v.coerceIn(0, 2)).apply() }
 
     // ---------- 回测参数 ----------
     /** 单边手续费率（买入卖出各收一次），0 表示不计。 */

@@ -68,6 +68,38 @@ object Indicators {
         val macdBar = closes.indices.map { (dif[it] - dea[it]) * 2 }
         return Triple(dif, dea, macdBar)
     }
+
+    /** ATR (Average True Range)，返回与 K 线数量等长的序列（前 period-1 个为 NaN）。 */
+    fun atr(bars: List<KLine>, period: Int = 14): List<Double> {
+        val out = ArrayList<Double>(bars.size)
+        if (bars.size < period + 1) {
+            repeat(bars.size) { out.add(Double.NaN) }
+            return out
+        }
+        val t = mutableListOf<Double>()
+        for (i in bars.indices) {
+            if (i == 0) { t.add(bars[i].high - bars[i].low); continue }
+            val prevClose = bars[i - 1].close
+            val tr = maxOf(
+                bars[i].high - bars[i].low,
+                kotlin.math.abs(bars[i].high - prevClose),
+                kotlin.math.abs(bars[i].low - prevClose)
+            )
+            t.add(tr)
+        }
+        // 用简单平均得到首个 ATR，再平滑
+        var sum = 0.0
+        for (i in 0 until period) sum += t[i]
+        var value = sum / period
+        for (i in bars.indices) {
+            if (i < period) { out.add(Double.NaN) }
+            else {
+                value = (value * (period - 1) + t[i]) / period
+                out.add(value)
+            }
+        }
+        return out
+    }
 }
 
 /** 策略对某标的给出的交易信号。 */

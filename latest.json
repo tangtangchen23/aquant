@@ -1,8 +1,8 @@
 {
   "latest": {
-    "version": "1.5.0",
-    "versionCode": 21,
+    "version": "1.6.0",
+    "versionCode": 22,
     "apkUrl": "https://github.com/tangtangchen23/aquant/releases/latest/download/aquant-release.apk",
-    "changelog": "v1.5.0：K线/分时图新增BOLL布林带与KDJ摆荡指标开关；指标开关横向可滑动不遮挡；策略页表单、回测结果、权益曲线、运行策略与日志统一卡片化排版"
+    "changelog": "v1.6.0：自动交易新增出场纪律与资金管理。①移动止盈（盈利达阈值后跟踪最高价回撤离场）；②保本止损（盈利达标后止损抬至成本价）；③ATR自适应止损（按波动率动态止损）；④分批建仓+盈利档位加仓（首仓比例+单档加仓比例+最大加仓次数）。策略页新增对应参数面板，全部可自定义开关。"
   }
 }

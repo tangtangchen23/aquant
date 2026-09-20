@@ -8,7 +8,13 @@ data class Position(
     val symbol: String,
     val name: String,
     val qty: Int,
-    val costPrice: Double
+    val costPrice: Double,
+    /** 自建仓以来跟踪到的最高价（移动止盈/保本止损的依据），随行情每轮更新。 */
+    var roundTripHigh: Double = costPrice,
+    /** 下一档盈利加仓触发阈值(%)；达标加仓后按增量前移。 */
+    var nextAddPct: Double = 0.0,
+    /** 已加仓次数。 */
+    var addCount: Int = 0
 ) {
     fun marketValue(price: Double) = qty * price
     fun pnl(price: Double) = (price - costPrice) * qty
@@ -57,9 +63,12 @@ class PaperAccount(initialCapital: Double = 100000.0) {
         cash -= amount
         val cur = positions[symbol]
         if (cur != null) {
+            // 加仓：合并数量与平均成本；跟踪中的 roundTripHigh 取较高者，不清零
             val newQty = cur.qty + qty
             val newCost = (cur.costPrice * cur.qty + amount) / newQty
-            positions[symbol] = Position(symbol, name, newQty, newCost)
+            positions[symbol] = Position(symbol, name, newQty, newCost,
+                if (price > cur.roundTripHigh) price else cur.roundTripHigh,
+                cur.nextAddPct, cur.addCount)
         } else {
             positions[symbol] = Position(symbol, name, qty, price)
         }
@@ -94,7 +103,9 @@ class PaperAccount(initialCapital: Double = 100000.0) {
         val pos = JSONArray()
         for (p in positions.values) {
             pos.put(JSONObject().put("symbol", p.symbol).put("name", p.name)
-                .put("qty", p.qty).put("cost", p.costPrice))
+                .put("qty", p.qty).put("cost", p.costPrice)
+                .put("high", p.roundTripHigh)
+                .put("nextAdd", p.nextAddPct).put("adds", p.addCount))
         }
         val tr = JSONArray()
         for (t in trades) {
@@ -115,7 +126,11 @@ class PaperAccount(initialCapital: Double = 100000.0) {
                 positions[p.getString("symbol")] = Position(
                     p.getString("symbol"), p.optString("name", ""),
                     p.optInt("qty", 0), p.optDouble("cost", 0.0)
-                )
+                ).apply {
+                    roundTripHigh = p.optDouble("high", costPrice)
+                    nextAddPct = p.optDouble("nextAdd", 0.0)
+                    addCount = p.optInt("adds", 0)
+                }
             }
             trades.clear()
             val tr = o.optJSONArray("trades") ?: JSONArray()

@@ -18,17 +18,66 @@ object MarketService {
         .readTimeout(12, TimeUnit.SECONDS)
         .build()
 
+    // 简易令牌桶：控制东财接口调用频率，避免触发 52 限流。
+    /** 两次请求的最小间隔（毫秒）。 */
+    @Volatile private var minIntervalMs = 200L
+    /** 连续失败后退避，最长退避 60s。 */
+    @Volatile private var backoffMs = 0L
+    private val lock = Any()
+
+    private fun throttle() {
+        synchronized(lock) {
+            if (backoffMs > 0) {
+                sleepQuietly(backoffMs)
+                backoffMs = 0
+            }
+            // 距上次请求的最小间隔
+            val now = System.currentTimeMillis()
+            if (now < lastReq + minIntervalMs) {
+                sleepQuietly(lastReq + minIntervalMs - now)
+            }
+            lastReq = System.currentTimeMillis()
+        }
+    }
+
+    private var lastReq = 0L
+
+    private fun sleepQuietly(ms: Long) {
+        try { Thread.sleep(ms.coerceAtMost(60_000)) } catch (_: InterruptedException) { }
+    }
+
+    private fun onSuccess() {
+        synchronized(lock) { minIntervalMs = 150L } // 命中后恢复较快节奏
+    }
+
+    private fun onThrottle() {
+        synchronized(lock) {
+            backoffMs = (backoffMs + 3000L).coerceAtMost(60_000L) // 指数退避
+        }
+    }
+
     private val UA =
         "Mozilla/5.0 (Linux; Android 13; Kline/1.0) AppleWebKit/537.36 Chrome Mobile Safari/537.36"
 
     private fun http(url: String): String {
+        throttle()
         val req = Request.Builder().url(url)
             .header("User-Agent", UA)
             .header("Referer", "https://quote.eastmoney.com/")
             .build()
-        client.newCall(req).execute().use { resp ->
-            if (!resp.isSuccessful) throw RuntimeException("HTTP ${resp.code} for $url")
-            return resp.body!!.string()
+        try {
+            client.newCall(req).execute().use { resp ->
+                if (!resp.isSuccessful) {
+                    if (resp.code == 429 || resp.code == 52) onThrottle()
+                    throw RuntimeException("HTTP ${resp.code} for $url")
+                }
+                onSuccess()
+                return resp.body!!.string()
+            }
+        } catch (e: Exception) {
+            // 网络/限流错误也退避
+            if (e is RuntimeException && e.message?.contains("HTTP 52") == true) onThrottle()
+            throw e
         }
     }
 

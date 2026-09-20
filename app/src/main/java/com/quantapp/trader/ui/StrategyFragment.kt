@@ -127,6 +127,45 @@ class StrategyFragment : Fragment() {
             refreshLog()
         }
 
+        // ---------- 出场纪律参数（自动交易生效） ----------
+        fun showVal(et: EditText, v: Double, int: Boolean) {
+            et.setText(if (v <= 0) "" else if (int) v.toInt().toString() else String.format("%.2f", v))
+        }
+        fun readVal(et: EditText): Double = et.text.toString().trim().toDoubleOrNull() ?: 0.0
+        fun readInt(et: EditText): Int = et.text.toString().trim().toIntOrNull() ?: 0
+
+        val etTrailActivate = root.findViewById<EditText>(R.id.et_trail_activate)
+        val etTrailStop = root.findViewById<EditText>(R.id.et_trail_stop)
+        val etBreakEven = root.findViewById<EditText>(R.id.et_breakeven)
+        val etATRIn = root.findViewById<EditText>(R.id.et_atr_enabled)
+        val etATRMult = root.findViewById<EditText>(R.id.et_atr_mult)
+        val etFirstBuy = root.findViewById<EditText>(R.id.et_first_buy)
+        val etAddPct = root.findViewById<EditText>(R.id.et_add_pct)
+        val etAddThr = root.findViewById<EditText>(R.id.et_add_thr)
+        with(App.appStore) {
+            showVal(etTrailActivate, trailingActivatePct, false)
+            showVal(etTrailStop, trailingStopPct, false)
+            showVal(etBreakEven, breakEvenPct, false)
+            showVal(etATRIn, atrStopEnabled.toDouble(), true)
+            showVal(etATRMult, atrMultiplier, false)
+            showVal(etFirstBuy, firstBuyPct, false)
+            showVal(etAddPct, addPositionPct, false)
+            showVal(etAddThr, addThresholdPct, false)
+        }
+        root.findViewById<Button>(R.id.btn_apply_exit).setOnClickListener {
+            with(App.appStore) {
+                trailingActivatePct = readVal(etTrailActivate)
+                trailingStopPct = readVal(etTrailStop)
+                breakEvenPct = readVal(etBreakEven)
+                atrStopEnabled = readInt(etATRIn).coerceIn(0, 1)
+                atrMultiplier = readVal(etATRMult).coerceIn(0.1, 10.0)
+                firstBuyPct = readVal(etFirstBuy).coerceIn(0.1, 1.0)
+                addPositionPct = readVal(etAddPct).coerceIn(0.0, 1.0)
+                addThresholdPct = readVal(etAddThr)
+            }
+            Toast.makeText(requireContext(), "出场纪律参数已保存", Toast.LENGTH_SHORT).show()
+        }
+
         btnBacktest.setOnClickListener { b ->
             val code = etSymbol.text.toString().trim()
             if (code.isEmpty()) return@setOnClickListener
