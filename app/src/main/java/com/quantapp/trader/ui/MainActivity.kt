@@ -67,6 +67,11 @@ class MainActivity : AppCompatActivity() {
             .commit()
     }
 
+    /** 切换到底部导航页签（供其他页面跳转，如未配置AI时跳设置）。 */
+    fun switchTab(itemId: Int) {
+        nav.selectedItemId = itemId
+    }
+
     /** Android 13+ 需要动态申请通知权限，后台引擎/到价提醒通知才可见。 */
     private fun requestNotificationPermission() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU &&

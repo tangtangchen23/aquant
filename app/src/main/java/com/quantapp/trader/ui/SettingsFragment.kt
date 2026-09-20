@@ -18,6 +18,7 @@ import androidx.appcompat.app.AlertDialog
 import androidx.fragment.app.Fragment
 import com.quantapp.trader.BuildConfig
 import com.quantapp.trader.R
+import com.quantapp.trader.data.LlmClient
 import com.quantapp.trader.trading.App
 import com.quantapp.trader.trading.PriceAlert
 import com.quantapp.trader.update.DEFAULT_UPDATE_MANIFEST_URL
@@ -27,6 +28,7 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 
 class SettingsFragment : Fragment() {
 
@@ -59,6 +61,12 @@ class SettingsFragment : Fragment() {
         val tvVersion = root.findViewById<TextView>(R.id.tv_version)
         val btnCheckUpdate = root.findViewById<Button>(R.id.btn_check_update)
         val btnSave = root.findViewById<Button>(R.id.btn_save)
+        val spAiProvider = root.findViewById<Spinner>(R.id.sp_ai_provider)
+        val etAiKey = root.findViewById<EditText>(R.id.et_ai_key)
+        val etAiModel = root.findViewById<EditText>(R.id.et_ai_model)
+        val btnAiTest = root.findViewById<Button>(R.id.btn_ai_test)
+        val btnAiSave = root.findViewById<Button>(R.id.btn_ai_save)
+        val tvAiStatus = root.findViewById<TextView>(R.id.tv_ai_status)
 
         val st = App.appStore
         if (st.mode == "live") rbLive.isChecked = true else rbPaper.isChecked = true
@@ -212,6 +220,71 @@ class SettingsFragment : Fragment() {
                 Toast.makeText(requireContext(), "设置已保存", Toast.LENGTH_SHORT).show()
             } catch (e: Exception) {
                 Toast.makeText(requireContext(), "保存失败：${e.message}", Toast.LENGTH_SHORT).show()
+            }
+        }
+        // ---------- AI 大模型配置 ----------
+        val aiProviders = LlmClient.providers
+        spAiProvider.adapter = ArrayAdapter(requireContext(),
+            android.R.layout.simple_spinner_item, aiProviders.map { it.name })
+            .apply { setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item) }
+        var currentProviderId = st.aiProvider
+        spAiProvider.setSelection(aiProviders.indexOfFirst { it.id == st.aiProvider }.coerceAtLeast(0))
+        etAiKey.setText(st.aiKey)
+        etAiModel.setText(st.aiModel)
+        fun defaultModelFor(id: String) = aiProviders.firstOrNull { it.id == id }?.defaultModel ?: "deepseek-chat"
+        spAiProvider.onItemSelectedListener = object : android.widget.AdapterView.OnItemSelectedListener {
+            override fun onItemSelected(parent: android.widget.AdapterView<*>?, v: View?, pos: Int, id: Long) {
+                val newId = aiProviders[pos].id
+                if (newId != currentProviderId) {
+                    val cur = etAiModel.text.toString().trim()
+                    if (cur.isEmpty() || cur == defaultModelFor(currentProviderId))
+                        etAiModel.setText(defaultModelFor(newId))
+                    currentProviderId = newId
+                }
+            }
+            override fun onNothingSelected(parent: android.widget.AdapterView<*>?) {}
+        }
+        fun statusOk(ok: Boolean) = android.graphics.Color.parseColor(if (ok) "#2E7D32" else "#C62828")
+        btnAiSave.setOnClickListener {
+            val key = etAiKey.text.toString().trim()
+            if (key.isEmpty()) {
+                tvAiStatus.text = "API Key 不能为空，请先在对应平台控制台获取"
+                tvAiStatus.setTextColor(statusOk(false)); return@setOnClickListener
+            }
+            val pid = aiProviders[spAiProvider.selectedItemPosition.coerceIn(0, aiProviders.size - 1)].id
+            st.aiProvider = pid
+            st.aiKey = key
+            st.aiModel = etAiModel.text.toString().trim().ifEmpty { defaultModelFor(pid) }
+            tvAiStatus.text = "已保存：${aiProviders[spAiProvider.selectedItemPosition].name} / ${st.aiModel}"
+            tvAiStatus.setTextColor(statusOk(true))
+        }
+        btnAiTest.setOnClickListener { b ->
+            val key = etAiKey.text.toString().trim()
+            if (key.isEmpty()) {
+                tvAiStatus.text = "请先填写 API Key"
+                tvAiStatus.setTextColor(statusOk(false)); return@setOnClickListener
+            }
+            val pid = aiProviders[spAiProvider.selectedItemPosition.coerceIn(0, aiProviders.size - 1)].id
+            val model = etAiModel.text.toString().trim().ifEmpty { defaultModelFor(pid) }
+            b.isEnabled = false
+            btnAiTest.text = "测试中..."
+            tvAiStatus.text = "正在请求 $model ..."
+            tvAiStatus.setTextColor(android.graphics.Color.parseColor("#CCB400"))
+            scope.launch(Dispatchers.IO) {
+                val ok = runCatching {
+                    LlmClient.chat(pid, key, model, "你是A股量化助手", "请回复：连接正常，模型可用。")
+                }
+                withContext(Dispatchers.Main) {
+                    ok.onSuccess { rep ->
+                        tvAiStatus.text = "连接成功：${rep.take(80)}"
+                        tvAiStatus.setTextColor(statusOk(true))
+                    }.onFailure { e ->
+                        tvAiStatus.text = "连接失败：${e.message}"
+                        tvAiStatus.setTextColor(statusOk(false))
+                    }
+                    b.isEnabled = true
+                    btnAiTest.text = "测试连接"
+                }
             }
         }
         return root

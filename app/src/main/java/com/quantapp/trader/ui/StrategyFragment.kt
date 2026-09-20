@@ -28,6 +28,7 @@ import com.github.mikephil.charting.data.LineDataSet
 import com.github.mikephil.charting.formatter.ValueFormatter
 import com.quantapp.trader.R
 import com.quantapp.trader.data.KLine
+import com.quantapp.trader.data.LlmClient
 import com.quantapp.trader.data.MarketService
 import com.quantapp.trader.strategy.Backtester
 import com.quantapp.trader.strategy.buildStrategy
@@ -392,6 +393,63 @@ class StrategyFragment : Fragment() {
                 }
                 .setNegativeButton("取消", null)
                 .show()
+        }
+
+        // ---------- AI 深度解读：调大模型解读当前回测 ----------
+        root.findViewById<Button>(R.id.btn_ai_explain).setOnClickListener { b ->
+            val raw = etSymbol.text.toString().trim()
+            if (raw.isEmpty()) {
+                Toast.makeText(requireContext(), "请先输入股票代码或名称", Toast.LENGTH_SHORT).show()
+                return@setOnClickListener
+            }
+            val st = App.appStore
+            if (!st.aiEnabled) {
+                android.app.AlertDialog.Builder(requireContext())
+                    .setTitle("未配置 AI 大模型")
+                    .setMessage("请先在「设置 → AI 大模型」填入 API Key 并保存，再回来使用深度解读。")
+                    .setPositiveButton("去设置") { _, _ ->
+                        (requireActivity() as? MainActivity)?.switchTab(R.id.nav_settings)
+                    }
+                    .setNegativeButton("取消", null)
+                    .show()
+                return@setOnClickListener
+            }
+            b.isEnabled = false
+            tvBacktest.text = "AI 深度解读中（${st.aiModel}）..."
+            AppScope.launch {
+                try {
+                    val fee = (etFee.text.toString().toDoubleOrNull() ?: 0.0).coerceIn(0.0, 0.1)
+                    val slip = (etSlip.text.toString().toDoubleOrNull() ?: 0.0).coerceIn(0.0, 0.1)
+                    val (code, bars) = fetchBars(raw) ?: return@launch
+                    if (bars.size < 40) { tvBacktest.text = "数据不足，无法解读"; return@launch }
+                    val sid = selectedStrategyId()
+                    val cfg = readParams()
+                    val result = withContext(Dispatchers.IO) {
+                        Backtester.run(buildStrategy(sid, cfg), bars, feeRate = fee, slippagePct = slip)
+                    }
+                    fun fmtNum(v: Double) =
+                        if (v == v.toLong().toDouble()) v.toLong().toString() else String.format("%.2f", v)
+                    val paramsStr = cfg.entries.joinToString(" ") { "${it.key}=${fmtNum(it.value)}" }
+                    val strategyName = strategyList[spinner.selectedItemPosition.coerceIn(0, strategyList.size - 1)].name
+                    val sys = "你是资深A股量化分析师。请针对用户给出的回测统计，用简明中文给出一句话结论、主要优点与风险、以及具体的改进建议（参数、风控或出场纪律）。不要复读原始数字表格，聚焦专业判断。篇幅控制在200字内。"
+                    val user = buildString {
+                        append("标的代码：$code\n")
+                        append("策略：$strategyName\n")
+                        append("参数：$paramsStr\n")
+                        append("成本：手续费${fee} 滑点${slip}\n")
+                        append("回测结果（近一年约260根K线）：\n")
+                        append(backtestText(result, fee, slip))
+                    }
+                    val reply = withContext(Dispatchers.IO) {
+                        LlmClient.chat(st.aiProvider, st.aiKey, st.aiModel, sys, user)
+                    }
+                    tvBacktest.text = "【AI 深度解读】\n$reply"
+                } catch (e: Exception) {
+                    tvBacktest.text = "AI 解读失败：${e.message}\n\n（若是模型名或密钥不对，请到「设置 → AI 大模型」检查）"
+                } finally {
+                    b.isEnabled = true
+                }
+            }
         }
 
         btnStart.setOnClickListener {

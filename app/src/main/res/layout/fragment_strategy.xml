@@ -42,6 +42,10 @@
                     android:singleLine="true" android:text="AI 一键配参" />
             </LinearLayout>
 
+            <Button android:id="@+id/btn_ai_explain" android:layout_width="match_parent"
+                android:layout_height="wrap_content" android:layout_marginTop="6dp"
+                android:singleLine="true" android:text="AI 深度解读（需在设置中配好大模型Key）" />
+
             <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content"
                 android:orientation="horizontal" android:layout_marginTop="8dp">
                 <Button android:id="@+id/btn_backtest" android:layout_width="0dp"

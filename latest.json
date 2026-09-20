@@ -1,8 +1,8 @@
 {
   "latest": {
-    "version": "2.5.0",
-    "versionCode": 32,
+    "version": "2.6.0",
+    "versionCode": 33,
     "apkUrl": "https://github.com/tangtangchen23/aquant/releases/latest/download/aquant-release.apk",
-    "changelog": "v2.5.0：新增本地 AI 智能分析（纯本地计算，不联网不上云）。①AI智能推荐：自动识别标的走势（趋势/震荡）并推荐最合适的策略与参数；②AI一键配参：按保守/均衡/激进三档网格寻优参数并自动回测；③回测白话解读：把收益、回撤、胜率结果翻译成人话与风险提示。"
+    "changelog": "v2.6.0：新增 AI 大模型深度解读。①设置页新增「AI 大模型」配置，内置 DeepSeek 与 千问(Qwen) 两个平台预设，填入 API Key 即可用；②策略页新增「AI 深度解读」按钮，调用大模型解读当前回测，给出结论、风险与改进建议；③支持测试连接。密钥仅保存在本机，AI 只做分析与建议，不接触交易。"
   }
 }

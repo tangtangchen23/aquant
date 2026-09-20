@@ -95,6 +95,38 @@
             android:textSize="12sp" />
 
         <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
+            android:layout_marginTop="16dp" android:text="AI 大模型（可选）" android:textStyle="bold" />
+        <Spinner android:id="@+id/sp_ai_provider" android:layout_width="match_parent"
+            android:layout_height="wrap_content" android:layout_marginTop="4dp" />
+        <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content"
+            android:orientation="horizontal" android:layout_marginTop="4dp">
+            <EditText android:id="@+id/et_ai_key" android:layout_width="0dp"
+                android:layout_height="wrap_content" android:layout_weight="1.6"
+                android:textSize="13sp" android:hint="API Key（仅存本机）"
+                android:inputType="textPassword" />
+            <EditText android:id="@+id/et_ai_model" android:layout_width="0dp"
+                android:layout_height="wrap_content" android:layout_weight="1"
+                android:layout_marginStart="6dp"
+                android:textSize="13sp" android:hint="模型名" android:singleLine="true" />
+        </LinearLayout>
+        <TextView android:layout_width="match_parent" android:layout_height="wrap_content"
+            android:layout_marginTop="2dp" android:textSize="12sp" android:textColor="@color/text_secondary"
+            android:text="用于回测/持仓的AI深度解读。密钥仅保存在本机，AI只做分析与建议，不会接触交易。" />
+        <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content"
+            android:orientation="horizontal" android:layout_marginTop="6dp">
+            <Button android:id="@+id/btn_ai_test" android:layout_width="0dp"
+                android:layout_height="wrap_content" android:layout_weight="1"
+                android:text="测试连接" />
+            <Button android:id="@+id/btn_ai_save" android:layout_width="0dp"
+                android:layout_height="wrap_content" android:layout_weight="1"
+                android:layout_marginStart="6dp"
+                android:text="保存AI配置" />
+        </LinearLayout>
+        <TextView android:id="@+id/tv_ai_status" android:layout_width="match_parent"
+            android:layout_height="wrap_content" android:layout_marginTop="4dp"
+            android:textSize="12sp" />
+
+        <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
             android:layout_marginTop="14dp" android:text="当前版本" android:textStyle="bold" />
         <TextView android:id="@+id/tv_version" android:layout_width="match_parent"
             android:layout_height="wrap_content" android:textSize="14sp" />

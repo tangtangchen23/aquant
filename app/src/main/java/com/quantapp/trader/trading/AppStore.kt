@@ -193,6 +193,23 @@ class AppStore(context: Context) {
         get() = prefs.getInt("theme_mode", 0)
         set(v) { prefs.edit().putInt("theme_mode", v.coerceIn(0, 2)).apply() }
 
+    // ---------- AI 大模型 ----------
+    var aiProvider: String
+        get() = prefs.getString("ai_provider", "deepseek") ?: "deepseek"   // "deepseek" | "qwen"
+        set(v) { prefs.edit().putString("ai_provider", v).apply() }
+
+    var aiKey: String
+        get() = prefs.getString("ai_key", "") ?: ""
+        set(v) { prefs.edit().putString("ai_key", v.trim()).apply() }
+
+    var aiModel: String
+        get() = prefs.getString("ai_model", "deepseek-chat") ?: "deepseek-chat"
+        set(v) { prefs.edit().putString("ai_model", v.trim()).apply() }
+
+    /** 配置了有效 Key 即视为开启。 */
+    val aiEnabled: Boolean
+        get() = prefs.getString("ai_key", "")?.trim()?.isNotEmpty() == true
+
     /** 策略自定义参数：{strategyId -> {key -> value}}，供回测与实盘共同使用。 */
     fun strategyConfig(id: String): MutableMap<String, Double> =
         parseConfig(prefs.getString("strat_cfg", "{}") ?: "{}")[id] ?: mutableMapOf()
