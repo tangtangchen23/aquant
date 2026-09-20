@@ -1,6 +1,9 @@
 <resources>
     <string name="app_name">AI量化</string>
     <string name="tab_market">行情</string>
+    <string name="tab_screener">选股</string>
+    <string name="tab_screener_start">开始选股</string>
+    <string name="tab_screener_stop">停止</string>
     <string name="tab_strategy">策略</string>
     <string name="tab_account">交易</string>
     <string name="tab_settings">设置</string>

@@ -49,6 +49,7 @@ class MainActivity : AppCompatActivity() {
 
         nav.setOnItemSelectedListener { item ->
             val f: Fragment = when (item.itemId) {
+                R.id.nav_screener -> ScreenerFragment()
                 R.id.nav_strategy -> StrategyFragment()
                 R.id.nav_account -> AccountFragment()
                 R.id.nav_settings -> SettingsFragment()

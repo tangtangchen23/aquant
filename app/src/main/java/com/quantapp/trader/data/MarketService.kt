@@ -347,6 +347,52 @@ object MarketService {
         } catch (e: Exception) { "" }
     }
 
+    /** 股票池中的一个标的（东财 clist 返回，已按成交额降序）。 */
+    data class StockListItem(
+        val code: String,
+        val name: String,
+        val market: Int,
+        val amount: Double,
+        val price: Double,
+        val changePct: Double
+    )
+
+    /**
+     * 拉取 A 股股票池（东方财富 clist 接口），按成交额(f6)降序返回 Top N。
+     * @param fs 市场过滤串，例如 "m:0+t:6,m:1+t:2"（沪深主板）。
+     * @param topN 最多返回的数量。
+     */
+    suspend fun fetchAStockList(fs: String, topN: Int): List<StockListItem> = withContext(Dispatchers.IO) {
+        val out = mutableListOf<StockListItem>()
+        var page = 1
+        var cursor = 0
+        while (cursor < topN) {
+            val pz = minOf(200, topN - cursor)
+            val url = "https://push2.eastmoney.com/api/qt/clist/get?pn=$page&pz=$pz&po=1&np=1&fltt=2&invt=2&fid=f6&fs=$fs&fields=f2,f3,f6,f12,f13,f14&ut=fa5fd1943c7b386f172d6893dbfba10b"
+            val json = try { JSONObject(http(url)) } catch (e: Exception) { break }
+            val data = json.optJSONObject("data") ?: break
+            val diff = data.optJSONArray("diff") ?: break
+            for (i in 0 until diff.length()) {
+                val it = diff.optJSONObject(i) ?: continue
+                val code = it.optString("f12", "")
+                if (code.isEmpty()) continue
+                out.add(StockListItem(
+                    code = code,
+                    name = it.optString("f14", ""),
+                    market = it.optInt("f13", if (code.startsWith("6")) 1 else 0),
+                    amount = it.optDouble("f6", 0.0),
+                    price = it.optDouble("f2", 0.0),
+                    changePct = it.optDouble("f3", 0.0)
+                ))
+            }
+            cursor += diff.length()
+            if (diff.length() < pz) break
+            page++
+            if (page > 20) break
+        }
+        out.take(topN)
+    }
+
     /**
      * 把用户输入解析成股票代码：纯数字（如 "600000"）直接返回；
      * 否则当作股票名称/关键字，通过东方财富搜索解析为代码（如 "浦发银行" -> "600000"）。
