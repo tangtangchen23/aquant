@@ -5,6 +5,7 @@ import kotlinx.coroutines.withContext
 import okhttp3.OkHttpClient
 import okhttp3.Request
 import org.json.JSONObject
+import java.nio.charset.Charset
 import java.util.concurrent.TimeUnit
 
 /**
@@ -17,6 +18,33 @@ object MarketService {
         .connectTimeout(8, TimeUnit.SECONDS)
         .readTimeout(12, TimeUnit.SECONDS)
         .build()
+
+    // ---- 多源实时行情：东财 / 新浪 / 腾讯 ----
+    private enum class QuoteSource { EASTMONEY, SINA, TENCENT }
+
+    private val sourceHealth = mutableMapOf(
+        QuoteSource.EASTMONEY to true,
+        QuoteSource.SINA to true,
+        QuoteSource.TENCENT to true
+    )
+    @Volatile private var lastSourceReset = 0L
+
+    /** 定时恢复被标记为不可用的源，避免一次波动长期禁用某个源。 */
+    private fun maybeResetSources() {
+        val now = System.currentTimeMillis()
+        synchronized(sourceHealth) {
+            if (now - lastSourceReset > 60_000L) {
+                sourceHealth.keys.forEach { sourceHealth[it] = true }
+                lastSourceReset = now
+            }
+        }
+    }
+
+    private fun markSource(s: QuoteSource, ok: Boolean) {
+        synchronized(sourceHealth) { sourceHealth[s] = ok }
+    }
+
+    private fun isHealthy(s: QuoteSource): Boolean = synchronized(sourceHealth) { sourceHealth[s] == true }
 
     // 简易令牌桶：控制东财接口调用频率，避免触发 52 限流。
     /** 两次请求的最小间隔（毫秒）。 */
@@ -59,11 +87,14 @@ object MarketService {
     private val UA =
         "Mozilla/5.0 (Linux; Android 13; Kline/1.0) AppleWebKit/537.36 Chrome Mobile Safari/537.36"
 
-    private fun http(url: String): String {
+    private fun http(url: String): String = httpBytes(url, "https://quote.eastmoney.com/").toString(Charsets.UTF_8)
+
+    /** 通用请求：可指定 Referer，返回字节，由调用方决定解码（新浪/腾讯为 GBK）。 */
+    private fun httpBytes(url: String, referer: String): ByteArray {
         throttle()
         val req = Request.Builder().url(url)
             .header("User-Agent", UA)
-            .header("Referer", "https://quote.eastmoney.com/")
+            .header("Referer", referer)
             .build()
         try {
             client.newCall(req).execute().use { resp ->
@@ -72,7 +103,7 @@ object MarketService {
                     throw RuntimeException("HTTP ${resp.code} for $url")
                 }
                 onSuccess()
-                return resp.body!!.string()
+                return resp.body!!.bytes()
             }
         } catch (e: Exception) {
             // 网络/限流错误也退避
@@ -185,13 +216,107 @@ object MarketService {
         out
     }
 
-    /** Fetch real-time quote. */
+    /**
+     * 获取实时行情：依次尝试东财 / 新浪 / 腾讯，任一带权随机选源，
+     * 失败后自动切换到下一个可用的源。东财被限流（52/429）时自动降级到新浪/腾讯。
+     */
     suspend fun fetchQuote(code: String): Quote = withContext(Dispatchers.IO) {
         val secid = toSecid(code)
+        // 尝试顺序：优先可用源，东财被标记为健康时就先试东财。
+        val attempts = if (isHealthy(QuoteSource.EASTMONEY)) {
+            listOf(QuoteSource.EASTMONEY, QuoteSource.SINA, QuoteSource.TENCENT)
+        } else {
+            listOf(QuoteSource.SINA, QuoteSource.TENCENT, QuoteSource.EASTMONEY)
+        }
+        var lastError: Exception? = null
+        for (i in attempts.indices) {
+            val src = attempts[i]
+            try {
+                val quote = when (src) {
+                    QuoteSource.EASTMONEY -> fetchEastmoneyQuote(secid, code)
+                    QuoteSource.SINA -> fetchSinaQuote(code)
+                    QuoteSource.TENCENT -> fetchTencentQuote(code)
+                }
+                markSource(src, true) // 成功恢复健康
+                return@withContext quote
+            } catch (e: Exception) {
+                lastError = e
+                markSource(src, false)
+                // 东财暂时不可用，交由 pickSource 逻辑；重掷后让后续尝试继续
+            }
+        }
+        throw lastError ?: RuntimeException("所有行情源均不可用")
+    }
+
+    private fun fetchEastmoneyQuote(secid: String, code: String): Quote {
         val url = "https://push2.eastmoney.com/api/qt/stock/get?" +
             "secid=$secid&fields=f43,f44,f45,f46,f47,f48,f57,f58,f60,f86,f169,f170&ut=fa5fd1943c7b386f172d6893dbfba10b"
-        val json = JSONObject(http(url))
-        parseQuote(code, json)
+        return parseQuote(code, JSONObject(http(url)))
+    }
+
+    /**
+     * 新浪财经实时行情（GBK 编码）。
+     * 字段：0名称 1今开 2昨收 3现价 4最高 5最低 6买一 7卖一 8成交量(股) 9成交额 30日期 31时间
+     */
+    private fun fetchSinaQuote(code: String): Quote {
+        val mktPrefix = if (code.startsWith("6") || code.startsWith("5") || code.startsWith("9")) "sh" else "sz"
+        val url = "https://hq.sinajs.cn/list=$mktPrefix$code"
+        val body = httpBytes(url, "https://finance.sina.com.cn/")
+        val text = String(body, Charset.forName("GBK"))
+        if (!text.contains("=\"") ) throw RuntimeException("sina bad response for $code")
+        val parts = text.substringAfter("=\"").substringBefore("\";").split(",")
+        if (parts.size < 32) throw RuntimeException("sina bad fields for $code")
+        val price = parts[3].toDoubleOrNull() ?: throw RuntimeException("sina no price $code")
+        val prevClose = parts[2].toDoubleOrNull() ?: 0.0
+        return Quote(
+            symbol = code,
+            name = parts.getOrElse(0) { "" },
+            price = price,
+            open = parts.getOrElse(1) { "0" }.toDoubleOrNull() ?: 0.0,
+            high = parts.getOrElse(4) { "0" }.toDoubleOrNull() ?: 0.0,
+            low = parts.getOrElse(5) { "0" }.toDoubleOrNull() ?: 0.0,
+            prevClose = prevClose,
+            changePct = if (prevClose > 0) (price - prevClose) / prevClose * 100 else 0.0,
+            volume = (parts.getOrElse(8) { "0" }.toLongOrNull() ?: 0L) / 100, // 股 → 手
+            time = (parts.getOrElse(30) { "" } + " " + parts.getOrElse(31) { "" }).trim()
+        )
+    }
+
+    /**
+     * 腾讯股票实时行情（GBK 编码）。
+     * 字段：1名称 2代码 3现价 4昨收 5今开 6成交量(手) 30时间 31日期 33最高 34最低
+     */
+    private fun fetchTencentQuote(code: String): Quote {
+        val mktPrefix = if (code.startsWith("6") || code.startsWith("5") || code.startsWith("9")) "sh" else "sz"
+        val url = "https://qt.gtimg.cn/q=$mktPrefix$code"
+        val body = httpBytes(url, "https://gu.qq.com/")
+        val text = String(body, Charset.forName("GBK"))
+        if (!text.contains("=\"")) throw RuntimeException("gtimg bad response for $code")
+        val parts = text.substringAfter("=\"").substringBefore("\";").split("~")
+        if (parts.size < 35) throw RuntimeException("gtimg bad fields for $code")
+        val price = parts[3].toDoubleOrNull() ?: throw RuntimeException("gtimg no price $code")
+        val prevClose = parts[4].toDoubleOrNull() ?: 0.0
+        return Quote(
+            symbol = code,
+            name = parts.getOrElse(1) { "" },
+            price = price,
+            open = parts.getOrElse(5) { "0" }.toDoubleOrNull() ?: 0.0,
+            high = parts.getOrElse(33) { "0" }.toDoubleOrNull() ?: 0.0,
+            low = parts.getOrElse(34) { "0" }.toDoubleOrNull() ?: 0.0,
+            prevClose = prevClose,
+            changePct = if (prevClose > 0) (price - prevClose) / prevClose * 100 else 0.0,
+            volume = parts.getOrElse(6) { "0" }.toLongOrNull() ?: 0L, // 手
+            time = formatTencentTime(parts.getOrElse(30) { "" })
+        )
+    }
+
+    /** 腾讯返回的字段30形如 "yyyyMMddHHmmss"，转为可读格式；否则原样返回。 */
+    private fun formatTencentTime(raw: String): String {
+        if (raw.length == 14 && raw.all { it.isDigit() }) {
+            return raw.substring(0, 4) + "-" + raw.substring(4, 6) + "-" + raw.substring(6, 8) +
+                " " + raw.substring(8, 10) + ":" + raw.substring(10, 12) + ":" + raw.substring(12, 14)
+        }
+        return raw
     }
 
     /** Search stocks by keyword (eastmoney suggest). */
