@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="brand">#EF5350</color>
+    <color name="brand_dark">#B71C1C</color>
+    <color name="up">#EF5350</color>
+    <color name="down">#66BB6A</color>
+    <color name="bg">#121212</color>
+    <color name="ic_launcher_background">#D32F2F</color>
+
+    <color name="card_bg">#1E1E1E</color>
+    <color name="divider">#333333</color>
+    <color name="text_primary">#E6E6E6</color>
+    <color name="text_secondary">#9A9A9A</color>
+    <color name="nav_bg">#1A1A1A</color>
+</resources>

@@ -22,7 +22,16 @@ class MainActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         AppScope.attach(lifecycleScope)
+        // 应用主题模式（跟随系统/浅色/深色），需在 setContentView 前调用
+        androidx.appcompat.app.AppCompatDelegate.setDefaultNightMode(
+            when (com.quantapp.trader.trading.App.appStore.themeMode) {
+                1 -> androidx.appcompat.app.AppCompatDelegate.MODE_NIGHT_NO
+                2 -> androidx.appcompat.app.AppCompatDelegate.MODE_NIGHT_YES
+                else -> androidx.appcompat.app.AppCompatDelegate.MODE_NIGHT_FOLLOW_SYSTEM
+            }
+        )
         setContentView(R.layout.activity_main)
+        com.quantapp.trader.trading.AlertWatcher.start()
 
         nav = findViewById(R.id.bottom_nav)
 

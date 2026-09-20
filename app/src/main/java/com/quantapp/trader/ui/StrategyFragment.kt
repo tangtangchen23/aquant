@@ -8,14 +8,23 @@ import android.widget.ArrayAdapter
 import android.widget.Button
 import android.widget.EditText
 import android.widget.ListView
+import android.widget.LinearLayout
 import android.widget.Spinner
 import android.widget.TextView
 import android.widget.Toast
 import androidx.fragment.app.Fragment
+import com.github.mikephil.charting.charts.LineChart
+import com.github.mikephil.charting.components.XAxis
+import com.github.mikephil.charting.data.Entry
+import com.github.mikephil.charting.data.LineData
+import com.github.mikephil.charting.data.LineDataSet
+import com.github.mikephil.charting.formatter.ValueFormatter
 import com.quantapp.trader.R
 import com.quantapp.trader.data.MarketService
 import com.quantapp.trader.strategy.Backtester
+import com.quantapp.trader.strategy.buildStrategy
 import com.quantapp.trader.strategy.strategies
+import com.quantapp.trader.strategy.strategyParams
 import com.quantapp.trader.trading.ActiveStrategy
 import com.quantapp.trader.trading.App
 import com.quantapp.trader.trading.TradingEngine
@@ -32,16 +41,74 @@ class StrategyFragment : Fragment() {
         val btnStart = root.findViewById<Button>(R.id.btn_start)
         val btnStop = root.findViewById<Button>(R.id.btn_stop)
         val tvBacktest = root.findViewById<TextView>(R.id.tv_backtest)
+        val chartEquity = root.findViewById<LineChart>(R.id.chart_equity)
         val tvStatus = root.findViewById<TextView>(R.id.tv_running_status)
         val listActive = root.findViewById<ListView>(R.id.list_active)
 
         val strategyList = strategies()
         spinner.adapter = ArrayAdapter(requireContext(), android.R.layout.simple_list_item_1, strategyList.map { "${it.name} (${it.paramsSummary()})" })
 
-        refreshStatus(tvStatus)
-        refreshActive(listActive)
+        val linearParams = root.findViewById<LinearLayout>(R.id.linear_params)
+        val btnApply = root.findViewById<Button>(R.id.btn_apply_params)
+        val paramEdits = mutableMapOf<String, EditText>()
+
+        // 根据所选策略构建参数输入框，值优先取已保存配置，其次默认值
+        fun buildParamFields(id: String) {
+            linearParams.removeAllViews()
+            paramEdits.clear()
+            val saved = App.appStore.strategyConfig(id)
+            val ctx = requireContext()
+            val etWidth = (140 * resources.displayMetrics.density).toInt()
+            for (p in strategyParams(id)) {
+                val value = if (saved.containsKey(p.key)) saved[p.key].toString() else p.def
+                val et = EditText(ctx).apply {
+                    setText(if (p.int) value.toIntOrNull()?.toString() ?: p.def
+                    else String.format("%.2f", value.toDoubleOrNull() ?: p.def.toDouble()))
+                    inputType = android.text.InputType.TYPE_CLASS_NUMBER or
+                        (if (p.int) android.text.InputType.TYPE_NUMBER_FLAG_SIGNED else android.text.InputType.TYPE_NUMBER_FLAG_DECIMAL)
+                }
+                val tv = TextView(ctx).apply { text = p.label }
+                val row = LinearLayout(ctx).apply {
+                    orientation = LinearLayout.HORIZONTAL
+                    gravity = android.view.Gravity.CENTER_VERTICAL
+                    addView(tv, LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f))
+                    addView(et, LinearLayout.LayoutParams(etWidth, LinearLayout.LayoutParams.WRAP_CONTENT))
+                }
+                linearParams.addView(row)
+                paramEdits[p.key] = et
+            }
+        }
 
         fun selectedStrategyId() = strategyList[spinner.selectedItemPosition.coerceIn(0, strategyList.size - 1)].id
+
+        fun readParams(): Map<String, Double> {
+            val map = mutableMapOf<String, Double>()
+            strategyParams(selectedStrategyId()).forEach { p ->
+                paramEdits[p.key]?.text?.toString()?.toDoubleOrNull()?.let { map[p.key] = it }
+            }
+            return map
+        }
+
+        spinner.onItemSelectedListener = object : android.widget.AdapterView.OnItemSelectedListener {
+            override fun onItemSelected(a: android.widget.AdapterView<*>?, v: View?, pos: Int, l: Long) {
+                buildParamFields(strategyList[pos.coerceIn(0, strategyList.size - 1)].id)
+            }
+            override fun onNothingSelected(a: android.widget.AdapterView<*>?) {}
+        }
+        buildParamFields(selectedStrategyId())
+
+        // 保存当前策略参数
+        btnApply.setOnClickListener {
+            val cfg = readParams()
+            if (cfg.isEmpty() && strategyParams(selectedStrategyId()).isNotEmpty()) {
+                Toast.makeText(requireContext(), "请输入有效参数", Toast.LENGTH_SHORT).show(); return@setOnClickListener
+            }
+            App.appStore.setStrategyConfig(selectedStrategyId(), cfg)
+            Toast.makeText(requireContext(), "参数已保存，回测/实盘将使用该参数", Toast.LENGTH_SHORT).show()
+        }
+
+        refreshStatus(tvStatus)
+        refreshActive(listActive)
 
         btnBacktest.setOnClickListener { b ->
             val code = etSymbol.text.toString().trim()
@@ -53,16 +120,20 @@ class StrategyFragment : Fragment() {
                     val bars = withContext(Dispatchers.IO) { MarketService.fetchKline(code, 260) }
                     if (bars.size < 40) { tvBacktest.text = "数据不足，无法回测"; return@launch }
                     val result = withContext(Dispatchers.IO) {
-                        Backtester.run(TradingEngine.strategyOf(selectedStrategyId()), bars)
+                        Backtester.run(buildStrategy(selectedStrategyId(), readParams()), bars)
                     }
                     tvBacktest.text = buildString {
-                        append("回测(${result.trades.size}笔)\n")
+                        append("回测(${result.tradeCount}笔)\n")
                         append("策略收益：${String.format("%.2f", result.returnPct)}%\n")
                         append("基准(买入持有)：${String.format("%.2f", result.benchmarkReturnPct)}%\n")
                         append("最终权益：${String.format("%.0f", result.finalEquity)} / 初始 ${String.format("%.0f", result.initialCapital)}\n")
                         append("胜率：${String.format("%.1f", result.winRate)}%\n")
-                        append("最大回撤：${String.format("%.1f", result.maxDrawdown)}%")
+                        append("最大回撤：${String.format("%.1f", result.maxDrawdown)}%\n")
+                        val avgPnl = if (result.trades.isEmpty()) 0.0
+                        else result.trades.map { it.pnlPct }.average()
+                        append("平均单笔收益：${String.format("%.2f", avgPnl)}%")
                     }
+                    renderEquity(chartEquity, result, bars)
                 } catch (e: Exception) {
                     tvBacktest.text = "回测失败：${e.message}"
                 } finally {
@@ -76,6 +147,7 @@ class StrategyFragment : Fragment() {
             if (code.isEmpty()) { Toast.makeText(requireContext(), "请输入股票代码", Toast.LENGTH_SHORT).show(); return@setOnClickListener }
             val bid = selectedStrategyId()
             val as_ = ActiveStrategy(code, "", bid)
+            App.appStore.setStrategyConfig(bid, readParams()) // 让实盘引擎使用同样的自定义参数
             App.appStore.addStrategy(as_)
             TradingEngine.start()
             refreshStatus(tvStatus)
@@ -124,4 +196,38 @@ class StrategyFragment : Fragment() {
     }
 
     private fun strategyLabel(id: String) = when (id) { "rsi" -> "RSI"; "macd" -> "MACD"; else -> "双均线" }
+
+    /** 绘制策略权益曲线与基准曲线。 */
+    private fun renderEquity(chart: LineChart, r: com.quantapp.trader.strategy.BacktestResult, bars: List<com.quantapp.trader.data.KLine>) {
+        val strategySet = LineDataSet(
+            r.equityCurve.mapIndexed { i, v -> Entry(i.toFloat(), v.toFloat()) },
+            "策略")
+        strategySet.color = android.graphics.Color.parseColor("#D32F2F")
+        strategySet.lineWidth = 2f
+        strategySet.setDrawCircles(false)
+        strategySet.setDrawValues(false)
+        val benchSet = LineDataSet(
+            r.benchmarkCurve.mapIndexed { i, v -> Entry(i.toFloat(), v.toFloat()) },
+            "买入持有")
+        benchSet.color = android.graphics.Color.parseColor("#43A047")
+        benchSet.lineWidth = 2f
+        benchSet.setDrawCircles(false)
+        benchSet.setDrawValues(false)
+        val data = LineData(strategySet, benchSet)
+        chart.data = data
+        chart.description.isEnabled = false
+        chart.legend.isEnabled = true
+        chart.legend.textSize = 11f
+        chart.setScaleEnabled(true)
+        chart.setPinchZoom(true)
+        chart.xAxis.position = XAxis.XAxisPosition.BOTTOM
+        chart.xAxis.labelCount = 4
+        chart.xAxis.valueFormatter = object : ValueFormatter() {
+            override fun getAxisLabel(value: Float, axis: com.github.mikephil.charting.components.AxisBase?): String {
+                val idx = value.toInt()
+                return if (idx in bars.indices) bars[idx].date.takeLast(5) else ""
+            }
+        }
+        chart.invalidate()
+    }
 }

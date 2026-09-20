@@ -28,6 +28,11 @@ fi
 
 # ---------- 常量 ----------
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+# ---------- GitHub token：优先环境变量，否则读取本地 gitignore 的 .release-token ----------
+if [ -z "${GH_TOKEN:-}" ] && [ -f "$ROOT_DIR/.release-token" ]; then
+  export GH_TOKEN="$(tr -d '[:space:]' < "$ROOT_DIR/.release-token")"
+fi
+
 GRADLE_FILE="$ROOT_DIR/app/build.gradle.kts"
 REPO="tangtangchen23/aquant"
 # 统一使用固定资产名，保证直链 /releases/latest/download/aquant-release.apk 永远指向最新版，

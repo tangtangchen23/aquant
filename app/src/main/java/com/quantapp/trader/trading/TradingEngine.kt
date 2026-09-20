@@ -9,9 +9,6 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import com.quantapp.trader.data.MarketService
-import com.quantapp.trader.strategy.MaCrossStrategy
-import com.quantapp.trader.strategy.MacdStrategy
-import com.quantapp.trader.strategy.RsiStrategy
 import com.quantapp.trader.strategy.Strategy
 import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.RequestBody.Companion.toRequestBody
@@ -31,11 +28,7 @@ object TradingEngine {
     @Volatile var onTrade: ((String) -> Unit)? = null // 资金/持仓变化回调
     private var job: Job? = null
 
-    fun strategyOf(id: String): Strategy = when (id) {
-        "rsi" -> RsiStrategy()
-        "macd" -> MacdStrategy()
-        else -> MaCrossStrategy()
-    }
+    fun strategyOf(id: String): Strategy = com.quantapp.trader.strategy.buildStrategy(id, App.appStore.strategyConfig(id))
 
     fun start() {
         if (running.get()) return

@@ -13,10 +13,12 @@ class QuantApp : Application() {
     }
 
     private fun createNotificationChannel() {
-        val channel = NotificationChannel(
-            "quant_trade", "交易通知", NotificationManager.IMPORTANCE_LOW
-        )
-        getSystemService(NotificationManager::class.java).createNotificationChannel(channel)
+        getSystemService(NotificationManager::class.java).apply {
+            createNotificationChannel(NotificationChannel(
+                "quant_trade", "交易通知", NotificationManager.IMPORTANCE_LOW))
+            createNotificationChannel(NotificationChannel(
+                "quant_alert", "行情提醒", NotificationManager.IMPORTANCE_HIGH))
+        }
     }
 }
 

@@ -20,17 +20,83 @@
         android:layout_height="wrap_content" android:layout_marginTop="2dp"
         android:padding="6dp" android:textColor="#E53935" android:text="清除查询历史" />
 
-    <TextView android:id="@+id/tv_quote"
-        android:layout_width="match_parent" android:layout_height="wrap_content"
-        android:layout_marginTop="12dp" android:padding="14dp" android:background="#FFFFFF"
-        android:textSize="15sp" />
+    <!-- 报价卡片 -->
+    <LinearLayout android:id="@+id/card_quote" android:layout_width="match_parent"
+        android:layout_height="wrap_content" android:layout_marginTop="12dp"
+        android:orientation="vertical" android:background="@drawable/bg_card" android:padding="14dp">
 
-    <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
-        android:text="自选股" android:layout_marginTop="12dp" android:textStyle="bold" />
+        <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content"
+            android:orientation="horizontal" android:gravity="center_vertical">
+            <TextView android:id="@+id/tv_q_name" android:layout_width="0dp" android:layout_height="wrap_content"
+                android:layout_weight="1" android:textSize="18sp" android:textStyle="bold"
+                android:textColor="#333333" android:text="--" />
+            <TextView android:id="@+id/tv_q_change" android:layout_width="wrap_content"
+                android:layout_height="wrap_content" android:textSize="16sp" android:textStyle="bold" android:text="--" />
+        </LinearLayout>
+
+        <TextView android:id="@+id/tv_q_price" android:layout_width="wrap_content"
+            android:layout_height="wrap_content" android:layout_marginTop="6dp"
+            android:textSize="30sp" android:textStyle="bold" android:text="--" />
+
+        <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content"
+            android:layout_marginTop="12dp" android:orientation="horizontal">
+            <LinearLayout android:layout_width="0dp" android:layout_height="wrap_content"
+                android:layout_weight="1" android:orientation="vertical">
+                <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
+                    android:text="今开" android:textSize="12sp" android:textColor="#888888" />
+                <TextView android:id="@+id/tv_q_open" android:layout_width="wrap_content"
+                    android:layout_height="wrap_content" android:textSize="15sp" android:text="--"
+                    android:layout_marginTop="2dp" />
+            </LinearLayout>
+            <LinearLayout android:layout_width="0dp" android:layout_height="wrap_content"
+                android:layout_weight="1" android:orientation="vertical">
+                <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
+                    android:text="昨收" android:textSize="12sp" android:textColor="#888888" />
+                <TextView android:id="@+id/tv_q_prev" android:layout_width="wrap_content"
+                    android:layout_height="wrap_content" android:textSize="15sp" android:text="--"
+                    android:layout_marginTop="2dp" />
+            </LinearLayout>
+            <LinearLayout android:layout_width="0dp" android:layout_height="wrap_content"
+                android:layout_weight="1" android:orientation="vertical">
+                <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
+                    android:text="最高" android:textSize="12sp" android:textColor="#888888" />
+                <TextView android:id="@+id/tv_q_high" android:layout_width="wrap_content"
+                    android:layout_height="wrap_content" android:textSize="15sp" android:text="--"
+                    android:layout_marginTop="2dp" />
+            </LinearLayout>
+            <LinearLayout android:layout_width="0dp" android:layout_height="wrap_content"
+                android:layout_weight="1" android:orientation="vertical">
+                <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
+                    android:text="最低" android:textSize="12sp" android:textColor="#888888" />
+                <TextView android:id="@+id/tv_q_low" android:layout_width="wrap_content"
+                    android:layout_height="wrap_content" android:textSize="15sp" android:text="--"
+                    android:layout_marginTop="2dp" />
+            </LinearLayout>
+        </LinearLayout>
+
+        <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content"
+            android:layout_marginTop="10dp" android:orientation="horizontal">
+            <TextView android:id="@+id/tv_q_volume" android:layout_width="0dp" android:layout_height="wrap_content"
+                android:layout_weight="1" android:textSize="12sp" android:textColor="#888888" android:text="--" />
+            <TextView android:id="@+id/tv_q_time" android:layout_width="wrap_content"
+                android:layout_height="wrap_content" android:textSize="12sp" android:textColor="#888888" android:text="--" />
+        </LinearLayout>
+    </LinearLayout>
+
+    <!-- 自选股标题行 + 刷新 -->
+    <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content"
+        android:layout_marginTop="12dp" android:orientation="horizontal" android:gravity="center_vertical">
+        <TextView android:layout_width="0dp" android:layout_height="wrap_content"
+            android:layout_weight="1" android:text="自选股" android:textStyle="bold" android:textSize="16sp" />
+        <TextView android:id="@+id/btn_refresh_watch" android:layout_width="wrap_content"
+            android:layout_height="wrap_content" android:padding="6dp" android:textColor="#D32F2F"
+            android:textSize="14sp" android:text="↻ 刷新" />
+    </LinearLayout>
 
     <ListView android:id="@+id/list_watch" android:layout_width="match_parent"
         android:layout_height="0dp" android:layout_weight="1"
-        android:layout_marginTop="4dp" android:background="#FFFFFF" />
+        android:layout_marginTop="4dp" android:background="@drawable/bg_card"
+        android:padding="4dp" android:divider="@color/bg" android:dividerHeight="1dp" />
 
     <Button android:id="@+id/btn_add_watch" android:layout_width="match_parent"
         android:layout_height="wrap_content" android:text="+ 加入自选并查看K线" />

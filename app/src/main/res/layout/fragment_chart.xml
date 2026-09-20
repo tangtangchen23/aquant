@@ -10,16 +10,41 @@
         android:orientation="horizontal" android:layout_marginTop="8dp">
         <EditText android:id="@+id/et_symbol"
             android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1"
-            android:hint="股票代码，如 600519" android:inputType="number" />
+            android:hint="股票代码或名称" />
         <Button android:id="@+id/btn_load" android:layout_width="wrap_content"
             android:layout_height="wrap_content" android:text="加载" />
     </LinearLayout>
 
-    <com.github.mikephil.charting.charts.CandleStickChart
+    <!-- 指标开关 -->
+    <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content"
+        android:layout_marginTop="6dp" android:orientation="horizontal" android:gravity="center_vertical">
+        <TextView android:id="@+id/tv_ma" android:layout_width="wrap_content"
+            android:layout_height="wrap_content" android:text="  均线  " android:padding="6dp"
+            android:textSize="14sp" android:textStyle="bold" android:textColor="#E53935"
+            android:background="@drawable/bg_indicator_on" />
+        <TextView android:id="@+id/tv_vol" android:layout_width="wrap_content"
+            android:layout_height="wrap_content" android:text="  成交量  " android:padding="6dp"
+            android:layout_marginStart="8dp" android:textSize="14sp" android:textStyle="bold"
+            android:textColor="#E53935" android:background="@drawable/bg_indicator_on" />
+        <TextView android:id="@+id/tv_macd" android:layout_width="wrap_content"
+            android:layout_height="wrap_content" android:text="  MACD  " android:padding="6dp"
+            android:layout_marginStart="8dp" android:textSize="14sp" android:textStyle="bold"
+            android:textColor="#E53935" android:background="@drawable/bg_indicator_on" />
+    </LinearLayout>
+
+    <com.github.mikephil.charting.charts.CombinedChart
         android:id="@+id/kline_chart" android:layout_width="match_parent"
         android:layout_height="0dp" android:layout_weight="1"
-        android:layout_marginTop="8dp" android:background="#FFFFFF" />
+        android:layout_marginTop="8dp" android:background="@color/card_bg" />
+
+    <com.github.mikephil.charting.charts.BarChart
+        android:id="@+id/vol_chart" android:layout_width="match_parent"
+        android:layout_height="64dp" android:layout_marginTop="2dp" android:background="@color/card_bg" />
+
+    <com.github.mikephil.charting.charts.CombinedChart
+        android:id="@+id/macd_chart" android:layout_width="match_parent"
+        android:layout_height="100dp" android:layout_marginTop="2dp" android:background="@color/card_bg" />
 
     <TextView android:id="@+id/tv_chart_info" android:layout_width="match_parent"
-        android:layout_height="wrap_content" android:layout_marginTop="6dp" />
+        android:layout_height="wrap_content" android:layout_marginTop="4dp" />
 </LinearLayout>

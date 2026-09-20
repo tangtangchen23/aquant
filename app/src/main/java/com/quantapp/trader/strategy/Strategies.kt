@@ -168,3 +168,40 @@ fun strategies(): List<Strategy> = listOf(
     RsiStrategy(),
     MacdStrategy()
 )
+
+/** 策略可编辑参数定义：key 供持久化/构建使用，label 用于 UI。 */
+data class StrategyParam(
+    val key: String,
+    val label: String,
+    val def: String,
+    val int: Boolean
+)
+
+/** 返回某策略的可编辑参数（含默认值）。 */
+fun strategyParams(id: String): List<StrategyParam> = when (id) {
+    "ma" -> listOf(
+        StrategyParam("short", "短均线周期", "5", true),
+        StrategyParam("long", "长均线周期", "20", true)
+    )
+    "rsi" -> listOf(
+        StrategyParam("period", "RSI周期", "14", true),
+        StrategyParam("oversold", "超卖线", "30", false),
+        StrategyParam("overbought", "超买线", "70", false)
+    )
+    "macd" -> listOf(
+        StrategyParam("fast", "快线EMA", "12", true),
+        StrategyParam("slow", "慢线EMA", "26", true),
+        StrategyParam("signal", "信号EMA", "9", true)
+    )
+    else -> emptyList()
+}
+
+/** 依据参数 map 构建策略实例；缺失项回退默认值。 */
+fun buildStrategy(id: String, v: Map<String, Double>): Strategy = when (id) {
+    "ma" -> MaCrossStrategy(v["short"]?.toInt() ?: 5, v["long"]?.toInt() ?: 20)
+    "rsi" -> RsiStrategy(
+        v["period"]?.toInt() ?: 14, v["oversold"] ?: 30.0, v["overbought"] ?: 70.0)
+    "macd" -> MacdStrategy(
+        v["fast"]?.toInt() ?: 12, v["slow"]?.toInt() ?: 26, v["signal"]?.toInt() ?: 9)
+    else -> MaCrossStrategy()
+}

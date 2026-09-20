@@ -18,6 +18,13 @@ data class UpdateInfo(
 const val VERSION_PATTERN = """v?(\d+\.\d+(\.\d+)?)(?:-|\s|\.apk|$|_)"""
 
 /**
+ * 内置版本清单地址（仓库根目录 latest.json）。
+ * 使用 Raw 托管避免 GitHub API 的匿名限流，设备能稳定读取。
+ */
+const val DEFAULT_UPDATE_MANIFEST_URL =
+    "https://raw.githubusercontent.com/tangtangchen23/aquant/main/latest.json"
+
+/**
  * 检查新版本。兼容两种来源：
  * 1. JSON 版本清单：`{ "latest": { "version":"1.1.0", "versionCode":2, "apkUrl":"...", "changelog":"..." } }`
  *    可提供精确版本号用于自动比对。
@@ -89,5 +96,21 @@ object UpdateChecker {
     private fun guessVersion(s: String): String? {
         val m = Regex(VERSION_PATTERN).find(s) ?: return null
         return m.groupValues[1]
+    }
+
+    /**
+     * 比较两个版本号字符串（如 "1.4.1"、"1.4.1"）。
+     * >0 表示 a 更新；==0 表示相同；<0 表示 a 更旧。
+     */
+    fun compareVersions(a: String, b: String): Int {
+        val pa = a.trimStart('v', 'V').split('.', '-', '_').mapNotNull { it.toIntOrNull() }
+        val pb = b.trimStart('v', 'V').split('.', '-', '_').mapNotNull { it.toIntOrNull() }
+        val n = maxOf(pa.size, pb.size)
+        for (i in 0 until n) {
+            val x = pa.getOrElse(i) { 0 }
+            val y = pb.getOrElse(i) { 0 }
+            if (x != y) return x - y
+        }
+        return 0
     }
 }

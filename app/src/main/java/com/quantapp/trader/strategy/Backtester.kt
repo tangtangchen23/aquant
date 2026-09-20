@@ -11,7 +11,11 @@ data class BacktestResult(
     val tradeCount: Int,
     val winRate: Double,
     val maxDrawdown: Double,
-    val trades: List<BacktestTrade>
+    val trades: List<BacktestTrade>,
+    /** 逐K线的策略权益曲线（与 bars 一一对应）。 */
+    val equityCurve: List<Double>,
+    /** 逐K线的买入持有基准曲线（与 bars 一一对应）。 */
+    val benchmarkCurve: List<Double>
 )
 
 data class BacktestTrade(
@@ -43,6 +47,7 @@ object Backtester {
         var buyDate = ""
         val trades = mutableListOf<BacktestTrade>()
         var wins = 0
+        val equityCurve = ArrayList<Double>(bars.size)
 
         for (i in history.indices) {
             val bar = history[i]
@@ -69,6 +74,8 @@ object Backtester {
                 }
                 Action.HOLD -> {}
             }
+            // 记录逐K线权益（未持仓时 qty==0，equity==现金）
+            equityCurve.add(if (holding) cash + qty * bar.close else cash)
         }
 
         // 未平仓部分按最后一根K线市价平仓估值
@@ -80,6 +87,11 @@ object Backtester {
             if (last.close > costPrice) wins++
             cash += qty * last.close
         }
+        equityCurve.add(cash)
+
+        // 基准：始终满仓买入持有，权益 = 初始本金 × 收盘价/首日收盘价
+        val baseClose = bars.first().close
+        val benchmarkCurve = bars.map { initialCapital * (it.close / baseClose) }
 
         val finalEquity = cash
         val benchmark = if (bars.size >= 2)
@@ -108,7 +120,9 @@ object Backtester {
             tradeCount = trades.size,
             winRate = winRate,
             maxDrawdown = maxDD,
-            trades = trades
+            trades = trades,
+            equityCurve = equityCurve,
+            benchmarkCurve = benchmarkCurve
         )
     }
 }

@@ -1,0 +1,8 @@
+{
+  "latest": {
+    "version": "1.4.3",
+    "versionCode": 14,
+    "apkUrl": "https://github.com/tangtangchen23/aquant/releases/latest/download/aquant-release.apk",
+    "changelog": "v1.4.3：修复“点击下载没有反应”与“检查更新不提示最新版本”的问题；优化版本比对与下载体验"
+  }
+}
