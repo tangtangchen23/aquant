@@ -1,9 +1,10 @@
 package com.quantapp.trader.ui
 
+import android.content.Context
 import android.graphics.Color
 import android.os.Bundle
+import android.text.Editable
 import android.text.InputType
-import android.view.Gravity
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -13,6 +14,7 @@ import android.widget.LinearLayout
 import android.widget.TextView
 import android.widget.Toast
 import androidx.appcompat.app.AlertDialog
+import androidx.core.content.ContextCompat
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.lifecycleScope
 import com.github.mikephil.charting.charts.BarChart
@@ -227,30 +229,76 @@ class ChartFragment : Fragment() {
         val pos = store.paper.positions[code]
         val name = quoteName.ifEmpty { code }
         val ctx = requireContext()
+        val maxQty = pos?.qty ?: 0
 
-        val priceEt = EditText(ctx).apply {
-            setText(String.format("%.2f", price))
-            inputType = InputType.TYPE_CLASS_NUMBER or InputType.TYPE_NUMBER_FLAG_DECIMAL
-        }
-        val qtyHint = if (isBuy) "买入股数，100的整数倍（留空则按金额算）" else "卖出股数，留空=全部"
-        val qtyEt = EditText(ctx).apply {
-            hint = qtyHint
-            inputType = InputType.TYPE_CLASS_NUMBER
-        }
-        // 金额输入框（仅买入时显示）
-        val amountEt = if (isBuy) EditText(ctx).apply {
-            hint = "或输入买入金额（元），按100股取整"
-            inputType = InputType.TYPE_CLASS_NUMBER or InputType.TYPE_NUMBER_FLAG_DECIMAL
-        } else null
+        val priceEt = tradeField(ctx, value = String.format("%.2f", price), inputType = InputType.TYPE_CLASS_NUMBER or InputType.TYPE_NUMBER_FLAG_DECIMAL, hint = "成交价，可修改")
+        val qtyEt = tradeField(ctx, value = "", inputType = InputType.TYPE_CLASS_NUMBER,
+            hint = if (isBuy) "100的整数倍，留空则按金额算" else "留空=全部，最多 $maxQty 股")
+        val amountEt = if (isBuy) tradeField(ctx, value = "",
+            inputType = InputType.TYPE_CLASS_NUMBER or InputType.TYPE_NUMBER_FLAG_DECIMAL, hint = "输入金额自动换算股数") else null
 
-        val cur = if (!isBuy && pos != null) "(持仓 ${pos.qty}股)" else ""
+        // 实时换算提示行
+        val hint = TextView(ctx).apply {
+            textSize = 12f
+            setTextColor(ContextCompat.getColor(ctx, R.color.text_secondary))
+            setPadding(8, 6, 0, 0)
+        }
+
+        var suppress = false
+        fun refreshHint() {
+            val p = priceEt.text.toString().toDoubleOrNull() ?: 0.0
+            if (isBuy) {
+                val q = qtyEt.text.toString().toIntOrNull() ?: 0
+                hint.text = if (q > 0 && p > 0)
+                    "约需资金 ¥${"%.0f".format(q * p)}（${q / 100} 手），可用 ¥${"%.0f".format(store.paper.cash)}"
+                else "可用资金 ¥${"%.0f".format(store.paper.cash)}"
+            } else {
+                val q = qtyEt.text.toString().toIntOrNull()?.coerceIn(0, maxQty) ?: maxQty
+                hint.text = if (p > 0)
+                    "可得约 ¥${"%.0f".format(q * p)}（当前可卖 $maxQty 股）"
+                else "当前可卖 $maxQty 股"
+            }
+        }
+        fun setQty(q: Int) { suppress = true; qtyEt.setText(if (q > 0) "$q" else ""); suppress = false; refreshHint() }
+        fun setAmount(a: Double) { suppress = true; amountEt?.setText("${"%.0f".format(a)}"); suppress = false; refreshHint() }
+
+        // 联动换算：价 ↔ 金额 ↔ 股数
+        priceEt.addTextChangedListener(textWatcher { refreshHint() })
+        qtyEt.addTextChangedListener(textWatcher {
+            if (suppress) return@textWatcher
+            val q = qtyEt.text.toString().toIntOrNull() ?: 0
+            if (isBuy) {
+                val p = priceEt.text.toString().toDoubleOrNull() ?: 0.0
+                if (q > 0 && p > 0) setAmount(q * p) else refreshHint()
+            } else refreshHint()
+        })
+        amountEt?.addTextChangedListener(textWatcher {
+            if (suppress) return@textWatcher
+            val a = amountEt?.text?.toString()?.toDoubleOrNull() ?: 0.0
+            val p = priceEt.text.toString().toDoubleOrNull() ?: 0.0
+            if (a > 0 && p > 0) {
+                val q = (a / p / 100.0).toInt() * 100
+                if (q >= 100) setQty(q) else refreshHint()
+            } else refreshHint()
+        })
+
+        val col = LinearLayout(ctx).apply { orientation = LinearLayout.VERTICAL; setPadding(48, 4, 48, 0) }
+        appendTradeField(col, "成交价", priceEt)
+        appendTradeField(col, if (isBuy) "买入股数" else "卖出股数", qtyEt)
+        if (amountEt != null) appendTradeField(col, "买入金额", amountEt)
+        col.addView(hint)
+        refreshHint()
+
+        val title = if (isBuy) "手动买入 $name"
+            else "手动卖出 $name" + if (!isBuy && pos != null) "（持仓 $maxQty 股）" else ""
         val dialog = AlertDialog.Builder(ctx)
-            .setTitle(if (isBuy) "手动买入 $name" else "手动卖出 $name $cur")
-            .setView(buildTradeForm(priceEt to "成交价", qtyEt to (if (isBuy) "买入股数" else "卖出股数"), amountEt))
+            .setTitle(title)
+            .setView(col)
             .setPositiveButton("确认", null) // null: 手动校验后再 dismiss
             .setNegativeButton("取消", null)
             .create()
         dialog.setOnShowListener {
+            dialog.getButton(AlertDialog.BUTTON_POSITIVE).setTextColor(ContextCompat.getColor(ctx, R.color.brand))
             dialog.getButton(AlertDialog.BUTTON_POSITIVE).setOnClickListener {
                 val p = priceEt.text.toString().toDoubleOrNull()
                 if (p == null || p <= 0) { toast("成交价无效"); return@setOnClickListener }
@@ -258,13 +306,12 @@ class ChartFragment : Fragment() {
                 if (isBuy) {
                     if (qty <= 0) {
                         val amt = (amountEt?.text?.toString())?.toDoubleOrNull() ?: 0.0
-                        if (amt <= 0) { toast("请填写买入股数或买入金额"); return@setOnClickListener }
+                        if (amt <= 0) { toast("请输入买入股数或金额"); return@setOnClickListener }
                         qty = (amt / p / 100.0).toInt() * 100
                     }
                     if (qty < 100) { toast("买入股数需为100的整数倍且≥100股"); return@setOnClickListener }
                 } else {
-                    // 留空=全部；超出持仓则平到所持数量
-                    if (qty <= 0) qty = pos?.qty ?: 0
+                    if (qty <= 0) qty = maxQty // 留空=全部
                 }
                 executeManual(isBuy, code, name, p, qty)
                 dialog.dismiss()
@@ -273,36 +320,40 @@ class ChartFragment : Fragment() {
         dialog.show()
     }
 
-    private fun buildTradeForm(
-        priceTo: Pair<EditText, String>,
-        qtyTo: Pair<EditText, String>,
-        amountOptional: EditText?
-    ): View {
-        val ctx = requireContext()
-        val col = LinearLayout(ctx).apply {
-            orientation = LinearLayout.VERTICAL
-            setPadding(54, 8, 54, 0)
+    private fun tradeField(ctx: Context, value: String, inputType: Int, hint: String): EditText =
+        EditText(ctx).apply {
+            this.inputType = inputType
+            this.hint = hint
+            textSize = 15f
+            setHintTextColor(ContextCompat.getColor(ctx, R.color.text_secondary))
+            if (value.isNotEmpty()) setText(value)
         }
-        fun addRow(et: EditText?, label: String, isSecond: Boolean = false) {
-            val tv = TextView(ctx).apply {
-                text = label
-                setTextSize(13f)
-                gravity = Gravity.START
-                val lp = LinearLayout.LayoutParams(
-                    LinearLayout.LayoutParams.MATCH_PARENT,
-                    LinearLayout.LayoutParams.WRAP_CONTENT
-                )
-                if (isSecond) lp.topMargin = 24
-                layoutParams = lp
-            }
-            col.addView(tv)
-            col.addView(et)
+
+    private fun appendTradeField(col: LinearLayout, label: String, et: EditText) {
+        val ctx = col.context
+        val tv = TextView(ctx).apply {
+            text = label
+            setTextSize(13f)
+            setTextColor(ContextCompat.getColor(ctx, R.color.text_secondary))
+            layoutParams = LinearLayout.LayoutParams(
+                LinearLayout.LayoutParams.MATCH_PARENT,
+                LinearLayout.LayoutParams.WRAP_CONTENT
+            ).apply { topMargin = if (col.childCount == 0) 0 else 18 }
         }
-        addRow(priceTo.first, priceTo.second)
-        addRow(qtyTo.first, qtyTo.second, isSecond = true)
-        if (amountOptional != null) addRow(amountOptional, "第二项：买入金额", isSecond = true)
-        return col
+        col.addView(tv)
+        et.layoutParams = LinearLayout.LayoutParams(
+            LinearLayout.LayoutParams.MATCH_PARENT,
+            LinearLayout.LayoutParams.WRAP_CONTENT
+        ).apply { topMargin = 4 }
+        col.addView(et)
     }
+
+    private fun textWatcher(onChanged: () -> Unit): android.text.TextWatcher =
+        object : android.text.TextWatcher {
+            override fun afterTextChanged(s: Editable?) { onChanged() }
+            override fun beforeTextChanged(s: CharSequence?, st: Int, c: Int, a: Int) {}
+            override fun onTextChanged(s: CharSequence?, st: Int, c: Int, a: Int) {}
+        }
 
     private fun executeManual(isBuy: Boolean, code: String, name: String, price: Double, qty: Int) {
         val store = App.appStore
