@@ -40,17 +40,18 @@ object UpdateChecker {
 
     suspend fun check(link: String): UpdateInfo = withContext(Dispatchers.IO) {
         if (link.isBlank()) throw RuntimeException("链接为空")
-        val req = okhttp3.Request.Builder().url(link)
-            .header("User-Agent", "AQuantUpdater/1.2")
-            .build()
+        // 优先请求 GitHub API 的 raw-media 端点（无 CDN 缓存、始终返回最新内容）。
+        // raw.githubusercontent.com 对该路径存在顽固边缘缓存，会长期返回旧版清单，
+        // 导致“检查更新永远报已是最新”，这里统一将 raw 地址实时地映射到 API 读取。
+        val freshUrl = toFreshUrl(link) ?: link
         try {
-            client.newCall(req).execute().use { resp ->
-                val body = resp.body?.string() ?: ""
-                if (!resp.isSuccessful && body.isBlank()) throw RuntimeException("HTTP ${resp.code}")
-                parse(body, link)
-            }
+            fetch(freshUrl, link)
         } catch (e: Exception) {
-            // 无法作为文档获取时，退化为直接下载链接（版本号从链接字符串猜测）
+            // API 被匿名限流(403)等场景：回退到原始 raw 地址再试一次
+            if (freshUrl != link) {
+                try { return@withContext fetch(link, link) } catch (e2: Exception) { /* 继续走兜底 */ }
+            }
+            // 仍无法作为文档获取时，退化为直接下载链接（版本号从链接字符串猜测）
             UpdateInfo(
                 versionName = guessVersion(link),
                 versionCode = null,
@@ -58,6 +59,30 @@ object UpdateChecker {
                 changelog = ""
             )
         }
+    }
+
+    /** 拉取并解析。isSuccessful 失败即抛异常，便于上层回退。 */
+    private suspend fun fetch(url: String, displayLink: String): UpdateInfo {
+        val req = okhttp3.Request.Builder().url(url)
+            .header("User-Agent", "AQuantUpdater/1.2")
+            .header("Accept", "application/vnd.github.raw") // 对 API 返回原内容；对 raw 地址无害
+            .build()
+        client.newCall(req).execute().use { resp ->
+            val body = resp.body?.string() ?: ""
+            if (!resp.isSuccessful) throw RuntimeException("HTTP ${resp.code}")
+            return parse(body, displayLink)
+        }
+    }
+
+    /**
+     * 把 `raw.githubusercontent.com/{owner}/{repo}/{ref}/{path}` 实时映射为
+     * `api.github.com/repos/{owner}/{repo}/contents/{path}?ref={ref}`，
+     * 借助 API 绕开 raw CDN 的陈旧缓存。非 raw 地址原样返回。
+     */
+    private fun toFreshUrl(raw: String): String? {
+        val m = Regex("raw.githubusercontent\\.com/([^/]+)/([^/]+)/([^/]+)/(.+)").find(raw) ?: return null
+        val (owner, repo, ref, path) = m.destructured
+        return "https://api.github.com/repos/$owner/$repo/contents/$path?ref=$ref"
     }
 
     private fun parse(body: String, link: String): UpdateInfo {

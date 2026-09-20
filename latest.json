@@ -1,8 +1,8 @@
 {
   "latest": {
-    "version": "1.4.5",
-    "versionCode": 16,
+    "version": "1.4.6",
+    "versionCode": 17,
     "apkUrl": "https://github.com/tangtangchen23/aquant/releases/latest/download/aquant-release.apk",
-    "changelog": "v1.4.5：隐藏K线图表页签；在行情页点击自选股或查询卡片即可自动跳转K线图"
+    "changelog": "v1.4.6：修复“检查更新检测不到最新版本”——改用GitHub API实时读取版本清单，杜绝raw CDN缓存导致的一直提示已是最新"
   }
 }
