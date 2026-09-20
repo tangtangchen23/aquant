@@ -1,10 +1,15 @@
 package com.quantapp.trader.ui
 
 import android.os.Bundle
+import android.os.Handler
+import android.os.Looper
+import android.text.Editable
+import android.text.TextWatcher
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.ArrayAdapter
+import android.widget.AutoCompleteTextView
 import android.widget.Button
 import android.widget.EditText
 import android.widget.ListView
@@ -13,6 +18,7 @@ import android.widget.ScrollView
 import android.widget.Spinner
 import android.widget.TextView
 import android.widget.Toast
+import androidx.appcompat.app.AlertDialog
 import androidx.fragment.app.Fragment
 import com.github.mikephil.charting.charts.LineChart
 import com.github.mikephil.charting.components.XAxis
@@ -31,6 +37,8 @@ import com.quantapp.trader.trading.App
 import com.quantapp.trader.trading.TradingEngine
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
+import org.json.JSONArray
+import org.json.JSONObject
 
 class StrategyFragment : Fragment() {
 
@@ -39,8 +47,65 @@ class StrategyFragment : Fragment() {
 
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View {
         val root = inflater.inflate(R.layout.fragment_strategy, container, false)
-        val etSymbol = root.findViewById<EditText>(R.id.et_strat_symbol)
+        val etSymbol = root.findViewById<AutoCompleteTextView>(R.id.et_strat_symbol)
+        val btnPickWatch = root.findViewById<Button>(R.id.btn_pick_watch)
         val spinner = root.findViewById<Spinner>(R.id.spinner_strategy)
+
+        // 股票名称/代码联想搜索
+        val searchHandler = Handler(Looper.getMainLooper())
+        val searchCodes = mutableListOf<String>()
+        val searchTask = object : Runnable {
+            override fun run() {
+                val q = etSymbol.text.toString().trim()
+                if (q.isEmpty()) return
+                AppScope.launch {
+                    val res = try { withContext(Dispatchers.IO) { MarketService.search(q) } }
+                        catch (e: Exception) { emptyList() }
+                    if (etSymbol.text.toString().trim() == q) {
+                        searchCodes.clear()
+                        res.forEach { searchCodes.add(it.code) }
+                        etSymbol.setAdapter(ArrayAdapter(requireContext(),
+                            android.R.layout.simple_dropdown_item_1line,
+                            res.map { "${it.name}  ${it.code}" }))
+                        if (res.isNotEmpty()) etSymbol.showDropDown()
+                    }
+                }
+            }
+        }
+        etSymbol.addTextChangedListener(object : TextWatcher {
+            override fun afterTextChanged(s: Editable?) {
+                searchHandler.removeCallbacks(searchTask)
+                if (!s.isNullOrBlank()) searchHandler.postDelayed(searchTask, 250)
+            }
+            override fun beforeTextChanged(s: CharSequence?, a: Int, b: Int, c: Int) {}
+            override fun onTextChanged(s: CharSequence?, a: Int, b: Int, c: Int) {}
+        })
+        etSymbol.setOnItemClickListener { _, _, pos, _ ->
+            if (pos in searchCodes.indices) etSymbol.setText(searchCodes[pos])
+        }
+
+        // 从自选股列表选择
+        btnPickWatch.setOnClickListener {
+            val p = App.context.getSharedPreferences("watch", 0)
+            val list = try { JSONArray(p.getString("list", "[]") ?: "[]") }
+                catch (e: Exception) { JSONArray() }
+            val names = try { JSONObject(p.getString("names", "{}") ?: "{}") }
+                catch (e: Exception) { JSONObject() }
+            val codes = mutableListOf<String>()
+            for (i in 0 until list.length()) codes.add(list.optString(i, ""))
+            if (codes.isEmpty()) {
+                Toast.makeText(requireContext(), "自选股为空", Toast.LENGTH_SHORT).show()
+                return@setOnClickListener
+            }
+            val labels = codes.map { c ->
+                val n = names.optString(c, "")
+                if (n.isEmpty()) c else "$n  $c"
+            }
+            AlertDialog.Builder(requireContext())
+                .setTitle("从自选股选择")
+                .setItems(labels.toTypedArray()) { _, pos -> etSymbol.setText(codes[pos]) }
+                .show()
+        }
         val btnBacktest = root.findViewById<Button>(R.id.btn_backtest)
         val btnStart = root.findViewById<Button>(R.id.btn_start)
         val btnStop = root.findViewById<Button>(R.id.btn_stop)
@@ -167,12 +232,14 @@ class StrategyFragment : Fragment() {
         }
 
         btnBacktest.setOnClickListener { b ->
-            val code = etSymbol.text.toString().trim()
-            if (code.isEmpty()) return@setOnClickListener
+            val raw = etSymbol.text.toString().trim()
+            if (raw.isEmpty()) return@setOnClickListener
             b.isEnabled = false
             tvBacktest.text = "回测中..."
             AppScope.launch {
                 try {
+                    val code = try { withContext(Dispatchers.IO) { MarketService.resolveCode(raw) } }
+                        catch (e: Exception) { raw }
                     val fee = (etFee.text.toString().toDoubleOrNull() ?: 0.0)
                         .coerceIn(0.0, 0.1)
                     val slip = (etSlip.text.toString().toDoubleOrNull() ?: 0.0)
@@ -209,16 +276,19 @@ class StrategyFragment : Fragment() {
         }
 
         btnStart.setOnClickListener {
-            val code = etSymbol.text.toString().trim()
-            if (code.isEmpty()) { Toast.makeText(requireContext(), "请输入股票代码", Toast.LENGTH_SHORT).show(); return@setOnClickListener }
+            val raw = etSymbol.text.toString().trim()
+            if (raw.isEmpty()) { Toast.makeText(requireContext(), "请输入股票代码或名称", Toast.LENGTH_SHORT).show(); return@setOnClickListener }
             val bid = selectedStrategyId()
-            val as_ = ActiveStrategy(code, "", bid)
             App.appStore.setStrategyConfig(bid, readParams()) // 让实盘引擎使用同样的自定义参数
-            App.appStore.addStrategy(as_)
-            TradingEngine.start()
-            refreshStatus(tvStatus)
-            refreshActive(listActive)
-            Toast.makeText(requireContext(), "已启动 $code 的自动化交易", Toast.LENGTH_SHORT).show()
+            AppScope.launch {
+                val code = try { withContext(Dispatchers.IO) { MarketService.resolveCode(raw) } }
+                    catch (e: Exception) { raw }
+                App.appStore.addStrategy(ActiveStrategy(code, "", bid))
+                TradingEngine.start()
+                refreshStatus(tvStatus)
+                refreshActive(listActive)
+                Toast.makeText(requireContext(), "已启动 $code 的自动化交易", Toast.LENGTH_SHORT).show()
+            }
         }
 
         btnStop.setOnClickListener {

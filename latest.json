@@ -1,8 +1,8 @@
 {
   "latest": {
-    "version": "2.2.0",
-    "versionCode": 29,
+    "version": "2.3.0",
+    "versionCode": 30,
     "apkUrl": "https://github.com/tangtangchen23/aquant/releases/latest/download/aquant-release.apk",
-    "changelog": "v2.2.0：新增布林带(BOLL)策略。跌破下轨或回穿下轨买入，突破/跌破上轨卖出（均值回归），支持调整布林周期(默认20)与标准差倍数(默认2)；可在策略页下拉框选用并参与回测与自动交易。"
+    "changelog": "v2.3.0：①修复行情页查询历史不显示的bug——历史下拉始终展示全部历史记录，不再因已填文本被过滤；②行情页查询框提示词改小、缩短，不再看不全；③策略页股票代码输入升级：支持输入名称联想搜索（选中有名称+代码）、新增【自选】按钮从自选股列表直接选择，回测/启动自动交易自动把名称解析为代码。"
   }
 }

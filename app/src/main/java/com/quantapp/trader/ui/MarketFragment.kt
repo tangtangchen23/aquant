@@ -6,6 +6,7 @@ import android.view.View
 import android.view.ViewGroup
 import android.widget.ArrayAdapter
 import android.widget.AutoCompleteTextView
+import android.widget.Filter
 import android.widget.Button
 import android.widget.ListView
 import android.widget.TextView
@@ -84,9 +85,8 @@ class MarketFragment : Fragment() {
         watchAdapter.refresh()
         startAutoRefresh(list)
 
-        // 查询历史自动补全
-        val historyAdapter = ArrayAdapter(requireContext(),
-            android.R.layout.simple_dropdown_item_1line, queryHistory)
+        // 查询历史自动补全（始终显示全部历史，不按已填文本过滤）
+        val historyAdapter = historyAdapter()
         etCode.setAdapter(historyAdapter)
         if (queryHistory.isNotEmpty()) etCode.setText(queryHistory.lastOrNull() ?: "")
 
@@ -102,8 +102,7 @@ class MarketFragment : Fragment() {
                 return@setOnClickListener
             }
             clearHistory()
-            etCode.setAdapter(ArrayAdapter(requireContext(),
-                android.R.layout.simple_dropdown_item_1line, queryHistory))
+            etCode.setAdapter(historyAdapter())
             etCode.dismissDropDown()
             etCode.setText("")
             Toast.makeText(requireContext(), "查询历史已清除", Toast.LENGTH_SHORT).show()
@@ -291,9 +290,29 @@ class MarketFragment : Fragment() {
     }
 
     private fun refreshHistory(etCode: AutoCompleteTextView) {
-        etCode.setAdapter(ArrayAdapter(requireContext(),
-            android.R.layout.simple_dropdown_item_1line, queryHistory))
+        etCode.setAdapter(historyAdapter())
     }
+
+    // 历史下拉适配器：不按已填文本过滤，始终展示全部历史记录
+    private fun historyAdapter(): ArrayAdapter<String> =
+        object : ArrayAdapter<String>(
+            requireContext(), android.R.layout.simple_dropdown_item_1line, queryHistory) {
+            override fun getFilter(): Filter = object : Filter() {
+                override fun performFiltering(constraint: CharSequence?): FilterResults {
+                    val r = FilterResults()
+                    val copy = ArrayList<String>().apply { addAll(queryHistory) }
+                    r.values = copy
+                    r.count = copy.size
+                    return r
+                }
+                @Suppress("UNCHECKED_CAST")
+                override fun publishResults(constraint: CharSequence?, results: FilterResults?) {
+                    clear()
+                    results?.values?.let { addAll(it as List<String>) }
+                    notifyDataSetChanged()
+                }
+            }
+        }
 
     // ---------- 持久化：自选 ----------
     private fun prefs() = App.context.getSharedPreferences("watch", 0)

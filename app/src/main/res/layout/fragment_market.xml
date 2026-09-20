@@ -10,8 +10,9 @@
         android:orientation="horizontal" android:layout_marginTop="8dp">
         <AutoCompleteTextView android:id="@+id/et_code"
             android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1"
-            android:hint="输入代码或名称，如 600519（可下拉选历史）"
-            android:inputType="text" android:singleLine="true" android:completionThreshold="1" />
+            android:hint="输入代码或名称，如 600519"
+            android:textSize="14sp" android:inputType="text" android:singleLine="true"
+            android:completionThreshold="1" />
         <Button android:id="@+id/btn_query" android:layout_width="wrap_content" android:layout_height="wrap_content"
             android:text="查询" />
     </LinearLayout>

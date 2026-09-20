@@ -16,15 +16,20 @@
             android:orientation="vertical" android:layout_marginTop="10dp"
             android:padding="12dp" android:background="@drawable/bg_card">
             <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content"
-                android:orientation="vertical">
-                <EditText android:id="@+id/et_strat_symbol" android:layout_width="match_parent"
-                    android:layout_height="wrap_content" android:minHeight="46dp"
+                android:orientation="horizontal">
+                <AutoCompleteTextView android:id="@+id/et_strat_symbol"
+                    android:layout_width="0dp" android:layout_height="wrap_content"
+                    android:layout_weight="1" android:minHeight="46dp"
                     android:paddingStart="12dp" android:paddingEnd="12dp"
                     android:gravity="center_vertical" android:textSize="16sp"
-                    android:hint="股票代码，如 600519" android:inputType="number" />
-                <Spinner android:id="@+id/spinner_strategy" android:layout_width="match_parent"
-                    android:layout_height="wrap_content" android:layout_marginTop="8dp" />
+                    android:hint="输入代码或名称搜索，如 600519"
+                    android:inputType="text" android:singleLine="true" android:completionThreshold="1" />
+                <Button android:id="@+id/btn_pick_watch" android:layout_width="wrap_content"
+                    android:layout_height="wrap_content" android:layout_marginStart="6dp"
+                    android:text="自选" />
             </LinearLayout>
+            <Spinner android:id="@+id/spinner_strategy" android:layout_width="match_parent"
+                android:layout_height="wrap_content" android:layout_marginTop="8dp" />
 
             <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content"
                 android:orientation="horizontal" android:layout_marginTop="8dp">
