@@ -21,8 +21,8 @@
                     android:layout_width="0dp" android:layout_height="wrap_content"
                     android:layout_weight="1" android:minHeight="46dp"
                     android:paddingStart="12dp" android:paddingEnd="12dp"
-                    android:gravity="center_vertical" android:textSize="16sp"
-                    android:hint="输入代码或名称搜索，如 600519"
+                    android:gravity="center_vertical" android:textSize="14sp"
+                    android:hint="名称或代码，如 600519"
                     android:inputType="text" android:singleLine="true" android:completionThreshold="1" />
                 <Button android:id="@+id/btn_pick_watch" android:layout_width="wrap_content"
                     android:layout_height="wrap_content" android:layout_marginStart="6dp"
@@ -48,12 +48,12 @@
                 android:orientation="horizontal" android:layout_marginTop="8dp">
                 <EditText android:id="@+id/et_fee_rate" android:layout_width="0dp"
                     android:layout_height="wrap_content" android:layout_weight="1"
-                    android:hint="手续费率(单边,如0.0003)" android:inputType="numberDecimal"
+                    android:textSize="13sp" android:hint="手续费率(如0.0003)" android:inputType="numberDecimal"
                     android:singleLine="true" />
                 <EditText android:id="@+id/et_slippage" android:layout_width="0dp"
                     android:layout_height="wrap_content" android:layout_weight="1"
                     android:layout_marginStart="6dp"
-                    android:hint="滑点(如0.001)" android:inputType="numberDecimal"
+                    android:textSize="13sp" android:hint="滑点(如0.001)" android:inputType="numberDecimal"
                     android:singleLine="true" />
             </LinearLayout>
         </LinearLayout>
@@ -89,7 +89,7 @@
                         android:textSize="12sp" android:textColor="@color/text_secondary" />
                     <EditText android:id="@+id/et_trail_activate" android:layout_width="match_parent"
                         android:layout_height="wrap_content" android:minHeight="42dp"
-                        android:layout_marginTop="2dp" android:hint="如 8" android:inputType="numberDecimal"
+                        android:layout_marginTop="2dp" android:textSize="13sp" android:hint="如 8" android:inputType="numberDecimal"
                         android:singleLine="true" />
                 </LinearLayout>
                 <LinearLayout android:layout_width="0dp" android:layout_height="wrap_content"
@@ -100,7 +100,7 @@
                         android:textSize="12sp" android:textColor="@color/text_secondary" />
                     <EditText android:id="@+id/et_trail_stop" android:layout_width="match_parent"
                         android:layout_height="wrap_content" android:minHeight="42dp"
-                        android:layout_marginTop="2dp" android:hint="如 8" android:inputType="numberDecimal"
+                        android:layout_marginTop="2dp" android:textSize="13sp" android:hint="如 8" android:inputType="numberDecimal"
                         android:singleLine="true" />
                 </LinearLayout>
             </LinearLayout>
@@ -114,7 +114,7 @@
                         android:textSize="12sp" android:textColor="@color/text_secondary" />
                     <EditText android:id="@+id/et_breakeven" android:layout_width="match_parent"
                         android:layout_height="wrap_content" android:minHeight="42dp"
-                        android:layout_marginTop="2dp" android:hint="如 1" android:inputType="numberDecimal"
+                        android:layout_marginTop="2dp" android:textSize="13sp" android:hint="如 1" android:inputType="numberDecimal"
                         android:singleLine="true" />
                 </LinearLayout>
                 <LinearLayout android:layout_width="0dp" android:layout_height="wrap_content"
@@ -125,7 +125,7 @@
                         android:textSize="12sp" android:textColor="@color/text_secondary" />
                     <EditText android:id="@+id/et_atr_enabled" android:layout_width="match_parent"
                         android:layout_height="wrap_content" android:minHeight="42dp"
-                        android:layout_marginTop="2dp" android:hint="1或0" android:inputType="number"
+                        android:layout_marginTop="2dp" android:textSize="13sp" android:hint="1或0" android:inputType="number"
                         android:singleLine="true" />
                 </LinearLayout>
             </LinearLayout>
@@ -139,7 +139,7 @@
                         android:textSize="12sp" android:textColor="@color/text_secondary" />
                     <EditText android:id="@+id/et_atr_mult" android:layout_width="match_parent"
                         android:layout_height="wrap_content" android:minHeight="42dp"
-                        android:layout_marginTop="2dp" android:hint="如 2" android:inputType="numberDecimal"
+                        android:layout_marginTop="2dp" android:textSize="13sp" android:hint="如 2" android:inputType="numberDecimal"
                         android:singleLine="true" />
                 </LinearLayout>
                 <LinearLayout android:layout_width="0dp" android:layout_height="wrap_content"
@@ -150,7 +150,7 @@
                         android:textSize="12sp" android:textColor="@color/text_secondary" />
                     <EditText android:id="@+id/et_first_buy" android:layout_width="match_parent"
                         android:layout_height="wrap_content" android:minHeight="42dp"
-                        android:layout_marginTop="2dp" android:hint="如 0.5" android:inputType="numberDecimal"
+                        android:layout_marginTop="2dp" android:textSize="13sp" android:hint="如 0.5" android:inputType="numberDecimal"
                         android:singleLine="true" />
                 </LinearLayout>
             </LinearLayout>
@@ -164,7 +164,7 @@
                         android:textSize="12sp" android:textColor="@color/text_secondary" />
                     <EditText android:id="@+id/et_add_pct" android:layout_width="match_parent"
                         android:layout_height="wrap_content" android:minHeight="42dp"
-                        android:layout_marginTop="2dp" android:hint="如 0.2" android:inputType="numberDecimal"
+                        android:layout_marginTop="2dp" android:textSize="13sp" android:hint="如 0.2" android:inputType="numberDecimal"
                         android:singleLine="true" />
                 </LinearLayout>
                 <LinearLayout android:layout_width="0dp" android:layout_height="wrap_content"
@@ -175,7 +175,7 @@
                         android:textSize="12sp" android:textColor="@color/text_secondary" />
                     <EditText android:id="@+id/et_add_thr" android:layout_width="match_parent"
                         android:layout_height="wrap_content" android:minHeight="42dp"
-                        android:layout_marginTop="2dp" android:hint="如 3" android:inputType="numberDecimal"
+                        android:layout_marginTop="2dp" android:textSize="13sp" android:hint="如 3" android:inputType="numberDecimal"
                         android:singleLine="true" />
                 </LinearLayout>
             </LinearLayout>

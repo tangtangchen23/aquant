@@ -324,7 +324,7 @@ class ChartFragment : Fragment() {
         EditText(ctx).apply {
             this.inputType = inputType
             this.hint = hint
-            textSize = 15f
+            textSize = 14f
             setHintTextColor(ContextCompat.getColor(ctx, R.color.text_secondary))
             if (value.isNotEmpty()) setText(value)
         }
