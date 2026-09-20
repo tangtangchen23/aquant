@@ -9,6 +9,7 @@ import android.widget.Button
 import android.widget.EditText
 import android.widget.ListView
 import android.widget.LinearLayout
+import android.widget.ScrollView
 import android.widget.Spinner
 import android.widget.TextView
 import android.widget.Toast
@@ -33,6 +34,9 @@ import kotlinx.coroutines.withContext
 
 class StrategyFragment : Fragment() {
 
+    private var tvLog: TextView? = null
+    private var logScroll: ScrollView? = null
+
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View {
         val root = inflater.inflate(R.layout.fragment_strategy, container, false)
         val etSymbol = root.findViewById<EditText>(R.id.et_strat_symbol)
@@ -44,6 +48,8 @@ class StrategyFragment : Fragment() {
         val chartEquity = root.findViewById<LineChart>(R.id.chart_equity)
         val tvStatus = root.findViewById<TextView>(R.id.tv_running_status)
         val listActive = root.findViewById<ListView>(R.id.list_active)
+        tvLog = root.findViewById(R.id.tv_engine_log)
+        logScroll = tvLog?.parent as? ScrollView
 
         val strategyList = strategies()
         spinner.adapter = ArrayAdapter(requireContext(), android.R.layout.simple_list_item_1, strategyList.map { "${it.name} (${it.paramsSummary()})" })
@@ -109,6 +115,17 @@ class StrategyFragment : Fragment() {
 
         refreshStatus(tvStatus)
         refreshActive(listActive)
+        refreshLog()
+
+        val etFee = root.findViewById<EditText>(R.id.et_fee_rate)
+        val etSlip = root.findViewById<EditText>(R.id.et_slippage)
+        etFee.setText(if (App.appStore.feeRate == 0.0) "" else App.appStore.feeRate.toString())
+        etSlip.setText(if (App.appStore.slippagePct == 0.0) "" else App.appStore.slippagePct.toString())
+
+        root.findViewById<Button>(R.id.btn_clear_log).setOnClickListener {
+            App.appStore.clearLogs()
+            refreshLog()
+        }
 
         btnBacktest.setOnClickListener { b ->
             val code = etSymbol.text.toString().trim()
@@ -117,13 +134,23 @@ class StrategyFragment : Fragment() {
             tvBacktest.text = "回测中..."
             AppScope.launch {
                 try {
+                    val fee = (etFee.text.toString().toDoubleOrNull() ?: 0.0)
+                        .coerceIn(0.0, 0.1)
+                    val slip = (etSlip.text.toString().toDoubleOrNull() ?: 0.0)
+                        .coerceIn(0.0, 0.1)
+                    App.appStore.feeRate = fee
+                    App.appStore.slippagePct = slip
                     val bars = withContext(Dispatchers.IO) { MarketService.fetchKline(code, 260) }
                     if (bars.size < 40) { tvBacktest.text = "数据不足，无法回测"; return@launch }
                     val result = withContext(Dispatchers.IO) {
-                        Backtester.run(buildStrategy(selectedStrategyId(), readParams()), bars)
+                        Backtester.run(buildStrategy(selectedStrategyId(), readParams()), bars,
+                            feeRate = fee, slippagePct = slip)
                     }
+                    val feeLine = if (fee > 0 || slip > 0)
+                        "\n成本假设：手续费 ${String.format("%.4f", fee)} / 滑点 ${String.format("%.4f", slip)}"
+                        else ""
                     tvBacktest.text = buildString {
-                        append("回测(${result.tradeCount}笔)\n")
+                        append("回测(${result.tradeCount}笔)$feeLine\n")
                         append("策略收益：${String.format("%.2f", result.returnPct)}%\n")
                         append("基准(买入持有)：${String.format("%.2f", result.benchmarkReturnPct)}%\n")
                         append("最终权益：${String.format("%.0f", result.finalEquity)} / 初始 ${String.format("%.0f", result.initialCapital)}\n")
@@ -175,9 +202,18 @@ class StrategyFragment : Fragment() {
             activity?.runOnUiThread {
                 refreshStatus(tvStatus)
                 refreshActive(listActive)
+                refreshLog()
             }
         }
         return root
+    }
+
+    private fun refreshLog() {
+        val tv = tvLog ?: return
+        val scroll = logScroll ?: return
+        val text = App.appStore.engineLogText()
+        tv.text = if (text.isEmpty()) "（暂无引擎日志）" else text
+        scroll.post { scroll.fullScroll(View.FOCUS_DOWN) }
     }
 
     private fun refreshStatus(tv: TextView) {

@@ -94,10 +94,16 @@
             android:textSize="14sp" android:text="↻ 刷新" />
     </LinearLayout>
 
-    <ListView android:id="@+id/list_watch" android:layout_width="match_parent"
-        android:layout_height="0dp" android:layout_weight="1"
-        android:layout_marginTop="4dp" android:background="@drawable/bg_card"
-        android:padding="4dp" android:divider="@color/bg" android:dividerHeight="1dp" />
+    <FrameLayout android:layout_width="match_parent" android:layout_height="0dp"
+        android:layout_weight="1" android:layout_marginTop="4dp">
+        <ListView android:id="@+id/list_watch" android:layout_width="match_parent"
+            android:layout_height="match_parent" android:background="@drawable/bg_card"
+            android:padding="4dp" android:divider="@color/bg" android:dividerHeight="1dp" />
+        <TextView android:id="@+id/tv_watch_empty" android:layout_width="wrap_content"
+            android:layout_height="wrap_content" android:layout_gravity="center"
+            android:gravity="center" android:textSize="13sp" android:textColor="@color/text_secondary"
+            android:text="自选股为空&#10;在上方输入代码查询后，加入自选即可查看" />
+    </FrameLayout>
 
     <Button android:id="@+id/btn_add_watch" android:layout_width="match_parent"
         android:layout_height="wrap_content" android:text="+ 加入自选并查看K线"

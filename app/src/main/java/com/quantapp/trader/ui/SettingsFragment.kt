@@ -50,6 +50,10 @@ class SettingsFragment : Fragment() {
         val etPoll = root.findViewById<EditText>(R.id.et_poll)
         val etPct = root.findViewById<EditText>(R.id.et_pct)
         val etGateway = root.findViewById<EditText>(R.id.et_gateway)
+        val etStopLoss = root.findViewById<EditText>(R.id.et_stop_loss)
+        val etTakeProfit = root.findViewById<EditText>(R.id.et_take_profit)
+        val etMaxDd = root.findViewById<EditText>(R.id.et_max_dd)
+        val tvGatewayStatus = root.findViewById<TextView>(R.id.tv_gateway_status)
         val tvModeHint = root.findViewById<TextView>(R.id.tv_mode_hint)
         val tvInfo = root.findViewById<TextView>(R.id.tv_info)
         val tvVersion = root.findViewById<TextView>(R.id.tv_version)
@@ -62,6 +66,9 @@ class SettingsFragment : Fragment() {
         etPoll.setText(st.pollSeconds.toString())
         etPct.setText(st.positionPct.toString())
         etGateway.setText(st.liveGateway)
+        etStopLoss.setText(fmtPct(st.stopLossPct))
+        etTakeProfit.setText(fmtPct(st.takeProfitPct))
+        etMaxDd.setText(fmtPct(st.maxDrawdownPct))
         updateHint(rbLive.isChecked, tvModeHint)
 
         // 外观主题初始化
@@ -176,6 +183,8 @@ class SettingsFragment : Fragment() {
 
         rg.setOnCheckedChangeListener { _, id ->
             updateHint(id == R.id.rb_live, tvModeHint)
+            // 切换到实盘信号时主动探测一次网关连通性
+            if (id == R.id.rb_live) probeGateway(tvGatewayStatus)
         }
 
         btnSave.setOnClickListener {
@@ -190,12 +199,16 @@ class SettingsFragment : Fragment() {
                 st.pollSeconds = poll
                 st.positionPct = pct
                 st.liveGateway = etGateway.text.toString().trim()
+                st.stopLossPct = etStopLoss.text.toString().toDoubleOrNull() ?: 0.0
+                st.takeProfitPct = etTakeProfit.text.toString().toDoubleOrNull() ?: 0.0
+                st.maxDrawdownPct = etMaxDd.text.toString().toDoubleOrNull() ?: 0.0
                 // 更换初始资金时重置模拟盘
                 if (Math.abs(st.initialCapital() - cap) > 0.01) {
                     st.setInitialCapital(cap)
                     st.paper.reset(cap)
                 }
                 st.save()
+                probeGateway(tvGatewayStatus)
                 Toast.makeText(requireContext(), "设置已保存", Toast.LENGTH_SHORT).show()
             } catch (e: Exception) {
                 Toast.makeText(requireContext(), "保存失败：${e.message}", Toast.LENGTH_SHORT).show()
@@ -260,5 +273,31 @@ class SettingsFragment : Fragment() {
         tv.text = if (live)
             "实盘信号模式：引擎只输出买卖信号并POST到网关，不直接成交，需配置下方网关URL。"
         else "模拟盘模式：使用虚拟资金按真实行情自动成交。"
+    }
+
+    private fun fmtPct(v: Double): String =
+        if (v == 0.0) "" else v.toString()
+
+    /** 在后台探测实盘网关连通性，并把结果状态显示出来。 */
+    private fun probeGateway(tv: TextView) {
+        val gw = App.appStore.liveGateway.trim()
+        if (gw.isEmpty()) {
+            tv.text = "网关：未配置，实盘模式不会发送信号"
+            return
+        }
+        tv.text = "网关检测中..."
+        tv.setTextColor(android.graphics.Color.parseColor("#CCB400"))
+        scope.launch(Dispatchers.IO) {
+            val ok = com.quantapp.trader.trading.TradingEngine.pingGateway()
+            kotlinx.coroutines.withContext(Dispatchers.Main) {
+                if (ok) {
+                    tv.text = "网关：连接正常"
+                    tv.setTextColor(android.graphics.Color.parseColor("#2E7D32"))
+                } else {
+                    tv.text = "网关：连接失败（${com.quantapp.trader.trading.TradingEngine.gatewayLastError}），将自动重试，请检查URL与网关服务"
+                    tv.setTextColor(android.graphics.Color.parseColor("#C62828"))
+                }
+            }
+        }
     }
 }

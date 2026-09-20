@@ -34,6 +34,19 @@
                 android:singleLine="true" android:text="停止" />
         </LinearLayout>
 
+        <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content"
+            android:orientation="horizontal" android:layout_marginTop="8dp">
+            <EditText android:id="@+id/et_fee_rate" android:layout_width="0dp"
+                android:layout_height="wrap_content" android:layout_weight="1"
+                android:hint="手续费率(单边,如0.0003)" android:inputType="numberDecimal"
+                android:singleLine="true" />
+            <EditText android:id="@+id/et_slippage" android:layout_width="0dp"
+                android:layout_height="wrap_content" android:layout_weight="1"
+                android:layout_marginStart="6dp"
+                android:hint="滑点(如0.001)" android:inputType="numberDecimal"
+                android:singleLine="true" />
+        </LinearLayout>
+
         <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
             android:layout_marginTop="12dp" android:text="策略参数(可自定义)" android:textStyle="bold" />
         <LinearLayout android:id="@+id/linear_params" android:layout_width="match_parent"
@@ -57,5 +70,22 @@
             android:text="运行中策略" android:layout_marginTop="12dp" android:textStyle="bold" />
         <ListView android:id="@+id/list_active" android:layout_width="match_parent"
             android:layout_height="wrap_content" android:background="@color/card_bg" />
+
+        <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content"
+            android:orientation="horizontal" android:layout_marginTop="16dp"
+            android:gravity="center_vertical">
+            <TextView android:layout_width="0dp" android:layout_height="wrap_content"
+                android:layout_weight="1" android:text="信号与成交日志" android:textStyle="bold" />
+            <Button android:id="@+id/btn_clear_log" android:layout_width="wrap_content"
+                android:layout_height="wrap_content" android:text="清空" />
+        </LinearLayout>
+        <ScrollView android:layout_width="match_parent" android:layout_height="wrap_content"
+            android:layout_marginTop="4dp">
+            <TextView android:id="@+id/tv_engine_log"
+                android:layout_width="match_parent" android:layout_height="wrap_content"
+                android:padding="10dp" android:background="@color/card_bg"
+                android:textIsSelectable="true" android:textSize="12sp"
+                android:fontFamily="monospace" />
+        </ScrollView>
     </LinearLayout>
 </ScrollView>

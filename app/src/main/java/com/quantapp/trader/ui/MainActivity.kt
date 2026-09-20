@@ -1,12 +1,16 @@
 package com.quantapp.trader.ui
 
+import android.os.Build
 import android.os.Bundle
 import android.widget.FrameLayout
 import androidx.appcompat.app.AppCompatActivity
+import androidx.core.app.ActivityCompat
+import androidx.core.content.ContextCompat
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.lifecycleScope
 import com.google.android.material.bottomnavigation.BottomNavigationView
 import com.quantapp.trader.R
+import com.quantapp.trader.trading.EngineService
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 
@@ -31,7 +35,9 @@ class MainActivity : AppCompatActivity() {
             }
         )
         setContentView(R.layout.activity_main)
-        com.quantapp.trader.trading.AlertWatcher.start()
+        // 启动常驻引擎服务：自动交易与到价提醒在退到后台/锁屏后仍继续运行
+        EngineService.start(this)
+        requestNotificationPermission()
 
         nav = findViewById(R.id.bottom_nav)
 
@@ -59,6 +65,16 @@ class MainActivity : AppCompatActivity() {
         supportFragmentManager.beginTransaction()
             .replace(R.id.container, ChartFragment())
             .commit()
+    }
+
+    /** Android 13+ 需要动态申请通知权限，后台引擎/到价提醒通知才可见。 */
+    private fun requestNotificationPermission() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU &&
+            ContextCompat.checkSelfPermission(this, android.Manifest.permission.POST_NOTIFICATIONS)
+                != android.content.pm.PackageManager.PERMISSION_GRANTED) {
+            ActivityCompat.requestPermissions(this,
+                arrayOf(android.Manifest.permission.POST_NOTIFICATIONS), 1001)
+        }
     }
 }
 

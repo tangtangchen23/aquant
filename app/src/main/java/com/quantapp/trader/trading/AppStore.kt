@@ -81,6 +81,33 @@ class AppStore(context: Context) {
         get() = (prefs.getFloat("position_pct", 0.8f)).toDouble()
         set(v) { prefs.edit().putFloat("position_pct", v.toFloat()).apply() }
 
+    // ---------- 风控参数 ----------
+    /** 单票止损线（跌到持仓成本的该比例即止损），0 表示关闭。 */
+    var stopLossPct: Double
+        get() = prefs.getFloat("stop_loss_pct", 0f).toDouble()
+        set(v) { prefs.edit().putFloat("stop_loss_pct", v.toFloat().coerceIn(0f, 100f)).apply() }
+
+    /** 单票止盈线（涨到持仓成本的该比例即止盈），0 表示关闭。 */
+    var takeProfitPct: Double
+        get() = prefs.getFloat("tp_pct", 0f).toDouble()
+        set(v) { prefs.edit().putFloat("tp_pct", v.toFloat().coerceIn(0f, 1000f)).apply() }
+
+    /** 账户最大回撤熔断（权益从峰值回撤达到该比例后暂停开仓），0 表示关闭。 */
+    var maxDrawdownPct: Double
+        get() = prefs.getFloat("max_dd_pct", 0f).toDouble()
+        set(v) { prefs.edit().putFloat("max_dd_pct", v.toFloat().coerceIn(0f, 100f)).apply() }
+
+    // ---------- 回测参数 ----------
+    /** 单边手续费率（买入卖出各收一次），0 表示不计。 */
+    var feeRate: Double
+        get() = prefs.getFloat("fee_rate", 0f).toDouble()
+        set(v) { prefs.edit().putFloat("fee_rate", v.toFloat().coerceIn(0f, 0.1f)).apply() }
+
+    /** 单边滑点比例，0 表示不计。 */
+    var slippagePct: Double
+        get() = prefs.getFloat("slippage_pct", 0f).toDouble()
+        set(v) { prefs.edit().putFloat("slippage_pct", v.toFloat().coerceIn(0f, 0.1f)).apply() }
+
     var updateUrl: String
         get() = prefs.getString("update_url", DEFAULT_UPDATE_URL) ?: DEFAULT_UPDATE_URL
         set(v) { prefs.edit().putString("update_url", v.trim()).apply() }
@@ -120,6 +147,39 @@ class AppStore(context: Context) {
     }
 
     private var strategies = loadActive()
+
+    // ---------- 引擎运行/信号日志 ----------
+    private var engineLogs = loadLogs()
+
+    /** 追加一条引擎日志（保留最近 300 条）。 */
+    fun addLog(msg: String) {
+        engineLogs.add(formatLogTime() + "  " + msg)
+        if (engineLogs.size > 300) engineLogs.removeAt(0)
+        val arr = JSONArray()
+        engineLogs.forEach { arr.put(it) }
+        prefs.edit().putString("engine_logs", arr.toString()).apply()
+    }
+
+    fun engineLogText(): String = engineLogs.joinToString("\n")
+
+    fun clearLogs() {
+        engineLogs.clear()
+        prefs.edit().putString("engine_logs", "[]").apply()
+    }
+
+    private fun loadLogs(): MutableList<String> {
+        val out = mutableListOf<String>()
+        try {
+            val arr = JSONArray(prefs.getString("engine_logs", "[]") ?: "[]")
+            for (i in 0 until arr.length()) out.add(arr.getString(i))
+        } catch (e: Exception) { /* ignore */ }
+        return out
+    }
+
+    private fun formatLogTime(): String {
+        val f = java.text.SimpleDateFormat("HH:mm:ss", java.util.Locale.getDefault())
+        return f.format(java.util.Date())
+    }
 
     private var alerts = loadAlerts()
 

@@ -77,6 +77,7 @@ class MarketFragment : Fragment() {
         // 自选股列表：显示名称 + 代码 + 实时行情（红涨绿跌）
         val watchAdapter = WatchAdapter(requireContext(), watchSymbols)
         list.adapter = watchAdapter
+        list.emptyView = root.findViewById(R.id.tv_watch_empty)
         watchAdapter.refresh()
         startAutoRefresh(list)
 

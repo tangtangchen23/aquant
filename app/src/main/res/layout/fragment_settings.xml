@@ -70,9 +70,29 @@
             android:layout_height="wrap_content" android:inputType="numberDecimal" />
 
         <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
+            android:layout_marginTop="14dp" android:text="风控规则(0表示关闭)" android:textStyle="bold" />
+        <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content"
+            android:orientation="horizontal" android:layout_marginTop="4dp">
+            <EditText android:id="@+id/et_stop_loss" android:layout_width="0dp"
+                android:layout_height="wrap_content" android:layout_weight="1"
+                android:hint="单票止损%" android:inputType="numberDecimal" />
+            <EditText android:id="@+id/et_take_profit" android:layout_width="0dp"
+                android:layout_height="wrap_content" android:layout_weight="1"
+                android:layout_marginStart="6dp"
+                android:hint="单票止盈%" android:inputType="numberDecimal" />
+            <EditText android:id="@+id/et_max_dd" android:layout_width="0dp"
+                android:layout_height="wrap_content" android:layout_weight="1"
+                android:layout_marginStart="6dp"
+                android:hint="回撤熔断%" android:inputType="numberDecimal" />
+        </LinearLayout>
+
+        <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
             android:layout_marginTop="14dp" android:text="实盘网关URL(可选,对接QMT/EasyTrader)" android:textStyle="bold" />
         <EditText android:id="@+id/et_gateway" android:layout_width="match_parent"
             android:layout_height="wrap_content" android:inputType="textUri" />
+        <TextView android:id="@+id/tv_gateway_status" android:layout_width="match_parent"
+            android:layout_height="wrap_content" android:layout_marginTop="2dp"
+            android:textSize="12sp" />
 
         <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
             android:layout_marginTop="14dp" android:text="当前版本" android:textStyle="bold" />

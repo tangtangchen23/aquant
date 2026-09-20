@@ -18,6 +18,8 @@ class QuantApp : Application() {
                 "quant_trade", "交易通知", NotificationManager.IMPORTANCE_LOW))
             createNotificationChannel(NotificationChannel(
                 "quant_alert", "行情提醒", NotificationManager.IMPORTANCE_HIGH))
+            createNotificationChannel(NotificationChannel(
+                EngineService.CHANNEL_ID, "后台引擎", NotificationManager.IMPORTANCE_LOW))
         }
     }
 }
