@@ -43,13 +43,94 @@ object MarketService {
     }
 
     /** Fetch recent daily K-lines (qfq). */
-    suspend fun fetchKline(code: String, limit: Int = 160): List<KLine> = withContext(Dispatchers.IO) {
+    suspend fun fetchKline(code: String, limit: Int = 160): List<KLine> = fetchKlineBy(code, klt = 101, limit = limit)
+
+    /**
+     * Fetch K-lines of a given period by Eastmoney klt code:
+     * 101=日线 102=周线 103=月线.
+     */
+    suspend fun fetchKlineBy(code: String, klt: Int = 101, limit: Int = 200): List<KLine> = withContext(Dispatchers.IO) {
         val secid = toSecid(code)
         val url = "https://push2his.eastmoney.com/api/qt/stock/kline/get?" +
-            "secid=$secid&klt=101&fqt=1&lmt=$limit&end=20500101&fields1=f1,f2,f3,f4,f5,f6&" +
+            "secid=$secid&klt=$klt&fqt=1&lmt=$limit&end=20500101&fields1=f1,f2,f3,f4,f5,f6&" +
             "fields2=f51,f52,f53,f54,f55,f56,f57&ut=fa5fd1943c7b386f172d6893dbfba10b"
         val json = JSONObject(http(url))
         parseKlines(json)
+    }
+
+    /** 年线：拉取足够长的日线，按自然年聚合成年度K线。 */
+    suspend fun fetchYearKline(code: String): List<KLine> = withContext(Dispatchers.IO) {
+        val daily = fetchKlineBy(code, klt = 101, limit = 5000)
+        if (daily.isEmpty()) return@withContext emptyList()
+        val grouped = daily.groupBy { it.date.substring(0, 4) } // "2024-xx" 前4位为年
+        grouped.keys.sorted().map { year ->
+            val bars = grouped[year]!!
+            KLine(
+                date = year,
+                open = bars.first().open,
+                high = bars.maxOf { it.high },
+                low = bars.minOf { it.low },
+                close = bars.last().close,
+                volume = bars.sumOf { it.volume },
+                amount = bars.sumOf { it.amount }
+            )
+        }
+    }
+
+    /**
+     * 120分时线：拉取60分K线后，把相邻两根合成一根120分钟K线；
+     * 末根若为单根则单独保留。open=第一根open, close=最后一根close, 高低取合并区间的极值。
+     */
+    suspend fun fetch120Kline(code: String): List<KLine> = withContext(Dispatchers.IO) {
+        val m60 = fetchKlineBy(code, klt = 60, limit = 400)
+        if (m60.isEmpty()) return@withContext emptyList()
+        val out = mutableListOf<KLine>()
+        var i = 0
+        while (i < m60.size) {
+            val a = m60[i]
+            val b = m60.getOrNull(i + 1)
+            if (b != null) {
+                out.add(KLine(
+                    date = a.date,
+                    open = a.open,
+                    high = maxOf(a.high, b.high),
+                    low = minOf(a.low, b.low),
+                    close = b.close,
+                    volume = a.volume + b.volume,
+                    amount = a.amount + b.amount
+                ))
+                i += 2
+            } else {
+                out.add(a)
+                i += 1
+            }
+        }
+        out
+    }
+
+    /** 分时数据点：时间 + 现价。 */
+    data class TrendPoint(val time: String, val price: Double)
+
+    /**
+     * 当日分时行情（trends2 接口）。返回当日每分钟的价格序列，用于分时图。
+     */
+    suspend fun fetchTrend(code: String): List<TrendPoint> = withContext(Dispatchers.IO) {
+        val secid = toSecid(code)
+        val url = "https://push2.eastmoney.com/api/qt/stock/trends2/get?" +
+            "secid=$secid&fields1=f1,f2,f3,f6,f7,f8&fields2=f51,f53,f56,f58&ndays=1&" +
+            "iscr=0&iscca=0&ut=fa5fd1943c7b386f172d6893dbfba10b"
+        val json = JSONObject(http(url))
+        val data = json.optJSONObject("data") ?: return@withContext emptyList()
+        val arr = data.optJSONArray("trends") ?: return@withContext emptyList()
+        val out = mutableListOf<TrendPoint>()
+        for (i in 0 until arr.length()) {
+            val parts = arr.getString(i).split(",")
+            if (parts.size >= 2) {
+                val price = parts[1].toDoubleOrNull() ?: continue
+                if (price > 0) out.add(TrendPoint(parts[0], price))
+            }
+        }
+        out
     }
 
     /** Fetch real-time quote. */

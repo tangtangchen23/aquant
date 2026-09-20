@@ -5,10 +5,9 @@ import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import android.widget.Button
-import android.widget.EditText
 import android.widget.TextView
 import androidx.fragment.app.Fragment
+import androidx.lifecycle.lifecycleScope
 import com.github.mikephil.charting.charts.BarChart
 import com.github.mikephil.charting.charts.CombinedChart
 import com.github.mikephil.charting.components.AxisBase
@@ -27,12 +26,26 @@ import com.github.mikephil.charting.formatter.ValueFormatter
 import com.quantapp.trader.R
 import com.quantapp.trader.data.KLine
 import com.quantapp.trader.data.MarketService
+import com.quantapp.trader.data.MarketService.TrendPoint
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.isActive
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
 class ChartFragment : Fragment() {
 
+    private enum class Period(val label: String) {
+        MINUTE("分时"), DAY("日线"), WEEK("周线"), YEAR("年线"), M120("120分时")
+    }
+
+    private var symbol: String = ""
+
+    /** 当前周期数据。K线周期用 bars；分时用 trend。 */
     private var bars: List<KLine> = emptyList()
+    private var trend: List<TrendPoint> = emptyList()
+
+    private var period: Period = Period.MINUTE
     private var showMA = true
     private var showVOL = true
     private var showMACD = true
@@ -44,16 +57,14 @@ class ChartFragment : Fragment() {
     private lateinit var tvVOL: TextView
     private lateinit var tvMACD: TextView
     private lateinit var tvInfo: TextView
-    private lateinit var etSymbol: EditText
-    private lateinit var btnLoad: Button
 
     private val UP_COLOR = "#E53935"
     private val DOWN_COLOR = "#43A047"
 
+    private val periodButtons = linkedMapOf<Period, TextView>()
+
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View {
         val root = inflater.inflate(R.layout.fragment_chart, container, false)
-        etSymbol = root.findViewById(R.id.et_symbol)
-        btnLoad = root.findViewById(R.id.btn_load)
         chart = root.findViewById(R.id.kline_chart)
         volChart = root.findViewById(R.id.vol_chart)
         macdChart = root.findViewById(R.id.macd_chart)
@@ -62,51 +73,150 @@ class ChartFragment : Fragment() {
         tvMACD = root.findViewById(R.id.tv_macd)
         tvInfo = root.findViewById(R.id.tv_chart_info)
 
-        tvMA.setOnClickListener { showMA = !showMA; refreshIndicatorAppearance(); renderCharts() }
-        tvVOL.setOnClickListener { showVOL = !showVOL; refreshIndicatorAppearance(); renderCharts() }
-        tvMACD.setOnClickListener { showMACD = !showMACD; refreshIndicatorAppearance(); renderCharts() }
+        periodButtons[Period.MINUTE] = root.findViewById(R.id.tv_period_minute)
+        periodButtons[Period.DAY] = root.findViewById(R.id.tv_period_day)
+        periodButtons[Period.WEEK] = root.findViewById(R.id.tv_period_week)
+        periodButtons[Period.YEAR] = root.findViewById(R.id.tv_period_year)
+        periodButtons[Period.M120] = root.findViewById(R.id.tv_period_120)
+
+        tvMA.setOnClickListener { showMA = !showMA; refreshIndicatorAppearance(); if (period != Period.MINUTE) renderCharts() }
+        tvVOL.setOnClickListener { showVOL = !showVOL; refreshIndicatorAppearance(); if (period != Period.MINUTE) renderCharts() }
+        tvMACD.setOnClickListener { showMACD = !showMACD; refreshIndicatorAppearance(); if (period != Period.MINUTE) renderCharts() }
         refreshIndicatorAppearance()
 
-        btnLoad.setOnClickListener { b ->
-            val raw = etSymbol.text.toString().trim()
-            if (raw.isEmpty()) return@setOnClickListener
-            b.isEnabled = false
-            tvInfo.text = "解析/加载中..."
-            AppScope.launch {
-                try {
-                    // 支持股票名称：先解析为代码，再加载K线
-                    val code = MarketService.resolveCode(raw)
-                    if (code != raw) etSymbol.setText(code)
-                    bars = withContext(Dispatchers.IO) { MarketService.fetchKline(code, 200) }
-                    if (bars.isEmpty()) {
-                        tvInfo.text = "未获取到数据，请检查代码或名称"
-                    } else {
-                        renderCharts()
-                        val last = bars.last()
-                        tvInfo.text = "$code　共${bars.size}根日K　最新收盘 ${String.format("%.2f", last.close)}"
-                    }
-                } catch (e: Exception) {
-                    tvInfo.text = "加载失败：${e.message}"
-                } finally {
-                    b.isEnabled = true
+        // 去除了输入股票代码加载——该功能与行情页重复。symbol 由行情页点击自选股/卡片时注入。
+        symbol = MainActivity.pendingChartSymbol ?: ""
+        MainActivity.pendingChartSymbol = null
+
+        // 周期切换
+        periodButtons.forEach { (p, tv) ->
+            tv.setOnClickListener { switchPeriod(p) }
+        }
+
+        updatePeriodButtonAppearance()
+
+        if (symbol.isBlank()) {
+            tvInfo.text = "未指定股票"
+        } else {
+            loadPeriod(Period.MINUTE, firstLoad = true)
+        }
+
+        // 分时图实时刷新
+        viewLifecycleOwner.lifecycleScope.launch {
+            while (isActive) {
+                delay(10_000)
+                if (period == Period.MINUTE && symbol.isNotBlank() && isVisible) {
+                    loadTrend(silent = true)
                 }
             }
         }
-
-        // 由行情页点击自选股触达：自动加载该股票K线
-        val pendingSymbol = MainActivity.pendingChartSymbol
-        if (!pendingSymbol.isNullOrBlank()) {
-            MainActivity.pendingChartSymbol = null
-            etSymbol.setText(pendingSymbol)
-            btnLoad.performClick()
-        }
         return root
+    }
+
+    private fun switchPeriod(p: Period) {
+        if (period == p) return
+        period = p
+        updatePeriodButtonAppearance()
+        loadPeriod(p)
+    }
+
+    private fun updatePeriodButtonAppearance() {
+        periodButtons.forEach { (p, tv) ->
+            val active = p == period
+            tv.setBackgroundResource(if (active) R.drawable.bg_indicator_on else R.drawable.bg_indicator_off)
+            tv.setTypeface(null, if (active) android.graphics.Typeface.BOLD else android.graphics.Typeface.NORMAL)
+            tv.alpha = if (active) 1f else 0.72f
+        }
+    }
+
+    private fun loadPeriod(p: Period, firstLoad: Boolean = false) {
+        tvInfo.text = when {
+            symbol.isBlank() -> "未指定股票"
+            else -> "加载${p.label}中..."
+        }
+        AppScope.launch {
+            try {
+                when (p) {
+                    Period.MINUTE -> {
+                        withContext(Dispatchers.IO) { trend = MarketService.fetchTrend(symbol) }
+                        if (trend.isEmpty()) tvInfo.text = "未获取到分时数据"
+                        else { renderTrend(); tvInfo.text = "$symbol　分时图（最后一分钟 ${String.format("%.2f", trend.last().price)}）" }
+                    }
+                    Period.DAY -> {
+                        bars = withContext(Dispatchers.IO) { MarketService.fetchKline(symbol, 240) }
+                        postCandle(p, "日K")
+                    }
+                    Period.WEEK -> {
+                        bars = withContext(Dispatchers.IO) { MarketService.fetchKlineBy(symbol, klt = 102, limit = 400) }
+                        postCandle(p, "周K")
+                    }
+                    Period.YEAR -> {
+                        bars = withContext(Dispatchers.IO) { MarketService.fetchYearKline(symbol) }
+                        postCandle(p, "年K")
+                    }
+                    Period.M120 -> {
+                        bars = withContext(Dispatchers.IO) { MarketService.fetch120Kline(symbol) }
+                        postCandle(p, "120分K")
+                    }
+                }
+            } catch (e: Exception) {
+                tvInfo.text = "加载${p.label}失败：${e.message}"
+            }
+        }
+    }
+
+    private fun postCandle(p: Period, label: String) {
+        if (bars.isEmpty()) {
+            tvInfo.text = "未获取到${p.label}数据"
+            return
+        }
+        renderCharts()
+        val last = bars.last()
+        tvInfo.text = "$symbol　$label　共${bars.size}根　最新收盘 ${String.format("%.2f", last.close)}"
+    }
+
+    private fun loadTrend(silent: Boolean) {
+        AppScope.launch {
+            try {
+                val t = withContext(Dispatchers.IO) { MarketService.fetchTrend(symbol) }
+                if (t.isNotEmpty()) { trend = t; renderTrend() }
+            } catch (e: Exception) { /* 静默失败，等待下轮 */ }
+        }
     }
 
     private fun refreshIndicatorAppearance() {
         tvMA.setBackgroundResource(if (showMA) R.drawable.bg_indicator_on else R.drawable.bg_indicator_off)
         tvVOL.setBackgroundResource(if (showVOL) R.drawable.bg_indicator_on else R.drawable.bg_indicator_off)
         tvMACD.setBackgroundResource(if (showMACD) R.drawable.bg_indicator_on else R.drawable.bg_indicator_off)
+    }
+
+    /** 分时图：以折线绘制每分钟价格。 */
+    private fun renderTrend() {
+        val entries = trend.mapIndexed { i, t -> Entry(i.toFloat(), t.price.toFloat()) }
+        val set = LineDataSet(entries, "分时").apply {
+            color = Color.parseColor("#2196F3")
+            lineWidth = 1.6f
+            setDrawCircles(false)
+            setDrawValues(false)
+            mode = LineDataSet.Mode.LINEAR
+        }
+        val data = CombinedData()
+        data.setData(LineData(set))
+        chart.apply {
+            this.data = data
+            description.isEnabled = false
+            legend.isEnabled = true
+            legend.textSize = 10f
+            xAxis.position = XAxis.XAxisPosition.BOTTOM
+            xAxis.labelCount = 5
+            xAxis.valueFormatter = trendFormatter()
+            axisRight.isEnabled = false
+            setScaleEnabled(true)
+            setPinchZoom(true)
+            invalidate()
+        }
+        volChart.visibility = View.GONE
+        macdChart.visibility = View.GONE
     }
 
     private fun renderCharts() {
@@ -117,7 +227,7 @@ class ChartFragment : Fragment() {
     }
 
     private fun renderPriceChart() {
-        val candleSet = CandleDataSet(barEntries(), "日K").apply {
+        val candleSet = CandleDataSet(barEntries(), period.label + "K").apply {
             color = Color.GRAY
             shadowColor = Color.DKGRAY
             shadowWidth = 0.7f
@@ -169,7 +279,6 @@ class ChartFragment : Fragment() {
         val colors = ArrayList<Int>()
         val entries = ArrayList<BarEntry>()
         bars.forEachIndexed { i, b ->
-            // 以“万手”为展示单位，减小数值量级
             entries.add(BarEntry(i.toFloat(), (b.volume / 1_0000_00f)))
             colors.add(Color.parseColor(if (b.close >= b.open) UP_COLOR else DOWN_COLOR))
         }
@@ -245,7 +354,6 @@ class ChartFragment : Fragment() {
         CandleEntry(i.toFloat(), b.high.toFloat(), b.low.toFloat(), b.open.toFloat(), b.close.toFloat())
     }
 
-    /** 均线：从第 period-1 根开始才有完整窗口。 */
     private fun maLine(period: Int): List<Entry> {
         val out = ArrayList<Entry>()
         var sum = 0.0
@@ -261,7 +369,6 @@ class ChartFragment : Fragment() {
     private fun LineEntries(v: List<Double>): List<Entry> =
         v.mapIndexed { i, x -> Entry(i.toFloat(), x.toFloat()) }
 
-    /** EMA 序列。seed 取前 period 根 SMA。 */
     private fun ema(values: DoubleArray, period: Int): DoubleArray {
         val out = DoubleArray(values.size)
         var seed = 0.0
@@ -274,7 +381,6 @@ class ChartFragment : Fragment() {
         return out
     }
 
-    /** MACD：返回 (DIF, DEA, MACD柱)。柱 = (DIF - DEA) * 2。 */
     private fun macd(closes: List<Double>): Triple<List<Double>, List<Double>, List<Double>> {
         val c = closes.toDoubleArray()
         val e12 = ema(c, 12)
@@ -292,6 +398,13 @@ class ChartFragment : Fragment() {
         override fun getAxisLabel(value: Float, axis: AxisBase?): String {
             val idx = value.toInt()
             return if (idx in bars.indices) bars[idx].date.takeLast(5) else ""
+        }
+    }
+
+    private fun trendFormatter() = object : ValueFormatter() {
+        override fun getAxisLabel(value: Float, axis: AxisBase?): String {
+            val idx = value.toInt()
+            return if (idx in trend.indices) trend[idx].time.substring(11) else ""
         }
     }
 }

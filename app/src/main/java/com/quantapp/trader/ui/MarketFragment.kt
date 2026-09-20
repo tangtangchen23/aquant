@@ -13,11 +13,15 @@ import android.widget.Toast
 import androidx.appcompat.app.AlertDialog
 import androidx.core.content.ContextCompat
 import androidx.fragment.app.Fragment
+import androidx.lifecycle.lifecycleScope
 import com.quantapp.trader.R
 import com.quantapp.trader.data.MarketService
 import com.quantapp.trader.data.Quote
 import com.quantapp.trader.trading.App
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.isActive
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import org.json.JSONArray
 
@@ -36,6 +40,8 @@ class MarketFragment : Fragment() {
     private var tvQLow: TextView? = null
     private var tvQVolume: TextView? = null
     private var tvQTime: TextView? = null
+    private var cardQuote: View? = null
+    private var btnAddWatch: Button? = null
 
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View {
         val root = inflater.inflate(R.layout.fragment_market, container, false)
@@ -45,6 +51,8 @@ class MarketFragment : Fragment() {
         val btnRefresh = root.findViewById<TextView>(R.id.btn_refresh_watch)
         val list = root.findViewById<ListView>(R.id.list_watch)
         val btnClearHistory = root.findViewById<TextView>(R.id.btn_clear_history)
+        btnAddWatch = btnAdd
+        cardQuote = root.findViewById(R.id.card_quote)
 
         // 报价卡片字段
         tvQName = root.findViewById(R.id.tv_q_name)
@@ -70,6 +78,7 @@ class MarketFragment : Fragment() {
         val watchAdapter = WatchAdapter(requireContext(), watchSymbols)
         list.adapter = watchAdapter
         watchAdapter.refresh()
+        startAutoRefresh(list)
 
         // 查询历史自动补全
         val historyAdapter = ArrayAdapter(requireContext(),
@@ -207,6 +216,7 @@ class MarketFragment : Fragment() {
     }
 
     private fun setQuoteLoading() {
+        cardQuote?.visibility = View.VISIBLE
         tvQName?.text = "加载中..."
         tvQChange?.text = "--"
         tvQPrice?.text = "--"
@@ -214,6 +224,8 @@ class MarketFragment : Fragment() {
 
     private fun resetQuoteCard() {
         quoteSymbol = null
+        cardQuote?.visibility = View.GONE
+        btnAddWatch?.visibility = View.GONE
         tvQName?.text = "未查询"
         tvQChange?.text = ""
         tvQPrice?.text = "--"
@@ -228,6 +240,8 @@ class MarketFragment : Fragment() {
     /** 用实时行情填充报价卡片，价格与涨跌幅红涨绿跌。 */
     private fun fillQuoteCard(q: Quote) {
         quoteSymbol = q.symbol
+        cardQuote?.visibility = View.VISIBLE
+        btnAddWatch?.visibility = View.VISIBLE
         val textColor = if (q.changePct >= 0) R.color.up else R.color.down
         val changeText = "${if (q.changePct >= 0) "+" else ""}${String.format("%.2f", q.changePct)}%"
         tvQName?.text = "${q.name}  ${q.symbol}"
@@ -286,5 +300,20 @@ class MarketFragment : Fragment() {
     private fun clearHistory() {
         queryHistory.clear()
         prefs().edit().putString("history", "[]").apply()
+    }
+
+    /**
+     * 自选股实时行情自动刷新：有自选股且页面对用户可见时，每 10 秒刷新一轮，
+     * 无需手工点击刷新。
+     */
+    private fun startAutoRefresh(list: ListView) {
+        viewLifecycleOwner.lifecycleScope.launch {
+            while (isActive) {
+                delay(10_000)
+                if (watchSymbols.isNotEmpty()) {
+                    (list.adapter as? WatchAdapter)?.refresh()
+                }
+            }
+        }
     }
 }

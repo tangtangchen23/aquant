@@ -1,8 +1,8 @@
 {
   "latest": {
-    "version": "1.4.6",
-    "versionCode": 17,
+    "version": "1.4.7",
+    "versionCode": 18,
     "apkUrl": "https://github.com/tangtangchen23/aquant/releases/latest/download/aquant-release.apk",
-    "changelog": "v1.4.6：修复“检查更新检测不到最新版本”——改用GitHub API实时读取版本清单，杜绝raw CDN缓存导致的一直提示已是最新"
+    "changelog": "v1.4.7：行情页卡片/加入自选按钮按需显隐、自选股与分时图自动实时刷新；K线图新增周期切换(分时/日/周/年/120分)、返回回到行情页；策略页三按钮对齐；修复浅色/深色主题字体对比度；模拟盘页签更名“交易”"
   }
 }
