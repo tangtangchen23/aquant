@@ -140,6 +140,15 @@ with open(path, "w", encoding="utf-8") as f:
     f.write("\n")
 print("已更新", ver, code)
 PY
+  # 把 latest.json 提交并推送到 main，确保应用内能读到最新版本清单。
+  # 此前脚本只在本地改文件、从不推送，导致远端 latest.json 长期停留在旧版本。
+  echo "同步 latest.json 到远端 main ..."
+  git add "$LATEST_JSON"
+  if git commit -m "chore: 同步latest.json至v$NEW_VERSION" >/dev/null 2>&1; then
+    git push origin HEAD:main || echo "⚠️  git push 失败，请手动推送 latest.json"
+  else
+    echo "latest.json 无变更，跳过提交"
+  fi
 fi
 
 # ---------- 5. 输出永久直链 ----------
