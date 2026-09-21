@@ -12,7 +12,6 @@ import android.widget.ArrayAdapter
 import android.widget.AutoCompleteTextView
 import android.widget.Button
 import android.widget.EditText
-import android.widget.ListView
 import android.widget.LinearLayout
 import android.widget.ScrollView
 import android.widget.Spinner
@@ -121,7 +120,7 @@ class StrategyFragment : Fragment() {
         val tvBacktest = root.findViewById<TextView>(R.id.tv_backtest)
         val chartEquity = root.findViewById<LineChart>(R.id.chart_equity)
         val tvStatus = root.findViewById<TextView>(R.id.tv_running_status)
-        val listActive = root.findViewById<ListView>(R.id.list_active)
+        val listActive = root.findViewById<LinearLayout>(R.id.list_active)
         tvLog = root.findViewById(R.id.tv_engine_log)
         logScroll = tvLog?.parent as? ScrollView
 
@@ -199,45 +198,6 @@ class StrategyFragment : Fragment() {
         root.findViewById<Button>(R.id.btn_clear_log).setOnClickListener {
             App.appStore.clearLogs()
             refreshLog()
-        }
-
-        // ---------- 出场纪律参数（自动交易生效） ----------
-        fun showVal(et: EditText, v: Double, int: Boolean) {
-            et.setText(if (v <= 0) "" else if (int) v.toInt().toString() else String.format("%.2f", v))
-        }
-        fun readVal(et: EditText): Double = et.text.toString().trim().toDoubleOrNull() ?: 0.0
-        fun readInt(et: EditText): Int = et.text.toString().trim().toIntOrNull() ?: 0
-
-        val etTrailActivate = root.findViewById<EditText>(R.id.et_trail_activate)
-        val etTrailStop = root.findViewById<EditText>(R.id.et_trail_stop)
-        val etBreakEven = root.findViewById<EditText>(R.id.et_breakeven)
-        val etATRIn = root.findViewById<EditText>(R.id.et_atr_enabled)
-        val etATRMult = root.findViewById<EditText>(R.id.et_atr_mult)
-        val etFirstBuy = root.findViewById<EditText>(R.id.et_first_buy)
-        val etAddPct = root.findViewById<EditText>(R.id.et_add_pct)
-        val etAddThr = root.findViewById<EditText>(R.id.et_add_thr)
-        with(App.appStore) {
-            showVal(etTrailActivate, trailingActivatePct, false)
-            showVal(etTrailStop, trailingStopPct, false)
-            showVal(etBreakEven, breakEvenPct, false)
-            showVal(etATRIn, atrStopEnabled.toDouble(), true)
-            showVal(etATRMult, atrMultiplier, false)
-            showVal(etFirstBuy, firstBuyPct, false)
-            showVal(etAddPct, addPositionPct, false)
-            showVal(etAddThr, addThresholdPct, false)
-        }
-        root.findViewById<Button>(R.id.btn_apply_exit).setOnClickListener {
-            with(App.appStore) {
-                trailingActivatePct = readVal(etTrailActivate)
-                trailingStopPct = readVal(etTrailStop)
-                breakEvenPct = readVal(etBreakEven)
-                atrStopEnabled = readInt(etATRIn).coerceIn(0, 1)
-                atrMultiplier = readVal(etATRMult).coerceIn(0.1, 10.0)
-                firstBuyPct = readVal(etFirstBuy).coerceIn(0.1, 1.0)
-                addPositionPct = readVal(etAddPct).coerceIn(0.0, 1.0)
-                addThresholdPct = readVal(etAddThr)
-            }
-            Toast.makeText(requireContext(), "出场纪律参数已保存", Toast.LENGTH_SHORT).show()
         }
 
         // ---------- 通用：回测结果展示（含 AI 白话解读） ----------
@@ -457,17 +417,35 @@ class StrategyFragment : Fragment() {
 
         btnStart.setOnClickListener {
             val raw = etSymbol.text.toString().trim()
-            if (raw.isEmpty()) { Toast.makeText(requireContext(), "请输入股票代码或名称", Toast.LENGTH_SHORT).show(); return@setOnClickListener }
+            if (raw.isEmpty()) {
+                Toast.makeText(requireContext(), "请输入股票代码或名称（多支用逗号/空格分隔）", Toast.LENGTH_SHORT).show()
+                return@setOnClickListener
+            }
             val bid = selectedStrategyId()
             App.appStore.setStrategyConfig(bid, readParams()) // 让实盘引擎使用同样的自定义参数
+            // 支持一次提交多支：按逗号/空格/分号/换行拆分
+            val inputs = raw.split(',', '，', ';', '；', ' ', '\t', '\n')
+                .map { it.trim() }.filter { it.isNotEmpty() }
+            if (inputs.isEmpty()) return@setOnClickListener
             AppScope.launch {
-                val code = try { withContext(Dispatchers.IO) { MarketService.resolveCode(raw) } }
-                    catch (e: Exception) { raw }
-                App.appStore.addStrategy(ActiveStrategy(code, "", bid))
+                val added = mutableListOf<Pair<String, String>>() // code to name
+                for (input in inputs) {
+                    val code = try { withContext(Dispatchers.IO) { MarketService.resolveCode(input) } }
+                        catch (e: Exception) { input }
+                    if (code.isBlank()) continue
+                    val name = try { withContext(Dispatchers.IO) { MarketService.fetchQuote(code).name } }
+                        catch (e: Exception) { "" }
+                    App.appStore.addStrategy(ActiveStrategy(code, name, bid))
+                    added.add(code to name)
+                }
+                if (added.isEmpty()) return@launch
                 TradingEngine.start()
                 refreshStatus(tvStatus)
                 refreshActive(listActive)
-                Toast.makeText(requireContext(), "已启动 $code 的自动化交易", Toast.LENGTH_SHORT).show()
+                App.appStore.addLog("运行中标的（${added.size}）：" +
+                    added.joinToString(" ") { "${it.second.ifEmpty { it.first }}(${it.first})" })
+                Toast.makeText(requireContext(),
+                    "已启动 ${added.size} 支：${added.joinToString(" ") { it.first }}", Toast.LENGTH_SHORT).show()
             }
         }
 
@@ -475,16 +453,6 @@ class StrategyFragment : Fragment() {
             TradingEngine.stop()
             refreshStatus(tvStatus)
             Toast.makeText(requireContext(), "引擎已停止", Toast.LENGTH_SHORT).show()
-        }
-
-        listActive.setOnItemClickListener { _, _, position, _ ->
-            val now = App.appStore.activeStrategies()
-            // 空列表时显示的占位行 / 下标越界都要兜底，避免闪退
-            if (position !in now.indices) return@setOnItemClickListener
-            val item = now[position]
-            App.appStore.removeStrategy(item.symbol)
-            refreshActive(listActive)
-            Toast.makeText(requireContext(), "已移除 ${item.symbol}", Toast.LENGTH_SHORT).show()
         }
 
         TradingEngine.onTicker = { _, _, _, runningCount ->
@@ -513,15 +481,41 @@ class StrategyFragment : Fragment() {
 
     private fun modeText(mode: String) = if (mode == "live") "实盘信号模式" else "模拟盘模式"
 
-    private fun refreshActive(list: ListView) {
+    /** 运行中策略列表：动态构建行（外层 ScrollView 内强制撑开），每行可点击移除。 */
+    private fun refreshActive(container: LinearLayout) {
+        container.removeAllViews()
         val list_ = App.appStore.activeStrategies()
-        list.adapter = ArrayAdapter(requireContext(), android.R.layout.simple_list_item_1,
-            if (list_.isEmpty()) listOf("（暂无运行中策略，点“启动自动交易”添加）")
-            else list_.map { "${it.symbol}  ${it.name}  ${strategyLabel(it.strategyId)}  [${it.lastAction.ifEmpty { "未触发" }}] ${it.lastReason}" })
+        if (list_.isEmpty()) {
+            container.addView(activeRow(requireContext(), "", "（暂无运行中策略，点“启动自动交易”添加）", null))
+            return
+        }
+        for (s in list_) {
+            val text = "${s.symbol}  ${s.name}  ${strategyLabel(s.strategyId)}  [${s.lastAction.ifEmpty { "未触发" }}] ${s.lastReason}"
+            container.addView(activeRow(requireContext(), s.symbol, text) {
+                App.appStore.removeStrategy(it)
+                refreshActive(container)
+                Toast.makeText(requireContext(), "已移除 $it", Toast.LENGTH_SHORT).show()
+            })
+        }
     }
 
+    private fun activeRow(ctx: android.content.Context, symbol: String, text: String, onClick: ((String) -> Unit)?): TextView {
+        val tv = TextView(ctx)
+        tv.text = text
+        tv.textSize = 14f
+        tv.setPadding(dp2(8), dp2(8), dp2(8), dp2(8))
+        if (onClick != null) {
+            tv.setBackgroundResource(R.drawable.bg_card)
+            tv.setOnClickListener { onClick(symbol) }
+        }
+        return tv
+    }
+
+    private fun dp2(v: Int): Int = (v * resources.displayMetrics.density).toInt()
+
     private fun strategyLabel(id: String) = when (id) {
-        "rsi" -> "RSI"; "macd" -> "MACD"; "boll" -> "布林带"; else -> "双均线"
+        "rsi" -> "RSI"; "macd" -> "MACD"; "boll" -> "布林带"; "t_ma" -> "均线做T"
+        "t_boll" -> "布林做T"; "t_vwap" -> "VWAP做T"; else -> "双均线"
     }
 
     /** 绘制策略权益曲线与基准曲线。 */

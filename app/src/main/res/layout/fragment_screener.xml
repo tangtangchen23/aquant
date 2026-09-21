@@ -10,7 +10,7 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:text="选股器"
-        android:textSize="20sp"
+        android:textSize="22sp"
         android:textStyle="bold"
         android:textColor="@color/text_primary" />
 
@@ -26,10 +26,10 @@
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginTop="12dp"
-        android:background="@color/card_bg"
+        android:layout_marginTop="14dp"
+        android:background="@drawable/bg_card"
         android:orientation="vertical"
-        android:padding="10dp">
+        android:padding="14dp">
 
         <TextView
             android:layout_width="wrap_content"
@@ -82,21 +82,24 @@
             <EditText
                 android:id="@+id/et_limit"
                 android:layout_width="90dp"
-                android:layout_height="wrap_content"
-                android:gravity="end"
+                android:layout_height="46dp"
+                android:gravity="center_vertical"
                 android:inputType="number"
-                android:text="120" />
+                android:text="100"
+                android:background="@drawable/bg_input"
+                android:textAlignment="viewEnd"
+                android:minHeight="0dp" />
         </LinearLayout>
     </LinearLayout>
 
     <Button
         android:id="@+id/btn_screen"
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="12dp"
-        android:backgroundTint="@color/brand"
+        android:layout_height="48dp"
+        android:layout_marginTop="14dp"
+        android:background="@drawable/bg_btn_primary"
         android:text="开始选股"
-        android:textColor="#FFFFFF" />
+        android:textColor="@color/on_brand" />
 
     <!-- 进度 -->
     <TextView

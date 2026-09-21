@@ -52,7 +52,13 @@ object TradingEngine {
     fun start() {
         if (running.get()) return
         running.set(true)
-        App.appStore.addLog("自动交易引擎启动")
+        val active = App.appStore.activeStrategies()
+        if (active.isEmpty()) {
+            App.appStore.addLog("自动交易引擎启动")
+        } else {
+            val list = active.joinToString(" ") { "${it.name.ifEmpty { it.symbol }}(${it.symbol})" }
+            App.appStore.addLog("自动交易引擎启动 · 运行中 ${active.size} 支：$list")
+        }
         job = scope.launch {
             while (isActive) {
                 try {
@@ -87,7 +93,15 @@ object TradingEngine {
     val isRunning: Boolean get() = running.get()
 
     /** 每轮数据：只拉取一次，估值与策略评估共用。 */
-    private class TickData(val price: Double, val bars: List<KLine>, val lastBarKey: String)
+    private class TickData(
+        val price: Double,
+        val bars: List<KLine>,
+        val lastBarKey: String,
+        /** 做T用：日内价格序列（分时或60分，由 tfreq 决定），非做T标的下为 null。 */
+        val intraday: List<Double>? = null,
+        /** 做T用：日内成交量序列（与 intraday 等长，VWAP 需要）。 */
+        val intradayVol: List<Double>? = null
+    )
 
     private suspend fun tick() {
         val store = App.appStore
@@ -100,7 +114,10 @@ object TradingEngine {
             if (!TradingSession.shouldEvaluate()) return
         }
 
-        // 1) 统一拉取所有活跃标的的行情 + K线
+        // 跨交易日：把隔日隔日的当日买入转为可卖底仓
+        store.paper.rollIntraday()
+
+        // 1) 统一拉取所有活跃标的的行情 + K线（做T标的额外拉分时/60分日内序列）
         val bundle = mutableMapOf<String, TickData>()
         for (a in active) {
             try {
@@ -108,7 +125,27 @@ object TradingEngine {
                 val bars = MarketService.fetchKline(a.symbol, limit = 120)
                 if (bars.isNotEmpty()) {
                     val key = bars.last().date
-                    bundle[a.symbol] = TickData(quote.price, bars, key)
+                    val isT = com.quantapp.trader.strategy.isTStrategy(a.strategyId)
+                    var intra: List<Double>? = null
+                    var intraVol: List<Double>? = null
+                    if (isT) {
+                        try {
+                            val cfg = store.strategyConfig(a.strategyId)
+                            val tfreq = cfg["tfreq"]?.toInt() ?: 0
+                            if (tfreq == 1) {
+                                // 60分周期做T：用分时序列做中枢更贴近日内波动
+                                val m = MarketService.fetchKlineBy(a.symbol, klt = 60, limit = 40)
+                                intra = m.map { it.close }
+                                intraVol = m.map { it.volume.toDouble() }
+                            } else {
+                                // 分时做T：默认 240 分钟数据（或当日分钟）
+                                val t = MarketService.fetchTrend(a.symbol)
+                                intra = t.map { it.price }
+                                intraVol = t.map { it.volume }
+                            }
+                        } catch (e: Exception) { /* 日内数据失败则仅用日线 */ }
+                    }
+                    bundle[a.symbol] = TickData(quote.price, bars, key, intra, intraVol)
                 }
             } catch (e: Exception) { /* 静默，等待下轮重试 */ }
         }
@@ -266,6 +303,12 @@ object TradingEngine {
         val lastPrice = d.price
         val lastClose = bars.last().close
 
+        // 做T策略：走日内多次高抛低吸专用路径
+        if (com.quantapp.trader.strategy.isTStrategy(a.strategyId)) {
+            executeTrading(a, d)
+            return
+        }
+
         val strategy = strategyOf(a.strategyId)
         val name = if (a.name.isNotEmpty()) a.name else resolveName(a.symbol)
 
@@ -353,6 +396,154 @@ object TradingEngine {
         val base = store.paper.cash * store.positionPct
         val cap = store.maxPositionPct
         return if (cap > 0) base.coerceAtMost(store.initialCapital() * cap) else base
+    }
+
+    /**
+     * 做T主逻辑：日内多次高抛低吸。
+     * - 数据：d.intraday 日内价格序列（分时或60分，全局 tFrequency 选择）。
+     * - 中枢：按策略类型计算分时/60分均线（或自身布林/VWAP 近似），生成上下轨。
+     * - 方向：价格跌破下轨→低吸买入；突破上轨→高抛卖出；回到中枢→观望。
+     * - T+1：买入当日记入 intradayQty，高抛只卖可卖底仓（sellableQty）。
+     * - 网格锚价：tLastBuy / tLastSell 使每次触发都要求价格比上次更极端一档，实现日内多档而不抖动。
+     */
+    private suspend fun executeTrading(a: ActiveStrategy, d: TickData) {
+        val store = App.appStore
+        val bars = d.bars
+        val price = d.price
+        val name = if (a.name.isNotEmpty()) a.name else resolveName(a.symbol)
+
+        // 计算日内中枢与上下轨
+        val band = computeTIntraband(a.strategyId, d)
+        if (band == null) {
+            a.lastReason = "做T：日内数据不足，等待下轮"; a.lastProcessedClose = bars.last().close
+            store.updateStrategy(a)
+            return
+        }
+        val (pivot, lower, upper) = band
+
+        val devPct = store.strategyConfig(a.strategyId)["devPct"]
+            ?: if (a.strategyId == "t_boll") 3.0 else if (a.strategyId == "t_vwap") 2.0 else 5.0
+        val dev = devPct / 100.0
+        val bandQtyTarget = positionTarget(store) * store.tBandPct
+
+        val pos = store.paper.positions[a.symbol]
+
+        // A) 无持仓 → 自动建底仓：仅当价格下探到下轨下方才介入（避免追高）
+        if (pos == null || pos.qty <= 0) {
+            if (price < lower) {
+                val target = positionTarget(store) * store.tBasePct
+                doTBuy(a, name, price, target, "做T建仓：跌破下轨${fmt(lower)}")
+            } else {
+                a.lastReason = "做T：等待跌破下轨${fmt(lower)}建仓（现价${fmt(price)}）"
+                a.lastProcessedClose = bars.last().close; store.updateStrategy(a)
+            }
+            return
+        }
+
+        // B) 有底仓 → 高抛 / 低吸
+        val sellable = pos.sellableQty()
+        // 高抛：突破上轨，且比上次卖出价高一档；只卖可卖的隔日底仓
+        if (price >= upper && sellable >= 100 &&
+            (pos.tLastSell <= 0 || price >= pos.tLastSell * (1 + dev))) {
+            val qty = ((bandQtyTarget / (price * 100)).toInt().coerceAtLeast(1) * 100)
+                .coerceAtMost(((sellable / 100).toInt() * 100).coerceAtLeast(0))
+            if (qty >= 100) {
+                doTSell(a, name, price, qty, "做T高抛：突破上轨${fmt(upper)}")
+            } else {
+                a.lastReason = "做T：上轨${fmt(upper)}可卖底仓不足"; a.lastProcessedClose = bars.last().close
+                store.updateStrategy(a)
+            }
+            return
+        }
+        // 低吸：跌破下轨，且比上次买入价低一档；用现金买（计入当日不可卖）
+        if (price <= lower &&
+            (pos.tLastBuy <= 0 || price <= pos.tLastBuy * (1 - dev)) &&
+            store.paper.cash >= price * 100) {
+            val target = bandQtyTarget
+            doTBuy(a, name, price, target, "做T低吸：跌破下轨${fmt(lower)}")
+            return
+        }
+
+        // C) 区间内观望
+        a.lastReason = "做T：中枢${fmt(pivot)}附近观望（下轨${fmt(lower)}上轨${fmt(upper)}）"
+        a.lastProcessedClose = bars.last().close; store.updateStrategy(a)
+    }
+
+    /** 计算做T中枢与上下轨：[pivot, lower, upper]；返回空表示数据不足。 */
+    private fun computeTIntraband(id: String, d: TickData): Triple<Double, Double, Double>? {
+        val store = App.appStore
+        val series = d.intraday ?: return null
+        if (series.size < 3) return null
+        val last = d.price
+        val closes = series + last
+        return when (id) {
+            "t_vwap" -> {
+                val vol = d.intradayVol
+                // VWAP：成交额/成交量 加权，用日内价格做近似 ±2%
+                val mv = if (vol != null && vol.isNotEmpty() && series.isNotEmpty()) {
+                    var sum = 0.0; var w = 0.0
+                    for (i in series.indices) { sum += series[i] * vol[i]; w += vol[i] }
+                    if (w > 0) sum / w else series.average()
+                } else series.average()
+                val dev = (store.strategyConfig("t_vwap")["devPct"] ?: 2.0) / 100.0
+                Triple(mv, mv * (1 - dev), mv * (1 + dev))
+            }
+            "t_boll" -> {
+                val period = (store.strategyConfig("t_boll")["period"]?.toInt() ?: 20).coerceAtLeast(3)
+                val mult = store.strategyConfig("t_boll")["mult"] ?: 2.0
+                val mid = Indicators.sma(closes, period).lastOrNull() ?: return null
+                if (mid.isNaN()) return null
+                val start = (closes.size - period).coerceAtLeast(0)
+                var s = 0.0
+                for (k in start until closes.size) { val dd = closes[k] - mid; s += dd * dd }
+                val std = kotlin.math.sqrt(s / period)
+                Triple(mid, mid - mult * std, mid + mult * std)
+            }
+            else -> { // t_ma
+                val period = (store.strategyConfig("t_ma")["devPct"] ?: 5.0) / 100.0
+                val mid = Indicators.sma(closes, 20).lastOrNull() ?: return null
+                if (mid.isNaN()) return null
+                Triple(mid, mid * (1 - period), mid * (1 + period))
+            }
+        }
+    }
+
+    private fun doTBuy(a: ActiveStrategy, name: String, price: Double, target: Double, reason: String) {
+        val store = App.appStore
+        if (store.mode == "paper") {
+            store.paper.buy(a.symbol, name, price, target, intraday = true)?.let {
+                val cur = store.paper.positions[a.symbol]
+                if (cur != null) store.paper.positions[a.symbol] = cur.copy(tLastBuy = price)
+                a.lastAction = "低吸"; a.lastReason = reason
+                a.lastProcessedClose = price
+                store.updateStrategy(a); onTrade?.invoke("模拟低吸 $name @ ${fmt(price)}")
+                store.addLog("$reason | $name(${a.symbol}) @ ${fmt(price)}")
+            }
+        } else {
+            a.lastAction = "低吸"; a.lastReason = reason
+            a.lastProcessedClose = price; store.updateStrategy(a)
+            pushLiveSignal(a.symbol, name, "BUY", price, reason)
+            store.addLog("实盘低吸信号 $name(${a.symbol}) @ ${fmt(price)} | $reason")
+        }
+    }
+
+    private fun doTSell(a: ActiveStrategy, name: String, price: Double, qty: Int, reason: String) {
+        val store = App.appStore
+        if (store.mode == "paper") {
+            store.paper.sell(a.symbol, name, price, qty)?.let {
+                val cur = store.paper.positions[a.symbol]
+                if (cur != null) store.paper.positions[a.symbol] = cur.copy(tLastSell = price)
+                a.lastAction = "高抛"; a.lastReason = reason
+                a.lastProcessedClose = price
+                store.updateStrategy(a); onTrade?.invoke("模拟高抛 $name @ ${fmt(price)}")
+                store.addLog("$reason | $name(${a.symbol}) @ ${fmt(price)}")
+            }
+        } else {
+            a.lastAction = "高抛"; a.lastReason = reason
+            a.lastProcessedClose = price; store.updateStrategy(a)
+            pushLiveSignal(a.symbol, name, "SELL", price, reason)
+            store.addLog("实盘高抛信号 $name(${a.symbol}) @ ${fmt(price)} | $reason")
+        }
     }
 
     private fun executeBuy(a: ActiveStrategy, name: String, price: Double, barKey: String, target: Double, reason: String) {
@@ -459,5 +650,8 @@ object TradingEngine {
             ?: com.quantapp.trader.data.MarketService.fetchQuote(symbol).name
     } catch (e: Exception) { "" }
 
-    private fun strategyLabel(id: String) = when (id) { "rsi" -> "RSI"; "macd" -> "MACD"; "boll" -> "布林带"; else -> "双均线" }
+    private fun strategyLabel(id: String) = when (id) {
+        "rsi" -> "RSI"; "macd" -> "MACD"; "boll" -> "布林带"; "t_ma" -> "均线做T"
+        "t_boll" -> "布林做T"; "t_vwap" -> "VWAP做T"; else -> "双均线"
+    }
 }

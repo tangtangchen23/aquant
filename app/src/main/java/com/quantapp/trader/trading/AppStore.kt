@@ -99,6 +99,22 @@ class AppStore(context: Context) {
         get() = prefs.getFloat("max_dd_pct", 0f).toDouble()
         set(v) { prefs.edit().putFloat("max_dd_pct", v.toFloat().coerceIn(0f, 100f)).apply() }
 
+    // ---------- 做T参数 ----------
+    /** 做T驱动频率：0=分时(默认更频繁) 1=60分K线(更稳)。 */
+    var tFrequency: Int
+        get() = prefs.getInt("t_frequency", 0)
+        set(v) { prefs.edit().putInt("t_frequency", v.coerceIn(0, 1)).apply() }
+
+    /** 做T底仓：无持仓时自动建立底仓占目标仓位的比例(0~1)。 */
+    var tBasePct: Double
+        get() = prefs.getFloat("t_base_pct", 0.2f).toDouble()
+        set(v) { prefs.edit().putFloat("t_base_pct", v.toFloat().coerceIn(0.05f, 1f)).apply() }
+
+    /** 做T每档交易占比：每次低吸/高抛用目标仓位的该比例资金/数量。 */
+    var tBandPct: Double
+        get() = prefs.getFloat("t_band_pct", 0.2f).toDouble()
+        set(v) { prefs.edit().putFloat("t_band_pct", v.toFloat().coerceIn(0.05f, 1f)).apply() }
+
     // ---------- 组合层参数 ----------
     /** 单票最大资金占用比例（相对初始资金），0 表示不限。 */
     var maxPositionPct: Double

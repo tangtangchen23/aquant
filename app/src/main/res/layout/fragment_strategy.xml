@@ -1,239 +1,174 @@
 <?xml version="1.0" encoding="utf-8"?>
 <ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
-    android:layout_width="match_parent" android:layout_height="match_parent">
+    android:layout_width="match_parent" android:layout_height="match_parent"
+    android:fillViewport="true">
 
     <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content"
-        android:orientation="vertical" android:padding="12dp">
+        android:orientation="vertical" android:padding="14dp">
 
         <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
-            android:text="策略与回测" android:textSize="20sp" android:textStyle="bold" />
+            android:text="策略与回测" android:textSize="22sp" android:textStyle="bold"
+            android:textColor="@color/text_primary" />
 
-        <TextView android:id="@+id/tv_running_status" android:layout_width="match_parent"
-            android:layout_height="wrap_content" android:layout_marginTop="6dp"
-            android:text="引擎状态：已停止" />
+        <!-- 引擎状态徽标 -->
+        <TextView android:id="@+id/tv_running_status" android:layout_width="wrap_content"
+            android:layout_height="wrap_content" android:layout_marginTop="8dp"
+            android:paddingStart="12dp" android:paddingEnd="12dp" android:paddingTop="4dp" android:paddingBottom="4dp"
+            android:background="@drawable/bg_indicator_off" android:textSize="13sp" />
 
+        <!-- ① 标的与策略 -->
+        <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
+            android:layout_marginTop="16dp" android:text="标的与策略" android:textStyle="bold"
+            android:textSize="14sp" android:textColor="@color/text_secondary" />
         <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content"
-            android:orientation="vertical" android:layout_marginTop="10dp"
-            android:padding="12dp" android:background="@drawable/bg_card">
+            android:layout_marginTop="6dp" android:orientation="vertical"
+            android:padding="14dp" android:background="@drawable/bg_card">
             <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content"
                 android:orientation="horizontal">
                 <AutoCompleteTextView android:id="@+id/et_strat_symbol"
-                    android:layout_width="0dp" android:layout_height="wrap_content"
-                    android:layout_weight="1" android:minHeight="46dp"
-                    android:paddingStart="12dp" android:paddingEnd="12dp"
+                    android:layout_width="0dp" android:layout_height="46dp"
+                    android:layout_weight="1" android:minHeight="0dp"
+                    android:paddingStart="14dp" android:paddingEnd="14dp"
+                    android:background="@drawable/bg_input"
                     android:gravity="center_vertical" android:textSize="14sp"
                     android:hint="名称或代码，如 600519"
                     android:inputType="text" android:singleLine="true" android:completionThreshold="1" />
                 <Button android:id="@+id/btn_pick_watch" android:layout_width="wrap_content"
-                    android:layout_height="wrap_content" android:layout_marginStart="6dp"
-                    android:text="自选" />
+                    android:layout_height="40dp" android:layout_marginStart="8dp"
+                    android:text="自选" android:textSize="14sp" android:minWidth="0dp"
+                    android:paddingStart="16dp" android:paddingEnd="16dp"
+                    android:background="@drawable/bg_btn_secondary" />
             </LinearLayout>
             <Spinner android:id="@+id/spinner_strategy" android:layout_width="match_parent"
-                android:layout_height="wrap_content" android:layout_marginTop="8dp" />
+                android:layout_height="wrap_content" android:layout_marginTop="10dp" />
+        </LinearLayout>
 
+        <!-- ② 启动操作（主操作置顶高亮） -->
+        <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
+            android:layout_marginTop="16dp" android:text="启动交易" android:textStyle="bold"
+            android:textSize="14sp" android:textColor="@color/text_secondary" />
+        <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content"
+            android:layout_marginTop="6dp" android:orientation="vertical"
+            android:padding="14dp" android:background="@drawable/bg_card">
             <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content"
-                android:orientation="horizontal" android:layout_marginTop="8dp">
-                <Button android:id="@+id/btn_ai_recommend" android:layout_width="0dp"
-                    android:layout_height="wrap_content" android:layout_weight="1"
-                    android:singleLine="true" android:text="AI 智能推荐" />
-                <Button android:id="@+id/btn_ai_optimize" android:layout_width="0dp"
-                    android:layout_height="wrap_content" android:layout_weight="1"
-                    android:layout_marginStart="6dp"
-                    android:singleLine="true" android:text="AI 一键配参" />
-            </LinearLayout>
-
-            <Button android:id="@+id/btn_ai_explain" android:layout_width="match_parent"
-                android:layout_height="wrap_content" android:layout_marginTop="6dp"
-                android:singleLine="true" android:text="AI 深度解读（需在设置中配好大模型Key）" />
-
-            <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content"
-                android:orientation="horizontal" android:layout_marginTop="8dp">
+                android:orientation="horizontal">
                 <Button android:id="@+id/btn_backtest" android:layout_width="0dp"
-                    android:layout_height="wrap_content" android:layout_weight="1"
-                    android:singleLine="true" android:text="回测" />
+                    android:layout_height="48dp" android:layout_weight="1"
+                    android:singleLine="true" android:text="回测"
+                    android:background="@drawable/bg_btn_secondary" />
                 <Button android:id="@+id/btn_start" android:layout_width="0dp"
-                    android:layout_height="wrap_content" android:layout_weight="1"
-                    android:singleLine="true" android:text="启动自动交易" />
-                <Button android:id="@+id/btn_stop" android:layout_width="0dp"
-                    android:layout_height="wrap_content" android:layout_weight="1"
-                    android:singleLine="true" android:text="停止" />
+                    android:layout_height="48dp" android:layout_weight="1"
+                    android:layout_marginStart="6dp"
+                    android:singleLine="true" android:text="启动自动交易"
+                    android:background="@drawable/bg_btn_primary" />
             </LinearLayout>
-
+            <Button android:id="@+id/btn_stop" android:layout_width="match_parent"
+                android:layout_height="44dp" android:layout_marginTop="8dp"
+                android:singleLine="true" android:text="停止策略"
+                android:textColor="@color/on_brand"
+                android:background="@drawable/bg_btn_stop" />
             <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content"
-                android:orientation="horizontal" android:layout_marginTop="8dp">
+                android:orientation="horizontal" android:layout_marginTop="10dp">
                 <EditText android:id="@+id/et_fee_rate" android:layout_width="0dp"
-                    android:layout_height="wrap_content" android:layout_weight="1"
+                    android:layout_height="46dp" android:minHeight="0dp"
+                    android:layout_weight="1" android:paddingStart="12dp" android:paddingEnd="12dp"
+                    android:background="@drawable/bg_input"
                     android:textSize="13sp" android:hint="手续费率(如0.0003)" android:inputType="numberDecimal"
                     android:singleLine="true" />
                 <EditText android:id="@+id/et_slippage" android:layout_width="0dp"
-                    android:layout_height="wrap_content" android:layout_weight="1"
-                    android:layout_marginStart="6dp"
+                    android:layout_height="46dp" android:minHeight="0dp"
+                    android:layout_weight="1" android:layout_marginStart="8dp"
+                    android:paddingStart="12dp" android:paddingEnd="12dp"
+                    android:background="@drawable/bg_input"
                     android:textSize="13sp" android:hint="滑点(如0.001)" android:inputType="numberDecimal"
                     android:singleLine="true" />
             </LinearLayout>
         </LinearLayout>
 
+        <!-- ③ AI 助手（次级） -->
+        <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
+            android:layout_marginTop="16dp" android:text="AI 助手" android:textStyle="bold"
+            android:textSize="14sp" android:textColor="@color/text_secondary" />
         <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content"
-            android:orientation="vertical" android:layout_marginTop="12dp"
-            android:padding="12dp" android:background="@drawable/bg_card">
+            android:layout_marginTop="6dp" android:orientation="vertical"
+            android:padding="14dp" android:background="@drawable/bg_card">
+            <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content"
+                android:orientation="horizontal">
+                <Button android:id="@+id/btn_ai_recommend" android:layout_width="0dp"
+                    android:layout_height="44dp" android:layout_weight="1"
+                    android:singleLine="true" android:text="AI 智能推荐"
+                    android:background="@drawable/bg_btn_secondary" />
+                <Button android:id="@+id/btn_ai_optimize" android:layout_width="0dp"
+                    android:layout_height="44dp" android:layout_weight="1"
+                    android:layout_marginStart="8dp"
+                    android:singleLine="true" android:text="AI 一键配参"
+                    android:background="@drawable/bg_btn_secondary" />
+            </LinearLayout>
+            <Button android:id="@+id/btn_ai_explain" android:layout_width="match_parent"
+                android:layout_height="44dp" android:layout_marginTop="8dp"
+                android:singleLine="true" android:text="AI 深度解读"
+                android:background="@drawable/bg_btn_secondary" />
+        </LinearLayout>
+
+        <!-- ⑤ 策略参数 + 出场纪律 -->
+        <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
+            android:layout_marginTop="16dp" android:text="参数配置" android:textStyle="bold"
+            android:textSize="14sp" android:textColor="@color/text_secondary" />
+        <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content"
+            android:layout_marginTop="6dp" android:orientation="vertical"
+            android:padding="14dp" android:background="@drawable/bg_card">
             <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
                 android:text="策略参数(可自定义)" android:textStyle="bold" />
             <LinearLayout android:id="@+id/linear_params" android:layout_width="match_parent"
                 android:layout_height="wrap_content" android:orientation="vertical" android:layout_marginTop="4dp" />
             <Button android:id="@+id/btn_apply_params" android:layout_width="wrap_content"
-                android:layout_height="wrap_content" android:layout_gravity="end"
-                android:layout_marginTop="4dp" android:text="保存参数" />
+                android:layout_height="40dp" android:layout_gravity="end"
+                android:layout_marginTop="6dp" android:text="保存参数"
+                android:background="@drawable/bg_btn_secondary" />
         </LinearLayout>
 
+        <!-- ⑥ 回测报告 -->
+        <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
+            android:layout_marginTop="16dp" android:text="回测报告" android:textStyle="bold"
+            android:textSize="14sp" android:textColor="@color/text_secondary" />
         <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content"
-            android:orientation="vertical" android:layout_marginTop="12dp"
-            android:padding="12dp" android:background="@drawable/bg_card">
+            android:layout_marginTop="6dp" android:orientation="vertical"
+            android:padding="14dp" android:background="@drawable/bg_card">
+            <TextView android:id="@+id/tv_backtest"
+                android:layout_width="match_parent" android:layout_height="wrap_content"
+                android:textIsSelectable="true" android:textSize="14sp" />
             <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
-                android:text="出场纪律(移动止盈/保本/ATR止损/分批加仓)" android:textStyle="bold"
-                android:textSize="14sp" />
-            <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
-                android:layout_marginTop="2dp" android:text="0 表示关闭该项" android:textSize="12sp"
-                android:textColor="@color/text_secondary" />
-
-            <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content"
-                android:orientation="horizontal" android:layout_marginTop="10dp">
-                <LinearLayout android:layout_width="0dp" android:layout_height="wrap_content"
-                    android:layout_weight="1" android:orientation="vertical">
-                    <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
-                        android:text="移动止盈·启动盈利%"
-                        android:textSize="12sp" android:textColor="@color/text_secondary" />
-                    <EditText android:id="@+id/et_trail_activate" android:layout_width="match_parent"
-                        android:layout_height="wrap_content" android:minHeight="42dp"
-                        android:layout_marginTop="2dp" android:textSize="13sp" android:hint="如 8" android:inputType="numberDecimal"
-                        android:singleLine="true" />
-                </LinearLayout>
-                <LinearLayout android:layout_width="0dp" android:layout_height="wrap_content"
-                    android:layout_weight="1" android:layout_marginStart="10dp"
-                    android:orientation="vertical">
-                    <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
-                        android:text="移动止盈·回撤离场%"
-                        android:textSize="12sp" android:textColor="@color/text_secondary" />
-                    <EditText android:id="@+id/et_trail_stop" android:layout_width="match_parent"
-                        android:layout_height="wrap_content" android:minHeight="42dp"
-                        android:layout_marginTop="2dp" android:textSize="13sp" android:hint="如 8" android:inputType="numberDecimal"
-                        android:singleLine="true" />
-                </LinearLayout>
-            </LinearLayout>
-
-            <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content"
-                android:orientation="horizontal" android:layout_marginTop="8dp">
-                <LinearLayout android:layout_width="0dp" android:layout_height="wrap_content"
-                    android:layout_weight="1" android:orientation="vertical">
-                    <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
-                        android:text="保本止损·启动%"
-                        android:textSize="12sp" android:textColor="@color/text_secondary" />
-                    <EditText android:id="@+id/et_breakeven" android:layout_width="match_parent"
-                        android:layout_height="wrap_content" android:minHeight="42dp"
-                        android:layout_marginTop="2dp" android:textSize="13sp" android:hint="如 1" android:inputType="numberDecimal"
-                        android:singleLine="true" />
-                </LinearLayout>
-                <LinearLayout android:layout_width="0dp" android:layout_height="wrap_content"
-                    android:layout_weight="1" android:layout_marginStart="10dp"
-                    android:orientation="vertical">
-                    <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
-                        android:text="ATR止损·开关(1/0)"
-                        android:textSize="12sp" android:textColor="@color/text_secondary" />
-                    <EditText android:id="@+id/et_atr_enabled" android:layout_width="match_parent"
-                        android:layout_height="wrap_content" android:minHeight="42dp"
-                        android:layout_marginTop="2dp" android:textSize="13sp" android:hint="1或0" android:inputType="number"
-                        android:singleLine="true" />
-                </LinearLayout>
-            </LinearLayout>
-
-            <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content"
-                android:orientation="horizontal" android:layout_marginTop="8dp">
-                <LinearLayout android:layout_width="0dp" android:layout_height="wrap_content"
-                    android:layout_weight="1" android:orientation="vertical">
-                    <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
-                        android:text="ATR止损·倍数"
-                        android:textSize="12sp" android:textColor="@color/text_secondary" />
-                    <EditText android:id="@+id/et_atr_mult" android:layout_width="match_parent"
-                        android:layout_height="wrap_content" android:minHeight="42dp"
-                        android:layout_marginTop="2dp" android:textSize="13sp" android:hint="如 2" android:inputType="numberDecimal"
-                        android:singleLine="true" />
-                </LinearLayout>
-                <LinearLayout android:layout_width="0dp" android:layout_height="wrap_content"
-                    android:layout_weight="1" android:layout_marginStart="10dp"
-                    android:orientation="vertical">
-                    <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
-                        android:text="建仓·首仓比例"
-                        android:textSize="12sp" android:textColor="@color/text_secondary" />
-                    <EditText android:id="@+id/et_first_buy" android:layout_width="match_parent"
-                        android:layout_height="wrap_content" android:minHeight="42dp"
-                        android:layout_marginTop="2dp" android:textSize="13sp" android:hint="如 0.5" android:inputType="numberDecimal"
-                        android:singleLine="true" />
-                </LinearLayout>
-            </LinearLayout>
-
-            <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content"
-                android:orientation="horizontal" android:layout_marginTop="8dp">
-                <LinearLayout android:layout_width="0dp" android:layout_height="wrap_content"
-                    android:layout_weight="1" android:orientation="vertical">
-                    <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
-                        android:text="加仓·每档比例"
-                        android:textSize="12sp" android:textColor="@color/text_secondary" />
-                    <EditText android:id="@+id/et_add_pct" android:layout_width="match_parent"
-                        android:layout_height="wrap_content" android:minHeight="42dp"
-                        android:layout_marginTop="2dp" android:textSize="13sp" android:hint="如 0.2" android:inputType="numberDecimal"
-                        android:singleLine="true" />
-                </LinearLayout>
-                <LinearLayout android:layout_width="0dp" android:layout_height="wrap_content"
-                    android:layout_weight="1" android:layout_marginStart="10dp"
-                    android:orientation="vertical">
-                    <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
-                        android:text="加仓·盈利档位%"
-                        android:textSize="12sp" android:textColor="@color/text_secondary" />
-                    <EditText android:id="@+id/et_add_thr" android:layout_width="match_parent"
-                        android:layout_height="wrap_content" android:minHeight="42dp"
-                        android:layout_marginTop="2dp" android:textSize="13sp" android:hint="如 3" android:inputType="numberDecimal"
-                        android:singleLine="true" />
-                </LinearLayout>
-            </LinearLayout>
-
-            <Button android:id="@+id/btn_apply_exit" android:layout_width="wrap_content"
-                android:layout_height="wrap_content" android:layout_gravity="end"
-                android:layout_marginTop="8dp" android:text="保存出场纪律" />
-        </LinearLayout>
-
-        <TextView android:id="@+id/tv_backtest"
-            android:layout_width="match_parent" android:layout_height="wrap_content"
-            android:layout_marginTop="12dp" android:padding="12dp" android:background="@drawable/bg_card"
-            android:textIsSelectable="true" android:textSize="14sp" />
-
-        <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content"
-            android:orientation="vertical" android:layout_marginTop="8dp"
-            android:padding="12dp" android:background="@drawable/bg_card">
-            <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
-                android:text="权益曲线（策略 vs 买入持有）" android:textStyle="bold"
-                android:textSize="14sp" />
+                android:layout_marginTop="12dp" android:text="权益曲线（策略 vs 买入持有）" android:textStyle="bold"
+                android:textSize="13sp" android:textColor="@color/text_secondary" />
             <com.github.mikephil.charting.charts.LineChart
                 android:id="@+id/chart_equity" android:layout_width="match_parent"
                 android:layout_height="180dp" android:layout_marginTop="8dp" />
         </LinearLayout>
 
+        <!-- ⑦ 运行中策略 + 日志 -->
+        <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
+            android:layout_marginTop="16dp" android:text="运行监控" android:textStyle="bold"
+            android:textSize="14sp" android:textColor="@color/text_secondary" />
         <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content"
-            android:orientation="vertical" android:layout_marginTop="12dp"
-            android:padding="12dp" android:background="@drawable/bg_card">
+            android:layout_marginTop="6dp" android:orientation="vertical"
+            android:padding="14dp" android:background="@drawable/bg_card">
             <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
                 android:text="运行中策略" android:textStyle="bold" />
-            <ListView android:id="@+id/list_active" android:layout_width="match_parent"
-                android:layout_height="wrap_content" android:layout_marginTop="6dp" />
+            <LinearLayout android:id="@+id/list_active"
+                android:layout_width="match_parent" android:layout_height="wrap_content"
+                android:orientation="vertical" android:layout_marginTop="6dp" />
         </LinearLayout>
 
         <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content"
-            android:orientation="vertical" android:layout_marginTop="12dp"
-            android:padding="12dp" android:background="@drawable/bg_card">
+            android:layout_marginTop="12dp" android:orientation="vertical"
+            android:padding="14dp" android:background="@drawable/bg_card">
             <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content"
                 android:orientation="horizontal" android:gravity="center_vertical">
                 <TextView android:layout_width="0dp" android:layout_height="wrap_content"
                     android:layout_weight="1" android:text="信号与成交日志" android:textStyle="bold" />
                 <Button android:id="@+id/btn_clear_log" android:layout_width="wrap_content"
-                    android:layout_height="wrap_content" android:text="清空" />
+                    android:layout_height="40dp" android:text="清空"
+                    android:background="@drawable/bg_btn_secondary" />
             </LinearLayout>
             <ScrollView android:layout_width="match_parent" android:layout_height="wrap_content"
                 android:layout_marginTop="6dp">

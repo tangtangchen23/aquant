@@ -1,15 +1,49 @@
-<?xml version="1.0" encoding="utf-8"?>
 <resources>
+    <!-- 品牌主色 -->
     <color name="brand">#EF5350</color>
-    <color name="brand_dark">#B71C1C</color>
-    <color name="up">#EF5350</color>
-    <color name="down">#66BB6A</color>
-    <color name="bg">#121212</color>
-    <color name="ic_launcher_background">#D32F2F</color>
+    <color name="brand_dark">#C62828</color>
+    <color name="brand_pressed">#C62828</color>
+    <color name="on_brand">#FFFFFF</color>
 
-    <color name="card_bg">#1E1E1E</color>
-    <color name="divider">#333333</color>
-    <color name="text_primary">#E6E6E6</color>
-    <color name="text_secondary">#9A9A9A</color>
-    <color name="nav_bg">#1A1A1A</color>
+    <!-- 行情语义色：A股红涨绿跌（夜间加深做背景提升辨识度） -->
+    <color name="up">#EF5350</color>
+    <color name="up_bg">#3A1B1B</color>
+    <color name="down">#66BB6A</color>
+    <color name="down_bg">#1B3320</color>
+    <color name="flat">#9AA0A6</color>
+
+    <!-- 背景 / 表面 -->
+    <color name="bg">#121316</color>
+    <color name="card_bg">#1E2024</color>
+    <color name="card_bg_pressed">#292C31</color>
+    <color name="divider">#34373D</color>
+
+    <!-- 文字 -->
+    <color name="text_primary">#EAECEE</color>
+    <color name="text_secondary">#A5ABB4</color>
+    <color name="text_hint">#6E747C</color>
+    <color name="text_disabled">#565B62</color>
+
+    <!-- 输入框 -->
+    <color name="input_border">#3A3E45</color>
+    <color name="input_bg">#23262B</color>
+    <color name="input_focus_border">#EF5350</color>
+    <color name="input_active_bg">#2B1E1E</color>
+
+    <!-- 底部导航 -->
+    <color name="nav_bg">#1E2024</color>
+    <color name="nav_active">#EF5350</color>
+    <color name="nav_inactive">#777D86</color>
+
+    <!-- 列表分隔 -->
+    <color name="list_divider">#2A2D32</color>
+
+    <!-- 分段控件 -->
+    <color name="seg_bg">#2A2D32</color>
+    <color name="seg_text">#A5ABB4</color>
+    <color name="seg_active_bg">#3A3E45</color>
+    <color name="seg_active_text">#EF5350</color>
+
+    <!-- 危险/次操作 -->
+    <color name="danger">#EF5350</color>
 </resources>

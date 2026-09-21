@@ -240,8 +240,89 @@ fun strategies(): List<Strategy> = listOf(
     MaCrossStrategy(),
     RsiStrategy(),
     MacdStrategy(),
-    BollStrategy()
+    BollStrategy(),
+    DivideAverageTStrategy(),
+    BollGridTStrategy(),
+    VwapTStrategy()
 )
+
+/** 做T策略标识前缀：命中后引擎走“日内多次高抛低吸”专用逻辑，而非日线单次信号。 */
+fun isTStrategy(id: String): Boolean = id.startsWith("t_")
+
+/**
+ * 通用做T参数。下轨触发的低吸/高抛基于「日内分时均线或60分周期」计算得到的中枢与偏离阈值。
+ */
+private fun tParamsSummary(prefix: String, dev: Double) = "$prefix·偏离$dev%"
+
+/** 分时/60分均线做T：价格低于中枢×偏离即低吸买入，高于中枢×偏离即高抛卖出。 */
+class DivideAverageTStrategy(val devPct: Double = 5.0) : Strategy {
+    override val id = "t_ma"
+    override val name = "均线做T"
+    override val description = "价格相对日内分时/60分均线偏离超阈值时低吸高抛，日内可多次。"
+    override fun paramsSummary() = tParamsSummary("均线做T", devPct)
+
+    override fun evaluate(bars: List<KLine>, lastPrice: Double): Signal {
+        // 日内中枢算法由引擎基于分时序列计算，此处提供保守的日线信号用于自动建底仓判断
+        val closes = bars.map { it.close } + lastPrice
+        val mid = Indicators.sma(closes, 20).lastOrNull() ?: Double.NaN
+        if (mid.isNaN() || mid <= 0) return Signal(Action.HOLD, "数据不足")
+        val dev = devPct / 100.0
+        return when {
+            lastPrice < mid * (1 - dev) -> Signal(Action.BUY, "跌破日内均线下轨${String.format("%.2f", mid)}")
+            lastPrice > mid * (1 + dev) -> Signal(Action.SELL, "突破日内均线上轨${String.format("%.2f", mid)}")
+            else -> Signal(Action.HOLD, "均线区间内观望")
+        }
+    }
+}
+
+/** 日内布林带网格做T：跌破下轨分档低吸，突破上轨分档高抛。 */
+class BollGridTStrategy(val period: Int = 20, val mult: Double = 2.0, val devPct: Double = 3.0) : Strategy {
+    override val id = "t_boll"
+    override val name = "布林网格做T"
+    override val description = "日内布林下轨分档低吸、上轨分档高抛，沿网格反复收割波动。"
+    override fun paramsSummary() = "布林网格($period,$mult)·$devPct%"
+
+    override fun evaluate(bars: List<KLine>, lastPrice: Double): Signal {
+        val closes = bars.map { it.close } + lastPrice
+        val n = closes.size
+        if (n < period + 1) return Signal(Action.HOLD, "数据不足")
+        val mid = Indicators.sma(closes, period)
+        val lastMid = mid[n - 1]
+        if (lastMid.isNaN()) return Signal(Action.HOLD, "数据不足")
+        var s = 0.0
+        for (k in n - period until n) { val d = closes[k] - lastMid; s += d * d }
+        val std = kotlin.math.sqrt(s / period)
+        val lower = lastMid - mult * std
+        val upper = lastMid + mult * std
+        return when {
+            lastPrice < lower -> Signal(Action.BUY, "跌破布林下轨(${String.format("%.2f", lower)})分档低吸")
+            lastPrice > upper -> Signal(Action.SELL, "突破布林上轨(${String.format("%.2f", upper)})分档高抛")
+            else -> Signal(Action.HOLD, "布林区间内观望")
+        }
+    }
+}
+
+/** 分时VWAP/关键位做T：以当日均价(VWAP)与前收盘为锚，回踩低吸、冲高离场高抛。 */
+class VwapTStrategy(val devPct: Double = 2.0) : Strategy {
+    override val id = "t_vwap"
+    override val name = "VWAP做T"
+    override val description = "以日内均价线(VWAP)/前收盘为锚，价格低于锚点回踩低吸，高于锚点冲高出货。"
+    override fun paramsSummary() = tParamsSummary("VWAP做T", devPct)
+
+    override fun evaluate(bars: List<KLine>, lastPrice: Double): Signal {
+        val closes = bars.map { it.close } + lastPrice
+        val n = closes.size
+        if (n < 2) return Signal(Action.HOLD, "数据不足")
+        val mid = Indicators.sma(closes, 20).lastOrNull()
+        val anchor = if (mid != null && !mid.isNaN()) mid else closes.takeLast(20).average()
+        val dev = devPct / 100.0
+        return when {
+            lastPrice < anchor * (1 - dev) -> Signal(Action.BUY, "回踩VWAP下沿(${String.format("%.2f", anchor)})低吸")
+            lastPrice > anchor * (1 + dev) -> Signal(Action.SELL, "冲高VWAP上沿(${String.format("%.2f", anchor)})高抛")
+            else -> Signal(Action.HOLD, "VWAP附近观望")
+        }
+    }
+}
 
 /** 策略可编辑参数定义：key 供持久化/构建使用，label 用于 UI。 */
 data class StrategyParam(
@@ -271,6 +352,20 @@ fun strategyParams(id: String): List<StrategyParam> = when (id) {
         StrategyParam("period", "布林周期", "20", true),
         StrategyParam("mult", "标准差倍数", "2", false)
     )
+    "t_ma" -> listOf(
+        StrategyParam("devPct", "做T偏离阈值%", "5", false),
+        StrategyParam("tfreq", "做T频率(分/60)", "0", true)
+    )
+    "t_boll" -> listOf(
+        StrategyParam("period", "布林周期", "20", true),
+        StrategyParam("mult", "标准差倍数", "2", false),
+        StrategyParam("devPct", "做T偏离阈值%", "3", false),
+        StrategyParam("tfreq", "做T频率(分/60)", "0", true)
+    )
+    "t_vwap" -> listOf(
+        StrategyParam("devPct", "做T偏离阈值%", "2", false),
+        StrategyParam("tfreq", "做T频率(分/60)", "0", true)
+    )
     else -> emptyList()
 }
 
@@ -283,5 +378,9 @@ fun buildStrategy(id: String, v: Map<String, Double>): Strategy = when (id) {
         v["fast"]?.toInt() ?: 12, v["slow"]?.toInt() ?: 26, v["signal"]?.toInt() ?: 9)
     "boll" -> BollStrategy(
         v["period"]?.toInt() ?: 20, v["mult"] ?: 2.0)
+    "t_ma" -> DivideAverageTStrategy(v["devPct"] ?: 5.0)
+    "t_boll" -> BollGridTStrategy(
+        v["period"]?.toInt() ?: 20, v["mult"] ?: 2.0, v["devPct"] ?: 3.0)
+    "t_vwap" -> VwapTStrategy(v["devPct"] ?: 2.0)
     else -> MaCrossStrategy()
 }

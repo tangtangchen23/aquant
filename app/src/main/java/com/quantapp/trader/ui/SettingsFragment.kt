@@ -51,10 +51,23 @@ class SettingsFragment : Fragment() {
         val etCapital = root.findViewById<EditText>(R.id.et_capital)
         val etPoll = root.findViewById<EditText>(R.id.et_poll)
         val etPct = root.findViewById<EditText>(R.id.et_pct)
+        val rgTfreq = root.findViewById<RadioGroup>(R.id.rg_tfreq)
+        val rbTfreq1min = root.findViewById<RadioButton>(R.id.rb_tfreq_1min)
+        val rbTfreq60min = root.findViewById<RadioButton>(R.id.rb_tfreq_60min)
+        val etTBase = root.findViewById<EditText>(R.id.et_t_base)
+        val etTBand = root.findViewById<EditText>(R.id.et_t_band)
         val etGateway = root.findViewById<EditText>(R.id.et_gateway)
         val etStopLoss = root.findViewById<EditText>(R.id.et_stop_loss)
         val etTakeProfit = root.findViewById<EditText>(R.id.et_take_profit)
         val etMaxDd = root.findViewById<EditText>(R.id.et_max_dd)
+        val etTrailActivate = root.findViewById<EditText>(R.id.et_trail_activate)
+        val etTrailStop = root.findViewById<EditText>(R.id.et_trail_stop)
+        val etBreakEven = root.findViewById<EditText>(R.id.et_breakeven)
+        val etAtrEnabled = root.findViewById<EditText>(R.id.et_atr_enabled)
+        val etAtrMult = root.findViewById<EditText>(R.id.et_atr_mult)
+        val etFirstBuy = root.findViewById<EditText>(R.id.et_first_buy)
+        val etAddPct = root.findViewById<EditText>(R.id.et_add_pct)
+        val etAddThr = root.findViewById<EditText>(R.id.et_add_thr)
         val tvGatewayStatus = root.findViewById<TextView>(R.id.tv_gateway_status)
         val tvModeHint = root.findViewById<TextView>(R.id.tv_mode_hint)
         val tvInfo = root.findViewById<TextView>(R.id.tv_info)
@@ -77,6 +90,17 @@ class SettingsFragment : Fragment() {
         etStopLoss.setText(fmtPct(st.stopLossPct))
         etTakeProfit.setText(fmtPct(st.takeProfitPct))
         etMaxDd.setText(fmtPct(st.maxDrawdownPct))
+        etTrailActivate.setText(fmtPct(st.trailingActivatePct))
+        etTrailStop.setText(fmtPct(st.trailingStopPct))
+        etBreakEven.setText(fmtPct(st.breakEvenPct))
+        etAtrEnabled.setText(if (st.atrStopEnabled == 0) "" else st.atrStopEnabled.toString())
+        etAtrMult.setText(if (st.atrMultiplier <= 0.1) "" else st.atrMultiplier.toString())
+        etFirstBuy.setText(fmtPct(st.firstBuyPct))
+        etAddPct.setText(fmtPct(st.addPositionPct))
+        etAddThr.setText(fmtPct(st.addThresholdPct))
+        if (st.tFrequency == 1) rbTfreq60min.isChecked = true else rbTfreq1min.isChecked = true
+        etTBase.setText(st.tBasePct.toString())
+        etTBand.setText(st.tBandPct.toString())
         updateHint(rbLive.isChecked, tvModeHint)
 
         // 外观主题初始化
@@ -210,6 +234,17 @@ class SettingsFragment : Fragment() {
                 st.stopLossPct = etStopLoss.text.toString().toDoubleOrNull() ?: 0.0
                 st.takeProfitPct = etTakeProfit.text.toString().toDoubleOrNull() ?: 0.0
                 st.maxDrawdownPct = etMaxDd.text.toString().toDoubleOrNull() ?: 0.0
+                st.trailingActivatePct = etTrailActivate.text.toString().toDoubleOrNull() ?: 0.0
+                st.trailingStopPct = etTrailStop.text.toString().toDoubleOrNull() ?: 0.0
+                st.breakEvenPct = etBreakEven.text.toString().toDoubleOrNull() ?: 0.0
+                st.atrStopEnabled = etAtrEnabled.text.toString().toIntOrNull()?.coerceIn(0, 1) ?: 0
+                st.atrMultiplier = etAtrMult.text.toString().toDoubleOrNull()?.let { it.coerceIn(0.1, 10.0) } ?: 0.0
+                st.firstBuyPct = etFirstBuy.text.toString().toDoubleOrNull()?.let { it.coerceIn(0.1, 1.0) } ?: 0.0
+                st.addPositionPct = etAddPct.text.toString().toDoubleOrNull()?.let { it.coerceIn(0.0, 1.0) } ?: 0.0
+                st.addThresholdPct = etAddThr.text.toString().toDoubleOrNull() ?: 0.0
+                st.tFrequency = if (rbTfreq60min.isChecked) 1 else 0
+                st.tBasePct = etTBase.text.toString().toDoubleOrNull()?.let { it.coerceIn(0.05, 1.0) } ?: st.tBasePct
+                st.tBandPct = etTBand.text.toString().toDoubleOrNull()?.let { it.coerceIn(0.05, 1.0) } ?: st.tBandPct
                 // 更换初始资金时重置模拟盘
                 if (Math.abs(st.initialCapital() - cap) > 0.01) {
                     st.setInitialCapital(cap)

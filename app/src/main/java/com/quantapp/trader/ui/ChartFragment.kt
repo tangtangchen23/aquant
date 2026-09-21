@@ -36,6 +36,7 @@ import com.quantapp.trader.R
 import com.quantapp.trader.data.KLine
 import com.quantapp.trader.data.MarketService
 import com.quantapp.trader.data.MarketService.TrendPoint
+import com.quantapp.trader.data.WatchStore
 import com.quantapp.trader.trading.App
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
@@ -76,10 +77,20 @@ class ChartFragment : Fragment() {
     private val UP_COLOR = "#E53935"
     private val DOWN_COLOR = "#43A047"
 
+    // 图表文字/网格颜色：随主题解析，避免深色主题下黑字看不清。
+    private var chartTextColor = 0xFF1A1A1A.toInt()
+    private var chartGridColor = 0xFFE6E8EB.toInt()
+
+    private fun resolveThemeColors() {
+        chartTextColor = ContextCompat.getColor(requireContext(), R.color.text_secondary)
+        chartGridColor = ContextCompat.getColor(requireContext(), R.color.divider)
+    }
+
     private val periodButtons = linkedMapOf<Period, TextView>()
 
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View {
         val root = inflater.inflate(R.layout.fragment_chart, container, false)
+        resolveThemeColors()
         chart = root.findViewById(R.id.kline_chart)
         volChart = root.findViewById(R.id.vol_chart)
         macdChart = root.findViewById(R.id.macd_chart)
@@ -90,6 +101,7 @@ class ChartFragment : Fragment() {
         tvBOLL = root.findViewById(R.id.tv_boll)
         tvKDJ = root.findViewById(R.id.tv_kdj)
         tvInfo = root.findViewById(R.id.tv_chart_info)
+        tvInfo.setTextColor(ContextCompat.getColor(requireContext(), R.color.text_secondary))
 
         periodButtons[Period.MINUTE] = root.findViewById(R.id.tv_period_minute)
         periodButtons[Period.DAY] = root.findViewById(R.id.tv_period_day)
@@ -107,6 +119,11 @@ class ChartFragment : Fragment() {
         // 去除了输入股票代码加载——该功能与行情页重复。symbol 由行情页点击自选股/卡片时注入。
         symbol = MainActivity.pendingChartSymbol ?: ""
         MainActivity.pendingChartSymbol = null
+
+        // 未加入自选时显示“＋ 自选”按钮，点击后写入自选
+        val btnAddWatch = root.findViewById<Button>(R.id.btn_add_watch)
+        updateWatchButton(btnAddWatch)
+        btnAddWatch.setOnClickListener { addToWatch(btnAddWatch) }
 
         // 周期切换
         periodButtons.forEach { (p, tv) ->
@@ -150,6 +167,30 @@ class ChartFragment : Fragment() {
             tv.setBackgroundResource(if (active) R.drawable.bg_indicator_on else R.drawable.bg_indicator_off)
             tv.setTypeface(null, if (active) android.graphics.Typeface.BOLD else android.graphics.Typeface.NORMAL)
             tv.alpha = if (active) 1f else 0.72f
+        }
+    }
+
+    /** 刷新“＋自选”按钮：已加入自选时置灰禁用，未加入时高亮可点击。 */
+    private fun updateWatchButton(btn: Button) {
+        val added = symbol.isNotBlank() && WatchStore.contains(symbol)
+        btn.text = if (added) "已加自选" else "＋ 自选"
+        btn.isEnabled = !added
+        btn.backgroundTintList = android.content.res.ColorStateList.valueOf(
+            ContextCompat.getColor(requireContext(), if (added) R.color.text_secondary else R.color.brand)
+        )
+    }
+
+    /** 加入自选：先取名称（行情接口失败则回退代码），再写入自选存储。 */
+    private fun addToWatch(btn: Button) {
+        if (symbol.isBlank()) return
+        btn.isEnabled = false
+        AppScope.launch {
+            val name = try {
+                withContext(Dispatchers.IO) { MarketService.fetchName(symbol) }
+            } catch (e: Exception) { "" }
+            val added = WatchStore.add(symbol, name)
+            toast(if (added) "已加入自选：${name.ifEmpty { symbol }}（$symbol）" else "该股票已在自选中")
+            updateWatchButton(btn)
         }
     }
 
@@ -409,6 +450,7 @@ class ChartFragment : Fragment() {
             axisRight.isEnabled = false
             setScaleEnabled(true)
             setPinchZoom(true)
+            styleChart(this)
             invalidate()
         }
         volChart.visibility = View.VISIBLE
@@ -446,6 +488,7 @@ class ChartFragment : Fragment() {
             axisLeft.axisMinimum = 0f
             setScaleEnabled(true)
             setPinchZoom(true)
+            styleChart(this)
             invalidate()
         }
     }
@@ -497,6 +540,7 @@ class ChartFragment : Fragment() {
             axisRight.isEnabled = false
             setScaleEnabled(true)
             setPinchZoom(true)
+            styleChart(this)
             invalidate()
         }
     }
@@ -570,6 +614,7 @@ class ChartFragment : Fragment() {
             xAxis.labelCount = 6
             xAxis.valueFormatter = dateFormatter()
             axisRight.isEnabled = true
+            styleChart(this)
             invalidate()
         }
     }
@@ -598,6 +643,7 @@ class ChartFragment : Fragment() {
             axisLeft.axisMinimum = 0f
             setScaleEnabled(true)
             setPinchZoom(true)
+            styleChart(this)
             invalidate()
         }
     }
@@ -646,6 +692,7 @@ class ChartFragment : Fragment() {
             axisRight.isEnabled = false
             setScaleEnabled(true)
             setPinchZoom(true)
+            styleChart(this)
             invalidate()
         }
     }
@@ -699,6 +746,7 @@ class ChartFragment : Fragment() {
             axisLeft.axisMaximum = 100f
             setScaleEnabled(true)
             setPinchZoom(true)
+            styleChart(this)
             invalidate()
         }
     }
@@ -793,6 +841,21 @@ class ChartFragment : Fragment() {
             val idx = value.toInt()
             return if (idx in bars.indices) bars[idx].date.takeLast(5) else ""
         }
+    }
+
+    /** 统一图表文字/轴/网格颜色，保证深浅主题下可读。 */
+    private fun styleChart(c: com.github.mikephil.charting.charts.BarLineChartBase<*>) {
+        c.xAxis.textColor = chartTextColor
+        c.axisLeft.textColor = chartTextColor
+        c.axisRight.textColor = chartTextColor
+        c.xAxis.gridColor = chartGridColor
+        c.axisLeft.gridColor = chartGridColor
+        c.axisRight.gridColor = chartGridColor
+        c.axisLeft.axisLineColor = chartGridColor
+        c.axisRight.axisLineColor = chartGridColor
+        c.xAxis.axisLineColor = chartGridColor
+        c.legend.textColor = chartTextColor
+        c.legend.form = com.github.mikephil.charting.components.Legend.LegendForm.LINE
     }
 
     private fun trendFormatter() = object : ValueFormatter() {

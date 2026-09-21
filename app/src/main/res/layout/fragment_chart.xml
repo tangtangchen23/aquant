@@ -1,10 +1,35 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent" android:layout_height="match_parent"
-    android:orientation="vertical" android:padding="12dp">
+    android:orientation="vertical" android:padding="14dp">
 
-    <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
-        android:text="K线图" android:textSize="20sp" android:textStyle="bold" />
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:gravity="center_vertical">
+
+        <TextView
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:text="K线图"
+            android:textSize="22sp"
+            android:textStyle="bold"
+            android:textColor="@color/text_primary" />
+
+        <Button
+            android:id="@+id/btn_add_watch"
+            android:layout_width="wrap_content"
+            android:layout_height="40dp"
+            android:background="@drawable/bg_btn_primary"
+            android:minWidth="0dp"
+            android:paddingLeft="16dp"
+            android:paddingRight="16dp"
+            android:text="＋ 自选"
+            android:textColor="@color/on_brand"
+            android:textSize="13sp" />
+    </LinearLayout>
 
     <!-- 周期切换：分时 / 日线 / 周线 / 年线 / 120分时 -->
     <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content"
@@ -12,26 +37,26 @@
         <TextView android:id="@+id/tv_period_minute" android:layout_width="0dp"
             android:layout_height="wrap_content" android:layout_weight="1" android:gravity="center"
             android:text="分时" android:singleLine="true" android:padding="6dp" android:textSize="14sp" android:textStyle="bold"
-            android:textColor="#E53935" android:background="@drawable/bg_indicator_on" />
+            android:textColor="@color/up" android:background="@drawable/bg_indicator_on" />
         <TextView android:id="@+id/tv_period_day" android:layout_width="0dp"
             android:layout_height="wrap_content" android:layout_weight="1" android:gravity="center"
             android:layout_marginStart="6dp" android:text="日线" android:singleLine="true" android:padding="6dp"
-            android:textSize="14sp" android:textStyle="bold" android:textColor="#E53935"
+            android:textSize="14sp" android:textStyle="bold" android:textColor="@color/up"
             android:background="@drawable/bg_indicator_on" />
         <TextView android:id="@+id/tv_period_week" android:layout_width="0dp"
             android:layout_height="wrap_content" android:layout_weight="1" android:gravity="center"
             android:layout_marginStart="6dp" android:text="周线" android:singleLine="true" android:padding="6dp"
-            android:textSize="14sp" android:textStyle="bold" android:textColor="#E53935"
+            android:textSize="14sp" android:textStyle="bold" android:textColor="@color/up"
             android:background="@drawable/bg_indicator_on" />
         <TextView android:id="@+id/tv_period_year" android:layout_width="0dp"
             android:layout_height="wrap_content" android:layout_weight="1" android:gravity="center"
             android:layout_marginStart="6dp" android:text="年线" android:singleLine="true" android:padding="6dp"
-            android:textSize="14sp" android:textStyle="bold" android:textColor="#E53935"
+            android:textSize="14sp" android:textStyle="bold" android:textColor="@color/up"
             android:background="@drawable/bg_indicator_on" />
         <TextView android:id="@+id/tv_period_120" android:layout_width="0dp"
             android:layout_height="wrap_content" android:layout_weight="1" android:gravity="center"
             android:layout_marginStart="6dp" android:text="120分" android:singleLine="true" android:padding="6dp"
-            android:textSize="14sp" android:textStyle="bold" android:textColor="#E53935"
+            android:textSize="14sp" android:textStyle="bold" android:textColor="@color/up"
             android:background="@drawable/bg_indicator_on" />
     </LinearLayout>
 
@@ -42,24 +67,24 @@
         android:orientation="horizontal" android:gravity="center_vertical">
         <TextView android:id="@+id/tv_ma" android:layout_width="wrap_content"
             android:layout_height="wrap_content" android:text="  均线  " android:padding="6dp"
-            android:textSize="14sp" android:textStyle="bold" android:textColor="#E53935"
+            android:textSize="14sp" android:textStyle="bold" android:textColor="@color/up"
             android:background="@drawable/bg_indicator_on" />
         <TextView android:id="@+id/tv_vol" android:layout_width="wrap_content"
             android:layout_height="wrap_content" android:text="  成交量  " android:padding="6dp"
             android:layout_marginStart="8dp" android:textSize="14sp" android:textStyle="bold"
-            android:textColor="#E53935" android:background="@drawable/bg_indicator_on" />
+            android:textColor="@color/up" android:background="@drawable/bg_indicator_on" />
         <TextView android:id="@+id/tv_macd" android:layout_width="wrap_content"
             android:layout_height="wrap_content" android:text="  MACD  " android:padding="6dp"
             android:layout_marginStart="8dp" android:textSize="14sp" android:textStyle="bold"
-            android:textColor="#E53935" android:background="@drawable/bg_indicator_on" />
+            android:textColor="@color/up" android:background="@drawable/bg_indicator_on" />
         <TextView android:id="@+id/tv_boll" android:layout_width="wrap_content"
             android:layout_height="wrap_content" android:text="  BOLL  " android:padding="6dp"
             android:layout_marginStart="8dp" android:textSize="14sp" android:textStyle="bold"
-            android:textColor="#E53935" android:background="@drawable/bg_indicator_on" />
+            android:textColor="@color/up" android:background="@drawable/bg_indicator_on" />
         <TextView android:id="@+id/tv_kdj" android:layout_width="wrap_content"
             android:layout_height="wrap_content" android:text="  KDJ  " android:padding="6dp"
             android:layout_marginStart="8dp" android:textSize="14sp" android:textStyle="bold"
-            android:textColor="#E53935" android:background="@drawable/bg_indicator_on" />
+            android:textColor="@color/up" android:background="@drawable/bg_indicator_on" />
     </LinearLayout>
     </HorizontalScrollView>
 
@@ -89,11 +114,11 @@
         android:layout_marginTop="10dp" android:orientation="horizontal"
         android:gravity="center_horizontal">
         <Button android:id="@+id/btn_manual_buy" android:layout_width="0dp"
-            android:layout_height="48dp" android:layout_weight="1" android:layout_marginEnd="4dp"
+            android:layout_height="52dp" android:layout_weight="1" android:layout_marginEnd="4dp"
             android:text="手动买入" android:textColor="#FFFFFF"
             android:background="@drawable/bg_btn_buy" />
         <Button android:id="@+id/btn_manual_sell" android:layout_width="0dp"
-            android:layout_height="48dp" android:layout_weight="1" android:layout_marginStart="4dp"
+            android:layout_height="52dp" android:layout_weight="1" android:layout_marginStart="4dp"
             android:text="手动卖出" android:textColor="#FFFFFF"
             android:background="@drawable/bg_btn_sell" />
     </LinearLayout>
