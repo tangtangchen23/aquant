@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  品牌色主题属性：同一布局以 ?attr/xxx 引用，由浅色/深色/红色三套主题分别取值，
+  实现运行时三主题切换（红色主题即改版前的经典红浅色主题）。
+-->
+<resources>
+    <declare-styleable name="QuantTheme">
+        <attr name="brand" format="color" />
+        <attr name="brandDark" format="color" />
+        <attr name="brandPressed" format="color" />
+        <attr name="onBrand" format="color" />
+        <attr name="inputFocusBorder" format="color" />
+        <attr name="inputActiveBg" format="color" />
+        <attr name="navActive" format="color" />
+        <attr name="segActiveText" format="color" />
+        <!-- K线周期/指标切换按钮的激活文字色：浅色=黑,红色=红 -->
+        <attr name="indicatorActiveText" format="color" />
+    </declare-styleable>
+</resources>

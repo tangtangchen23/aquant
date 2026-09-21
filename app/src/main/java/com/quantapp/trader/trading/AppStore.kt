@@ -204,10 +204,10 @@ class AppStore(context: Context) {
         get() = prefs.getString("update_url", DEFAULT_UPDATE_URL) ?: DEFAULT_UPDATE_URL
         set(v) { prefs.edit().putString("update_url", v.trim()).apply() }
 
-    /** 主题模式：0=跟随系统 1=浅色 2=深色。 */
+    /** 主题模式：0=跟随系统 1=浅色 2=深色 3=红色。 */
     var themeMode: Int
         get() = prefs.getInt("theme_mode", 0)
-        set(v) { prefs.edit().putInt("theme_mode", v.coerceIn(0, 2)).apply() }
+        set(v) { prefs.edit().putInt("theme_mode", v.coerceIn(0, 3)).apply() }
 
     // ---------- AI 大模型 ----------
     var aiProvider: String

@@ -6,6 +6,7 @@ import android.os.Bundle
 import android.text.Editable
 import android.text.InputType
 import android.view.LayoutInflater
+import android.view.MotionEvent
 import android.view.View
 import android.view.ViewGroup
 import android.widget.Button
@@ -18,9 +19,12 @@ import androidx.core.content.ContextCompat
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.lifecycleScope
 import com.github.mikephil.charting.charts.BarChart
+import com.github.mikephil.charting.charts.BarLineChartBase
 import com.github.mikephil.charting.charts.CombinedChart
 import com.github.mikephil.charting.components.AxisBase
+import com.github.mikephil.charting.components.LimitLine
 import com.github.mikephil.charting.components.XAxis
+import com.github.mikephil.charting.components.YAxis
 import com.github.mikephil.charting.data.BarData
 import com.github.mikephil.charting.data.BarDataSet
 import com.github.mikephil.charting.data.BarEntry
@@ -32,6 +36,8 @@ import com.github.mikephil.charting.data.Entry
 import com.github.mikephil.charting.data.LineData
 import com.github.mikephil.charting.data.LineDataSet
 import com.github.mikephil.charting.formatter.ValueFormatter
+import com.github.mikephil.charting.listener.ChartTouchListener
+import com.github.mikephil.charting.listener.OnChartGestureListener
 import com.quantapp.trader.R
 import com.quantapp.trader.data.KLine
 import com.quantapp.trader.data.MarketService
@@ -62,6 +68,8 @@ class ChartFragment : Fragment() {
     private var showMACD = true
     private var showBOLL = false
     private var showKDJ = false
+    private var showRange = false
+    private var signals: List<BuySellSignal> = emptyList()
 
     private lateinit var chart: CombinedChart
     private lateinit var volChart: BarChart
@@ -72,10 +80,16 @@ class ChartFragment : Fragment() {
     private lateinit var tvMACD: TextView
     private lateinit var tvBOLL: TextView
     private lateinit var tvKDJ: TextView
+    private lateinit var tvRange: TextView
     private lateinit var tvInfo: TextView
 
     private val UP_COLOR = "#E53935"
     private val DOWN_COLOR = "#43A047"
+
+    companion object {
+        const val BUY = 0
+        const val SELL = 1
+    }
 
     // 图表文字/网格颜色：随主题解析，避免深色主题下黑字看不清。
     private var chartTextColor = 0xFF1A1A1A.toInt()
@@ -100,8 +114,32 @@ class ChartFragment : Fragment() {
         tvMACD = root.findViewById(R.id.tv_macd)
         tvBOLL = root.findViewById(R.id.tv_boll)
         tvKDJ = root.findViewById(R.id.tv_kdj)
+        tvRange = root.findViewById(R.id.tv_range)
         tvInfo = root.findViewById(R.id.tv_chart_info)
         tvInfo.setTextColor(ContextCompat.getColor(requireContext(), R.color.text_secondary))
+
+        // 十字光标：点按/拖动主图时显示十字虚线 + 顶部日期/价格浮窗
+        chart.marker = CrosshairMarker(
+            chart,
+            infoOf = { idx -> markerText(idx) },
+            isUpAt = { idx -> markerUp(idx) }
+        )
+        chart.setDrawMarkers(true)
+
+        // 主图缩放/平移时，联动可见成交量/MACD/KDJ子图保持同一X轴范围
+        chart.setOnChartGestureListener(object : OnChartGestureListener {
+            override fun onChartGestureStart(e: MotionEvent?, gesture: ChartTouchListener.ChartGesture) {}
+            override fun onChartGestureEnd(e: MotionEvent?, gesture: ChartTouchListener.ChartGesture) { syncSubCharts() }
+            override fun onChartLongPressed(e: MotionEvent?) {}
+            override fun onChartDoubleTapped(e: MotionEvent?) {}
+            override fun onChartSingleTapped(e: MotionEvent?) {}
+            override fun onChartFling(e1: MotionEvent?, e2: MotionEvent?, velocityX: Float, velocityY: Float) { syncSubCharts() }
+            override fun onChartScale(e: MotionEvent?, scaleX: Float, scaleY: Float) { syncSubCharts() }
+            override fun onChartTranslate(e: MotionEvent?, dX: Float, dY: Float) { syncSubCharts() }
+        })
+
+        // 子图禁用独立手势，统一由主图控制缩放联动
+        listOf(volChart, macdChart, kdjChart).forEach { disableSubGestures(it) }
 
         periodButtons[Period.MINUTE] = root.findViewById(R.id.tv_period_minute)
         periodButtons[Period.DAY] = root.findViewById(R.id.tv_period_day)
@@ -114,6 +152,7 @@ class ChartFragment : Fragment() {
         tvMACD.setOnClickListener { showMACD = !showMACD; refreshIndicatorAppearance(); if (period != Period.MINUTE) renderCharts() else renderTrendMacd() }
         tvBOLL.setOnClickListener { showBOLL = !showBOLL; refreshIndicatorAppearance(); if (period != Period.MINUTE) renderCharts() }
         tvKDJ.setOnClickListener { showKDJ = !showKDJ; refreshIndicatorAppearance(); if (period != Period.MINUTE) renderCharts() else renderTrendKdj() }
+        tvRange.setOnClickListener { showRange = !showRange; refreshIndicatorAppearance(); if (period != Period.MINUTE) renderCharts() }
         refreshIndicatorAppearance()
 
         // 去除了输入股票代码加载——该功能与行情页重复。symbol 由行情页点击自选股/卡片时注入。
@@ -173,10 +212,16 @@ class ChartFragment : Fragment() {
     /** 刷新“＋自选”按钮：已加入自选时置灰禁用，未加入时高亮可点击。 */
     private fun updateWatchButton(btn: Button) {
         val added = symbol.isNotBlank() && WatchStore.contains(symbol)
+        val ctx = requireContext()
         btn.text = if (added) "已加自选" else "＋ 自选"
         btn.isEnabled = !added
         btn.backgroundTintList = android.content.res.ColorStateList.valueOf(
-            ContextCompat.getColor(requireContext(), if (added) R.color.text_secondary else R.color.brand)
+            if (added) ContextCompat.getColor(ctx, R.color.text_disabled)
+            else themeAttrColor(ctx, R.attr.brand)
+        )
+        btn.setTextColor(
+            if (added) ContextCompat.getColor(ctx, R.color.text_secondary)
+            else themeAttrColor(ctx, R.attr.onBrand)
         )
     }
 
@@ -339,7 +384,14 @@ class ChartFragment : Fragment() {
             .setNegativeButton("取消", null)
             .create()
         dialog.setOnShowListener {
-            dialog.getButton(AlertDialog.BUTTON_POSITIVE).setTextColor(ContextCompat.getColor(ctx, R.color.on_brand))
+            // 确认按钮：买入用红色，卖出用绿色（A股语义）
+            dialog.getButton(AlertDialog.BUTTON_POSITIVE).setTextColor(
+                ContextCompat.getColor(ctx, if (isBuy) R.color.up else R.color.down)
+            )
+            // 取消按钮：用主文字色，保证浅色/红色主题下清晰可读
+            dialog.getButton(AlertDialog.BUTTON_NEGATIVE).setTextColor(
+                ContextCompat.getColor(ctx, R.color.text_primary)
+            )
             dialog.getButton(AlertDialog.BUTTON_POSITIVE).setOnClickListener {
                 val p = priceEt.text.toString().toDoubleOrNull()
                 if (p == null || p <= 0) { toast("成交价无效"); return@setOnClickListener }
@@ -425,6 +477,7 @@ class ChartFragment : Fragment() {
         tvMACD.setBackgroundResource(if (showMACD) R.drawable.bg_indicator_on else R.drawable.bg_indicator_off)
         tvBOLL.setBackgroundResource(if (showBOLL) R.drawable.bg_indicator_on else R.drawable.bg_indicator_off)
         tvKDJ.setBackgroundResource(if (showKDJ) R.drawable.bg_indicator_on else R.drawable.bg_indicator_off)
+        tvRange.setBackgroundResource(if (showRange) R.drawable.bg_indicator_on else R.drawable.bg_indicator_off)
     }
 
     /** 分时图：以折线绘制每分钟价格。 */
@@ -451,6 +504,9 @@ class ChartFragment : Fragment() {
             setScaleEnabled(true)
             setPinchZoom(true)
             styleChart(this)
+            // 分时图不显示 B/S 买卖点与横盘箱体
+            signals = emptyList()
+            axisLeft.removeAllLimitLines()
             invalidate()
         }
         volChart.visibility = View.VISIBLE
@@ -610,11 +666,21 @@ class ChartFragment : Fragment() {
             legend.textSize = 10f
             setScaleEnabled(true)
             setPinchZoom(true)
-            xAxis.position = XAxis.XAxisPosition.BOTTOM
-            xAxis.labelCount = 6
-            xAxis.valueFormatter = dateFormatter()
+            styleDateAxis(this)
             axisRight.isEnabled = true
             styleChart(this)
+            // B/S 买卖点标记（叠加在主图之上）
+            signals = detectBuySell()
+            renderer = SignalRenderer(this, animator, viewPortHandler) { signals }
+            // 横盘区间：识别出震荡箱体后在上沿/下沿画虚线
+            axisLeft.removeAllLimitLines()
+            if (showRange) {
+                val range = detectRange()
+                if (range != null) {
+                    axisLeft.addLimitLine(range.first)
+                    axisLeft.addLimitLine(range.second)
+                }
+            }
             invalidate()
         }
     }
@@ -636,13 +702,11 @@ class ChartFragment : Fragment() {
             data = BarData(set)
             description.isEnabled = false
             legend.isEnabled = false
-            xAxis.position = XAxis.XAxisPosition.BOTTOM
-            xAxis.labelCount = 6
-            xAxis.valueFormatter = dateFormatter()
             axisRight.isEnabled = false
             axisLeft.axisMinimum = 0f
             setScaleEnabled(true)
             setPinchZoom(true)
+            styleDateAxis(this)
             styleChart(this)
             invalidate()
         }
@@ -686,12 +750,10 @@ class ChartFragment : Fragment() {
             description.isEnabled = false
             legend.isEnabled = true
             legend.textSize = 10f
-            xAxis.position = XAxis.XAxisPosition.BOTTOM
-            xAxis.labelCount = 6
-            xAxis.valueFormatter = dateFormatter()
             axisRight.isEnabled = false
             setScaleEnabled(true)
             setPinchZoom(true)
+            styleDateAxis(this)
             styleChart(this)
             invalidate()
         }
@@ -738,9 +800,8 @@ class ChartFragment : Fragment() {
             description.isEnabled = false
             legend.isEnabled = true
             legend.textSize = 10f
-            xAxis.position = XAxis.XAxisPosition.BOTTOM
-            xAxis.labelCount = 6
-            xAxis.valueFormatter = if (bars.isNotEmpty()) dateFormatter() else trendFormatter()
+            if (bars.isNotEmpty()) styleDateAxis(this)
+            else xAxis.valueFormatter = trendFormatter()
             axisRight.isEnabled = false
             axisLeft.axisMinimum = 0f
             axisLeft.axisMaximum = 100f
@@ -836,11 +897,145 @@ class ChartFragment : Fragment() {
         return Triple(dif.toList(), dea.toList(), hist.toList())
     }
 
+    /** 主图十字光标顶部浮窗文案：K线显示日期+开高低收，分时显示时间+价格。 */
+    private fun markerText(idx: Int): String {
+        return if (bars.isNotEmpty() && idx in bars.indices) {
+            val b = bars[idx]
+            "${b.date}\n开 ${fmt(b.open)}  高 ${fmt(b.high)}  低 ${fmt(b.low)}  收 ${fmt(b.close)}"
+        } else if (trend.isNotEmpty() && idx in trend.indices) {
+            val t = trend[idx]
+            "${t.time}  价格 ${fmt(t.price)}"
+        } else ""
+    }
+
+    /** 涨跌方向：K线按收盘vs开盘，分时按当前vs上一分钟。 */
+    private fun markerUp(idx: Int): Boolean {
+        return if (bars.isNotEmpty() && idx in bars.indices) bars[idx].close >= bars[idx].open
+        else if (trend.isNotEmpty() && idx in trend.indices && idx > 0) trend[idx].price >= trend[idx - 1].price
+        else true
+    }
+
+    private fun fmt(v: Double) = String.format("%.2f", v)
+
+    /** 子图（成交量/MACD/KDJ）禁用独立手势，缩放统一由主图驱动联动。 */
+    private fun disableSubGestures(c: BarLineChartBase<*>) {
+        c.setScaleEnabled(false)
+        c.setPinchZoom(false)
+        c.setDragEnabled(false)
+        c.setDoubleTapToZoomEnabled(false)
+        c.isHighlightPerDragEnabled = false
+    }
+
+    /**
+     * 主图缩放/平移后，把当前可见的X轴数据区间同步给可见子图，
+     * 实现成交量/MACD/KDJ 随主图一起放大缩小。
+     */
+    private fun syncSubCharts() {
+        val vp = chart.viewPortHandler
+        if (vp.contentLeft() >= vp.contentRight()) return
+        val t = chart.getTransformer(YAxis.AxisDependency.LEFT)
+        val l = t.getValuesByTouchPoint(vp.contentLeft(), 0f).x.toFloat()
+        val r = t.getValuesByTouchPoint(vp.contentRight(), 0f).x.toFloat()
+        if (l >= r) return
+        listOf(volChart, macdChart, kdjChart)
+            .filter { it.visibility == View.VISIBLE }
+            .forEach { c ->
+                c.xAxis.axisMinimum = l
+                c.xAxis.axisMaximum = r
+                c.invalidate()
+            }
+    }
+
+    /**
+     * MA5/MA10 金叉/死叉买卖信号：
+     * 金叉（MA5上穿MA10）→ 买点B，标记在当根K线低点下方；
+     * 死叉（MA5下穿MA10）→ 卖点S，标记在当根K线高点上方。
+     */
+    private fun detectBuySell(): List<BuySellSignal> {
+        val n = bars.size
+        if (n < 12) return emptyList()
+        val closes = DoubleArray(n) { bars[it].close }
+        val ma5 = DoubleArray(n) { Double.NaN }
+        val ma10 = DoubleArray(n) { Double.NaN }
+        var s5 = 0.0
+        var s10 = 0.0
+        for (i in 0 until n) {
+            s5 += closes[i]; if (i >= 5) s5 -= closes[i - 5]
+            s10 += closes[i]; if (i >= 10) s10 -= closes[i - 10]
+            if (i >= 4) ma5[i] = s5 / 5
+            if (i >= 9) ma10[i] = s10 / 10
+        }
+        val out = ArrayList<BuySellSignal>()
+        for (i in 1 until n) {
+            if (ma5[i - 1].isNaN() || ma5[i].isNaN() || ma10[i - 1].isNaN() || ma10[i].isNaN()) continue
+            val prev = ma5[i - 1] - ma10[i - 1]
+            val cur = ma5[i] - ma10[i]
+            when {
+                prev <= 0 && cur > 0 -> out.add(BuySellSignal(i, bars[i].low.toFloat(), BUY))
+                prev >= 0 && cur < 0 -> out.add(BuySellSignal(i, bars[i].high.toFloat(), SELL))
+            }
+        }
+        return out
+    }
+
+    /**
+     * 横盘箱体识别：取最近 min(30, n) 根K线，若振幅 (箱顶-箱底)/箱底 < 8% 视为横盘，
+     * 返回箱顶/箱底两条虚线 LimitLine；否则返回 null（不画）。
+     */
+    private fun detectRange(): Pair<LimitLine, LimitLine>? {
+        if (bars.size < 10) return null
+        val win = minOf(30, bars.size)
+        val start = bars.size - win
+        var hi = Double.MIN_VALUE
+        var lo = Double.MAX_VALUE
+        for (i in start until bars.size) {
+            if (bars[i].high > hi) hi = bars[i].high
+            if (bars[i].low < lo) lo = bars[i].low
+        }
+        if (lo <= 0 || (hi - lo) / lo >= 0.08) return null
+        val top = LimitLine(hi.toFloat(), "箱顶").apply {
+            lineColor = Color.parseColor("#7E57C2")
+            lineWidth = 1.2f
+            enableDashedLine(10f, 8f, 0f)
+            textColor = Color.parseColor("#7E57C2")
+            textSize = 10f
+            labelPosition = LimitLine.LimitLabelPosition.RIGHT_TOP
+        }
+        val bottom = LimitLine(lo.toFloat(), "箱底").apply {
+            lineColor = Color.parseColor("#7E57C2")
+            lineWidth = 1.2f
+            enableDashedLine(10f, 8f, 0f)
+            textColor = Color.parseColor("#7E57C2")
+            textSize = 10f
+            labelPosition = LimitLine.LimitLabelPosition.RIGHT_BOTTOM
+        }
+        return Pair(top, bottom)
+    }
+
     private fun dateFormatter() = object : ValueFormatter() {
         override fun getAxisLabel(value: Float, axis: AxisBase?): String {
             val idx = value.toInt()
             return if (idx in bars.indices) bars[idx].date.takeLast(5) else ""
         }
+    }
+
+    /**
+     * 时间轴统一配置（用于K线主图及成交量/MACD/KDJ 等子图）：
+     * - X轴底部、开启整数粒度，标签只落在整根K线上，不重叠、不错位。
+     * - 左右各留出半根K线宽的空白（min=-0.5 / max=n-0.5），首末K线不被裁切，能看到最后一天。
+     * - 标签数量随可见K线条数自适应，避免过密。
+     */
+    private fun styleDateAxis(c: com.github.mikephil.charting.charts.BarLineChartBase<*>) {
+        val n = bars.size.coerceAtLeast(1)
+        c.xAxis.position = XAxis.XAxisPosition.BOTTOM
+        c.xAxis.setGranularityEnabled(true)
+        c.xAxis.granularity = 1f
+        c.xAxis.setAvoidFirstLastClipping(true)
+        c.xAxis.labelCount = if (n > 40) 6 else minOf(5, maxOf(3, n))
+        c.xAxis.axisMinimum = -0.5f
+        c.xAxis.axisMaximum = (n - 1) + 0.5f
+        c.xAxis.valueFormatter = dateFormatter()
+        c.xAxis.setLabelCount(c.xAxis.labelCount, false)
     }
 
     /** 统一图表文字/轴/网格颜色，保证深浅主题下可读。 */

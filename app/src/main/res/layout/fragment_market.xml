@@ -18,13 +18,13 @@
             android:gravity="center_vertical" android:completionThreshold="1" />
         <Button android:id="@+id/btn_query" android:layout_width="wrap_content"
             android:layout_height="46dp" android:layout_marginStart="8dp"
-            android:background="@drawable/bg_btn_primary" android:textColor="@color/on_brand"
+            android:background="@drawable/bg_btn_primary" android:textColor="?attr/onBrand"
             android:text="查询" android:minWidth="0dp" android:paddingStart="20dp" android:paddingEnd="20dp" />
     </LinearLayout>
 
     <TextView android:id="@+id/btn_clear_history" android:layout_width="wrap_content"
         android:layout_height="wrap_content" android:layout_marginTop="2dp"
-        android:padding="6dp" android:textColor="@color/on_brand" android:text="清除查询历史" />
+        android:padding="6dp" android:textColor="@color/text_primary" android:text="清除查询历史" />
 
     <!-- 报价卡片：未查询到股票前隐藏，避免挤压自选股列表 -->
     <LinearLayout android:id="@+id/card_quote" android:layout_width="match_parent"
@@ -97,7 +97,7 @@
             android:layout_weight="1" android:text="自选股" android:textStyle="bold" android:textSize="17sp"
             android:textColor="@color/text_primary" />
         <TextView android:id="@+id/btn_refresh_watch" android:layout_width="wrap_content"
-            android:layout_height="wrap_content" android:padding="6dp" android:textColor="@color/on_brand"
+            android:layout_height="wrap_content" android:padding="6dp" android:textColor="?attr/onBrand"
             android:textSize="14sp" android:text="↻ 刷新" />
     </LinearLayout>
 
@@ -114,6 +114,6 @@
 
     <Button android:id="@+id/btn_add_watch" android:layout_width="match_parent"
         android:layout_height="48dp" android:layout_marginTop="8dp" android:background="@drawable/bg_btn_primary"
-        android:textColor="@color/on_brand" android:text="+ 加入自选并查看K线"
+        android:textColor="?attr/onBrand" android:text="+ 加入自选并查看K线"
         android:visibility="gone" />
 </LinearLayout>

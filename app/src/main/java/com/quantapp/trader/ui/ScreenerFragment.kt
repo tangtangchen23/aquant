@@ -162,7 +162,7 @@ private class ScreenHitAdapter(
         btn.text = if (added) "已加" else "＋ 自选"
         btn.isEnabled = !added
         btn.backgroundTintList = ColorStateList.valueOf(
-            ctx.getColor(if (added) R.color.text_secondary else R.color.brand))
+            ctx.getColor(if (added) R.color.text_secondary else themeAttrColor(ctx, R.attr.brand)))
         btn.setOnClickListener {
             if (WatchStore.add(hit.code, hit.name)) {
                 btn.text = "已加"

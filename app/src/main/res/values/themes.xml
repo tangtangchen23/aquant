@@ -1,9 +1,40 @@
 <resources>
+    <!-- 默认浅色主题（方案B：中性灰阶） -->
     <style name="Theme.QuantApp" parent="Theme.Material3.DayNight.NoActionBar">
         <item name="colorPrimary">@color/brand</item>
         <item name="colorPrimaryVariant">@color/brand_dark</item>
         <item name="colorOnPrimary">@color/on_brand</item>
         <item name="android:statusBarColor">@color/brand_dark</item>
         <item name="android:windowBackground">@color/bg</item>
+
+        <!-- 品牌色主题属性（浅色取值；深色由 values-night 覆盖） -->
+        <item name="brand">@color/brand</item>
+        <item name="brandDark">@color/brand_dark</item>
+        <item name="brandPressed">@color/brand_pressed</item>
+        <item name="onBrand">@color/on_brand</item>
+        <item name="inputFocusBorder">@color/input_focus_border</item>
+        <item name="inputActiveBg">@color/input_active_bg</item>
+        <item name="navActive">@color/nav_active</item>
+        <item name="segActiveText">@color/seg_active_text</item>
+        <item name="indicatorActiveText">@color/text_primary</item>
+    </style>
+
+    <!-- 红色主题（改版前的经典红浅色主题，浅色底+红色品牌） -->
+    <style name="Theme.QuantApp.Red" parent="Theme.QuantApp">
+        <item name="colorPrimary">@color/red_brand</item>
+        <item name="colorPrimaryVariant">@color/red_brand_dark</item>
+        <item name="colorOnPrimary">@color/red_on_brand</item>
+        <item name="android:statusBarColor">@color/red_brand_dark</item>
+        <item name="android:windowBackground">@color/bg</item>
+
+        <item name="brand">@color/red_brand</item>
+        <item name="brandDark">@color/red_brand_dark</item>
+        <item name="brandPressed">@color/red_brand_pressed</item>
+        <item name="onBrand">@color/red_on_brand</item>
+        <item name="inputFocusBorder">@color/red_input_focus_border</item>
+        <item name="inputActiveBg">@color/red_input_active_bg</item>
+        <item name="navActive">@color/red_nav_active</item>
+        <item name="segActiveText">@color/red_seg_active_text</item>
+        <item name="indicatorActiveText">@color/up</item>
     </style>
 </resources>

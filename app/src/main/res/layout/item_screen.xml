@@ -44,6 +44,6 @@
         android:paddingLeft="16dp"
         android:paddingRight="16dp"
         android:text="＋ 自选"
-        android:textColor="@color/on_brand"
+        android:textColor="?attr/onBrand"
         android:textSize="13sp" />
 </LinearLayout>

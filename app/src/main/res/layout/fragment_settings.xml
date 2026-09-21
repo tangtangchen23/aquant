@@ -147,71 +147,108 @@
                     android:background="@color/divider" />
 
                 <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
-                    android:layout_marginTop="10dp" android:text="出场纪律(自动交易生效)" android:textStyle="bold"
+                    android:layout_marginTop="10dp" android:text="出场策略(自动交易生效)" android:textStyle="bold"
                     android:textSize="14sp" />
-                <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
-                    android:layout_marginTop="2dp" android:text="0 表示关闭该项" android:textSize="12sp"
-                    android:textColor="@color/text_secondary" />
-                <TextView android:layout_width="match_parent" android:layout_height="wrap_content"
-                    android:layout_marginTop="4dp" android:textSize="12sp"
-                    android:lineSpacingExtra="3dp" android:textColor="@color/text_secondary"
-                    android:text="· 移动止盈·启动盈利%：盈利达此百分比后开始跟踪最高价\n· 移动止盈·回撤离场%：启动后从最高价回撤此百分比即卖出锁盈\n· 保本止损·启动%：盈利达此百分比后止损线抬至成本价，回本就止\n· ATR止损·开关(1/0)：1=启用按波动自动止损，0=关闭\n· ATR止损·倍数：止损距离=ATR×倍数，波动越大止损越宽\n· 建仓·首仓比例：首批买入占目标仓位比例，小于1分批建仓\n· 加仓·每档比例：每次盈利加仓的仓位占比，0=关闭加仓\n· 加仓·盈利档位%：持仓每盈利此百分比加仓一次" />
 
                 <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content"
                     android:orientation="horizontal" android:layout_marginTop="10dp">
-                    <EditText android:id="@+id/et_trail_activate" android:layout_width="0dp"
-                        android:layout_height="42dp" android:layout_weight="1"
-                        android:minHeight="0dp" android:paddingStart="12dp" android:paddingEnd="12dp"
-                        android:background="@drawable/bg_input"
-                        android:hint="移动止盈·启动盈利%" android:textSize="13sp" android:inputType="numberDecimal" />
-                    <EditText android:id="@+id/et_trail_stop" android:layout_width="0dp"
-                        android:layout_height="42dp" android:layout_weight="1"
-                        android:minHeight="0dp" android:paddingStart="12dp" android:paddingEnd="12dp"
-                        android:background="@drawable/bg_input"
-                        android:layout_marginStart="6dp"
-                        android:hint="移动止盈·回撤离场%" android:textSize="13sp" android:inputType="numberDecimal" />
+                    <LinearLayout android:layout_width="0dp" android:layout_height="wrap_content"
+                        android:layout_weight="1" android:orientation="vertical">
+                        <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
+                            android:textSize="13sp" android:textColor="@color/text_secondary"
+                            android:text="移动止盈·启动盈利%" />
+                        <EditText android:id="@+id/et_trail_activate" android:layout_width="match_parent"
+                            android:layout_height="42dp" android:layout_marginTop="4dp"
+                            android:minHeight="0dp" android:paddingStart="12dp" android:paddingEnd="12dp"
+                            android:background="@drawable/bg_input"
+                            android:textSize="13sp" android:inputType="numberDecimal" />
+                    </LinearLayout>
+                    <LinearLayout android:layout_width="0dp" android:layout_height="wrap_content"
+                        android:layout_weight="1" android:layout_marginStart="6dp" android:orientation="vertical">
+                        <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
+                            android:textSize="13sp" android:textColor="@color/text_secondary"
+                            android:text="移动止盈·回撤离场%" />
+                        <EditText android:id="@+id/et_trail_stop" android:layout_width="match_parent"
+                            android:layout_height="42dp" android:layout_marginTop="4dp"
+                            android:minHeight="0dp" android:paddingStart="12dp" android:paddingEnd="12dp"
+                            android:background="@drawable/bg_input"
+                            android:textSize="13sp" android:inputType="numberDecimal" />
+                    </LinearLayout>
                 </LinearLayout>
                 <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content"
-                    android:orientation="horizontal" android:layout_marginTop="8dp">
-                    <EditText android:id="@+id/et_breakeven" android:layout_width="0dp"
-                        android:layout_height="42dp" android:layout_weight="1"
-                        android:minHeight="0dp" android:paddingStart="12dp" android:paddingEnd="12dp"
-                        android:background="@drawable/bg_input"
-                        android:hint="保本止损·启动%" android:textSize="13sp" android:inputType="numberDecimal" />
-                    <EditText android:id="@+id/et_atr_enabled" android:layout_width="0dp"
-                        android:layout_height="42dp" android:layout_weight="1"
-                        android:minHeight="0dp" android:paddingStart="12dp" android:paddingEnd="12dp"
-                        android:background="@drawable/bg_input"
-                        android:layout_marginStart="6dp"
-                        android:hint="ATR止损·开关(1/0)" android:textSize="13sp" android:inputType="number" />
+                    android:orientation="horizontal" android:layout_marginTop="10dp">
+                    <LinearLayout android:layout_width="0dp" android:layout_height="wrap_content"
+                        android:layout_weight="1" android:orientation="vertical">
+                        <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
+                            android:textSize="13sp" android:textColor="@color/text_secondary"
+                            android:text="保本止损·启动%" />
+                        <EditText android:id="@+id/et_breakeven" android:layout_width="match_parent"
+                            android:layout_height="42dp" android:layout_marginTop="4dp"
+                            android:minHeight="0dp" android:paddingStart="12dp" android:paddingEnd="12dp"
+                            android:background="@drawable/bg_input"
+                            android:textSize="13sp" android:inputType="numberDecimal" />
+                    </LinearLayout>
+                    <LinearLayout android:layout_width="0dp" android:layout_height="wrap_content"
+                        android:layout_weight="1" android:layout_marginStart="6dp" android:orientation="vertical">
+                        <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
+                            android:textSize="13sp" android:textColor="@color/text_secondary"
+                            android:text="ATR止损·开关(1/0)" />
+                        <EditText android:id="@+id/et_atr_enabled" android:layout_width="match_parent"
+                            android:layout_height="42dp" android:layout_marginTop="4dp"
+                            android:minHeight="0dp" android:paddingStart="12dp" android:paddingEnd="12dp"
+                            android:background="@drawable/bg_input"
+                            android:textSize="13sp" android:inputType="number" />
+                    </LinearLayout>
                 </LinearLayout>
                 <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content"
-                    android:orientation="horizontal" android:layout_marginTop="8dp">
-                    <EditText android:id="@+id/et_atr_mult" android:layout_width="0dp"
-                        android:layout_height="42dp" android:layout_weight="1"
-                        android:minHeight="0dp" android:paddingStart="12dp" android:paddingEnd="12dp"
-                        android:background="@drawable/bg_input"
-                        android:hint="ATR止损·倍数" android:textSize="13sp" android:inputType="numberDecimal" />
-                    <EditText android:id="@+id/et_first_buy" android:layout_width="0dp"
-                        android:layout_height="42dp" android:layout_weight="1"
-                        android:minHeight="0dp" android:paddingStart="12dp" android:paddingEnd="12dp"
-                        android:background="@drawable/bg_input"
-                        android:layout_marginStart="6dp"
-                        android:hint="建仓·首仓比例" android:textSize="13sp" android:inputType="numberDecimal" />
+                    android:orientation="horizontal" android:layout_marginTop="10dp">
+                    <LinearLayout android:layout_width="0dp" android:layout_height="wrap_content"
+                        android:layout_weight="1" android:orientation="vertical">
+                        <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
+                            android:textSize="13sp" android:textColor="@color/text_secondary"
+                            android:text="ATR止损·倍数" />
+                        <EditText android:id="@+id/et_atr_mult" android:layout_width="match_parent"
+                            android:layout_height="42dp" android:layout_marginTop="4dp"
+                            android:minHeight="0dp" android:paddingStart="12dp" android:paddingEnd="12dp"
+                            android:background="@drawable/bg_input"
+                            android:textSize="13sp" android:inputType="numberDecimal" />
+                    </LinearLayout>
+                    <LinearLayout android:layout_width="0dp" android:layout_height="wrap_content"
+                        android:layout_weight="1" android:layout_marginStart="6dp" android:orientation="vertical">
+                        <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
+                            android:textSize="13sp" android:textColor="@color/text_secondary"
+                            android:text="建仓·首仓比例" />
+                        <EditText android:id="@+id/et_first_buy" android:layout_width="match_parent"
+                            android:layout_height="42dp" android:layout_marginTop="4dp"
+                            android:minHeight="0dp" android:paddingStart="12dp" android:paddingEnd="12dp"
+                            android:background="@drawable/bg_input"
+                            android:textSize="13sp" android:inputType="numberDecimal" />
+                    </LinearLayout>
                 </LinearLayout>
                 <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content"
-                    android:orientation="horizontal" android:layout_marginTop="8dp">
-                    <EditText android:id="@+id/et_add_pct" android:layout_width="0dp"
-                        android:layout_height="42dp" android:layout_weight="1"
-                        android:minHeight="0dp" android:paddingStart="12dp" android:paddingEnd="12dp"
-                        android:background="@drawable/bg_input"
-                        android:hint="加仓·每档比例" android:textSize="13sp" android:inputType="numberDecimal" />
-                    <EditText android:id="@+id/et_add_thr" android:layout_width="0dp"
-                        android:layout_height="42dp" android:layout_weight="1"
-                        android:minHeight="0dp" android:paddingStart="12dp" android:paddingEnd="12dp"
-                        android:background="@drawable/bg_input"
-                        android:layout_marginStart="6dp"
-                        android:hint="加仓·盈利档位%" android:textSize="13sp" android:inputType="numberDecimal" />
+                    android:orientation="horizontal" android:layout_marginTop="10dp">
+                    <LinearLayout android:layout_width="0dp" android:layout_height="wrap_content"
+                        android:layout_weight="1" android:orientation="vertical">
+                        <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
+                            android:textSize="13sp" android:textColor="@color/text_secondary"
+                            android:text="加仓·每档比例" />
+                        <EditText android:id="@+id/et_add_pct" android:layout_width="match_parent"
+                            android:layout_height="42dp" android:layout_marginTop="4dp"
+                            android:minHeight="0dp" android:paddingStart="12dp" android:paddingEnd="12dp"
+                            android:background="@drawable/bg_input"
+                            android:textSize="13sp" android:inputType="numberDecimal" />
+                    </LinearLayout>
+                    <LinearLayout android:layout_width="0dp" android:layout_height="wrap_content"
+                        android:layout_weight="1" android:layout_marginStart="6dp" android:orientation="vertical">
+                        <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
+                            android:textSize="13sp" android:textColor="@color/text_secondary"
+                            android:text="加仓·盈利档位%" />
+                        <EditText android:id="@+id/et_add_thr" android:layout_width="match_parent"
+                            android:layout_height="42dp" android:layout_marginTop="4dp"
+                            android:minHeight="0dp" android:paddingStart="12dp" android:paddingEnd="12dp"
+                            android:background="@drawable/bg_input"
+                            android:textSize="13sp" android:inputType="numberDecimal" />
+                    </LinearLayout>
                 </LinearLayout>
             </LinearLayout>
 
@@ -334,6 +371,8 @@
                         android:layout_height="wrap_content" android:text="浅色" />
                     <RadioButton android:id="@+id/rb_theme_dark" android:layout_width="wrap_content"
                         android:layout_height="wrap_content" android:text="深色" />
+                    <RadioButton android:id="@+id/rb_theme_red" android:layout_width="wrap_content"
+                        android:layout_height="wrap_content" android:text="红色" />
                 </RadioGroup>
             </LinearLayout>
 

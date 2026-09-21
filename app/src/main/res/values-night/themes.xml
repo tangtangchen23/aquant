@@ -1,0 +1,21 @@
+<resources>
+    <!-- 深色主题（方案B：深色底+浅色文字） -->
+    <style name="Theme.QuantApp" parent="Theme.Material3.DayNight.NoActionBar">
+        <item name="colorPrimary">@color/brand</item>
+        <item name="colorPrimaryVariant">@color/brand_dark</item>
+        <item name="colorOnPrimary">@color/on_brand</item>
+        <item name="android:statusBarColor">@color/brand_dark</item>
+        <item name="android:windowBackground">@color/bg</item>
+
+        <!-- 品牌色主题属性（深色取值） -->
+        <item name="brand">@color/brand</item>
+        <item name="brandDark">@color/brand_dark</item>
+        <item name="brandPressed">@color/brand_pressed</item>
+        <item name="onBrand">@color/on_brand</item>
+        <item name="inputFocusBorder">@color/input_focus_border</item>
+        <item name="inputActiveBg">@color/input_active_bg</item>
+        <item name="navActive">@color/nav_active</item>
+        <item name="segActiveText">@color/seg_active_text</item>
+        <item name="indicatorActiveText">@color/text_primary</item>
+    </style>
+</resources>

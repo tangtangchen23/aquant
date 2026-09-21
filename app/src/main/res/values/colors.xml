@@ -49,4 +49,14 @@
 
     <!-- 图标启动背景 -->
     <color name="ic_launcher_background">#EDEFF2</color>
+
+    <!-- 红色主题（改版前的经典红浅色主题）品牌色 -->
+    <color name="red_brand">#D32F2F</color>
+    <color name="red_brand_dark">#B71C1C</color>
+    <color name="red_brand_pressed">#B71C1C</color>
+    <color name="red_on_brand">#FFFFFF</color>
+    <color name="red_input_focus_border">#D32F2F</color>
+    <color name="red_input_active_bg">#FFF7F7</color>
+    <color name="red_nav_active">#D32F2F</color>
+    <color name="red_seg_active_text">#D32F2F</color>
 </resources>

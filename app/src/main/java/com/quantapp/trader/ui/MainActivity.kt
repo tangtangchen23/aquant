@@ -1,5 +1,6 @@
 package com.quantapp.trader.ui
 
+import android.content.Context
 import android.os.Build
 import android.os.Bundle
 import android.widget.FrameLayout
@@ -14,6 +15,18 @@ import com.quantapp.trader.trading.EngineService
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 
+/** 解析当前主题属性所指向的具体颜色（支持 ?attr 引用 color 资源）。 */
+fun themeAttrColor(ctx: Context, attrRes: Int): Int {
+    val tv = android.util.TypedValue()
+    if (ctx.theme.resolveAttribute(attrRes, tv, true)) {
+        if (tv.type == android.util.TypedValue.TYPE_REFERENCE) {
+            return ContextCompat.getColor(ctx, tv.resourceId)
+        }
+        return tv.data
+    }
+    return 0xFF000000.toInt()
+}
+
 class MainActivity : AppCompatActivity() {
 
     /** 待加载K线的股票代码：由行情页点击自选股设置，图表页读取后消费。 */
@@ -26,14 +39,21 @@ class MainActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         AppScope.attach(lifecycleScope)
-        // 应用主题模式（跟随系统/浅色/深色），需在 setContentView 前调用
-        androidx.appcompat.app.AppCompatDelegate.setDefaultNightMode(
-            when (com.quantapp.trader.trading.App.appStore.themeMode) {
-                1 -> androidx.appcompat.app.AppCompatDelegate.MODE_NIGHT_NO
-                2 -> androidx.appcompat.app.AppCompatDelegate.MODE_NIGHT_YES
-                else -> androidx.appcompat.app.AppCompatDelegate.MODE_NIGHT_FOLLOW_SYSTEM
+        // 应用主题模式（跟随系统/浅色/深色/红色），需在 setContentView 前调用
+        when (com.quantapp.trader.trading.App.appStore.themeMode) {
+            3 -> {
+                // 红色主题：浅色底 + 红色品牌，强制浅色并显式套用红色主题样式
+                androidx.appcompat.app.AppCompatDelegate.setDefaultNightMode(
+                    androidx.appcompat.app.AppCompatDelegate.MODE_NIGHT_NO)
+                setTheme(R.style.Theme_QuantApp_Red)
             }
-        )
+            1 -> androidx.appcompat.app.AppCompatDelegate.setDefaultNightMode(
+                androidx.appcompat.app.AppCompatDelegate.MODE_NIGHT_NO)
+            2 -> androidx.appcompat.app.AppCompatDelegate.setDefaultNightMode(
+                androidx.appcompat.app.AppCompatDelegate.MODE_NIGHT_YES)
+            else -> androidx.appcompat.app.AppCompatDelegate.setDefaultNightMode(
+                androidx.appcompat.app.AppCompatDelegate.MODE_NIGHT_FOLLOW_SYSTEM)
+        }
         setContentView(R.layout.activity_main)
         // 启动常驻引擎服务：自动交易与到价提醒在退到后台/锁屏后仍继续运行
         EngineService.start(this)

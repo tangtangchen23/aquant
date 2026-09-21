@@ -43,6 +43,7 @@ class SettingsFragment : Fragment() {
         val rbThemeSys = root.findViewById<RadioButton>(R.id.rb_theme_sys)
         val rbThemeLight = root.findViewById<RadioButton>(R.id.rb_theme_light)
         val rbThemeDark = root.findViewById<RadioButton>(R.id.rb_theme_dark)
+        val rbThemeRed = root.findViewById<RadioButton>(R.id.rb_theme_red)
         val etAlertSymbol = root.findViewById<EditText>(R.id.et_alert_symbol)
         val etAlertPrice = root.findViewById<EditText>(R.id.et_alert_price)
         val spAlertDir = root.findViewById<Spinner>(R.id.sp_alert_dir)
@@ -104,16 +105,31 @@ class SettingsFragment : Fragment() {
         updateHint(rbLive.isChecked, tvModeHint)
 
         // 外观主题初始化
-        when (st.themeMode) { 1 -> rbThemeLight.isChecked = true; 2 -> rbThemeDark.isChecked = true; else -> rbThemeSys.isChecked = true }
+        when (st.themeMode) {
+            1 -> rbThemeLight.isChecked = true
+            2 -> rbThemeDark.isChecked = true
+            3 -> rbThemeRed.isChecked = true
+            else -> rbThemeSys.isChecked = true
+        }
         fun applyTheme(mode: Int) {
-            if (st.themeMode != mode) st.themeMode = mode
-            androidx.appcompat.app.AppCompatDelegate.setDefaultNightMode(
-                when (mode) { 1 -> androidx.appcompat.app.AppCompatDelegate.MODE_NIGHT_NO
-                    2 -> androidx.appcompat.app.AppCompatDelegate.MODE_NIGHT_YES
-                    else -> androidx.appcompat.app.AppCompatDelegate.MODE_NIGHT_FOLLOW_SYSTEM })
+            val prev = st.themeMode
+            if (prev != mode) st.themeMode = mode
+            // 红色主题需显式重建 Activity 以套用 Theme.QuantApp.Red；其余由 Delegate 自动重建
+            if (mode == 3) {
+                androidx.appcompat.app.AppCompatDelegate.setDefaultNightMode(
+                    androidx.appcompat.app.AppCompatDelegate.MODE_NIGHT_NO)
+                requireActivity().recreate()
+            } else {
+                androidx.appcompat.app.AppCompatDelegate.setDefaultNightMode(
+                    when (mode) { 1 -> androidx.appcompat.app.AppCompatDelegate.MODE_NIGHT_NO
+                        2 -> androidx.appcompat.app.AppCompatDelegate.MODE_NIGHT_YES
+                        else -> androidx.appcompat.app.AppCompatDelegate.MODE_NIGHT_FOLLOW_SYSTEM })
+                // 从红色主题切走：若 Delegate 夜模式不变则需手动重建一次以移除红色样式
+                if (prev == 3) requireActivity().recreate()
+            }
         }
         rgTheme.setOnCheckedChangeListener { _, id ->
-            applyTheme(when (id) { R.id.rb_theme_light -> 1; R.id.rb_theme_dark -> 2; else -> 0 })
+            applyTheme(when (id) { R.id.rb_theme_light -> 1; R.id.rb_theme_dark -> 2; R.id.rb_theme_red -> 3; else -> 0 })
         }
 
         // 到价提醒

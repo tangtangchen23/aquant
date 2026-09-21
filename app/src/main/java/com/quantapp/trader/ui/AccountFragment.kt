@@ -252,7 +252,7 @@ class AccountFragment : Fragment() {
         fun style(id: Int, active: Boolean) {
             val btn = view?.findViewById<Button>(id)
             if (btn == null) return
-            btn.setTextColor(android.graphics.Color.WHITE)
+            btn.setTextColor(themeAttrColor(requireContext(), R.attr.onBrand))
             btn.alpha = if (active) 1f else 0.55f
             btn.setTypeface(null, if (active) android.graphics.Typeface.BOLD else android.graphics.Typeface.NORMAL)
         }
