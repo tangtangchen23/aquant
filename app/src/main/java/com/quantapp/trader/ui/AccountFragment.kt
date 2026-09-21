@@ -17,6 +17,9 @@ import com.quantapp.trader.trading.App
 import com.quantapp.trader.trading.Position
 import com.quantapp.trader.trading.TradingEngine
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.isActive
 import kotlinx.coroutines.withContext
 import java.text.SimpleDateFormat
 
@@ -26,14 +29,16 @@ class AccountFragment : Fragment() {
     private val quotes = mutableMapOf<String, Quote?>()
     private val positions = mutableListOf<Position>()
     private var btnRefresh: TextView? = null
+    private var summaryView: TextView? = null
     private var filterSide: String? = null // null=全部，"买入"/"卖出"
     private var posContainer: LinearLayout? = null
     private var tradeContainer: LinearLayout? = null
+    private var refreshJob: Job? = null
 
     // ------------------------- 生命周期 -------------------------
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View {
         val root = inflater.inflate(R.layout.fragment_account, container, false)
-        val tvSummary = root.findViewById<TextView>(R.id.tv_account_summary)
+        summaryView = root.findViewById(R.id.tv_account_summary)
         btnRefresh = root.findViewById(R.id.btn_refresh_positions)
 
         // 持仓/成交：动态 LinearLayout 逐行注入，随数量增长并整页滚动
@@ -41,6 +46,7 @@ class AccountFragment : Fragment() {
         tradeContainer = root.findViewById(R.id.list_trades_container)
         reloadPositions()
         renderTrades()
+        refreshSummary()
 
         // 一键清仓
         root.findViewById<TextView>(R.id.btn_clear_positions).setOnClickListener {
@@ -54,7 +60,7 @@ class AccountFragment : Fragment() {
                 .setMessage("确定以当前行情价卖出全部 ${pos.size} 只持仓吗？")
                 .setPositiveButton("全部卖出") { _, _ ->
                     clearAll()
-                    refreshAll(tvSummary)
+                    refreshAll()
                 }
                 .setNegativeButton("取消", null)
                 .show()
@@ -66,13 +72,11 @@ class AccountFragment : Fragment() {
         root.findViewById<Button>(R.id.btn_trade_sell).setOnClickListener { updateFilter("卖出") }
         updateFilterUi()
 
-        refreshSummary(tvSummary)
-
+        // 发生交易时：重新拉取行情，让市值/权益/浮动盈亏随最新价刷新
         TradingEngine.onTrade = { _ ->
             activity?.runOnUiThread {
                 reloadPositions()
-                refreshSummary(tvSummary)
-                renderTrades()
+                refreshQuotes()
             }
         }
 
@@ -83,6 +87,28 @@ class AccountFragment : Fragment() {
         }
 
         return root
+    }
+
+    override fun onResume() {
+        super.onResume()
+        startRefreshLoop()
+    }
+
+    override fun onPause() {
+        refreshJob?.cancel()
+        refreshJob = null
+        super.onPause()
+    }
+
+    /** 页面可见时按轮询间隔自动刷新行情，让持仓市值/权益/浮动盈亏实时跟随涨跌。 */
+    private fun startRefreshLoop() {
+        refreshJob?.cancel()
+        refreshJob = AppScope.launch {
+            while (isActive) {
+                refreshQuotes()
+                delay(App.appStore.pollSeconds.coerceIn(5, 600) * 1000L)
+            }
+        }
     }
 
     // ------------------------- 渲染 -------------------------
@@ -161,7 +187,6 @@ class AccountFragment : Fragment() {
                 text = "${sdf.format(java.util.Date(it.time))}  ${it.name}  ${it.side} ${it.qty}股 @ ${fmt(it.price)}"
                 textSize = 14f
                 setPadding(dp(10), dp(10), dp(10), dp(10))
-                // 买入红、卖出绿，与 A 股配色一致
                 setTextColor(ContextCompat.getColor(context, if (it.side == "买入") R.color.up else R.color.down))
             }
             if (i > 0) {
@@ -177,7 +202,8 @@ class AccountFragment : Fragment() {
     }
 
     // ------------------------- 逻辑 -------------------------
-    private fun refreshSummary(tvSummary: TextView) {
+    private fun refreshSummary() {
+        val tvSummary = summaryView ?: return
         val st = App.appStore
         val pos = st.paper.positions.values
         val cash = st.paper.cash
@@ -235,15 +261,20 @@ class AccountFragment : Fragment() {
         style(R.id.btn_trade_sell, filterSide == "卖出")
     }
 
-    private fun refreshAll(tvSummary: TextView) {
+    private fun refreshAll() {
         reloadPositions()
-        refreshSummary(tvSummary)
+        refreshSummary()
         renderTrades()
     }
 
-    /** 逐条异步拉取持仓实时行情，拉取完成后重写对应行，保留结构。 */
+    /** 逐条异步拉取持仓实时行情，拉取完成后重写对应行并刷新账户汇总。 */
     private fun refreshQuotes(onDone: (() -> Unit)? = null) {
         val pending = positions.toList()
+        if (pending.isEmpty()) {
+            onDone?.invoke()
+            refreshSummary()
+            return
+        }
         AppScope.launch {
             pending.forEach { pos ->
                 try {
@@ -251,7 +282,10 @@ class AccountFragment : Fragment() {
                 } catch (e: Exception) {
                     quotes[pos.symbol] = null
                 }
-                activity?.runOnUiThread { refreshPositionsRows() }
+                activity?.runOnUiThread {
+                    refreshPositionsRows()
+                    refreshSummary()
+                }
             }
             onDone?.invoke()
         }
