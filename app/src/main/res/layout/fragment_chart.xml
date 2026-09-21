@@ -37,7 +37,7 @@
         <TextView android:id="@+id/tv_period_minute" android:layout_width="0dp"
             android:layout_height="wrap_content" android:layout_weight="1" android:gravity="center"
             android:text="分时" android:singleLine="true" android:padding="6dp" android:textSize="14sp" android:textStyle="bold"
-            android:textColor="@color/up" android:background="@drawable/bg_indicator_on" />
+            android:textColor="@color/on_brand" android:background="@drawable/bg_indicator_on" />
         <TextView android:id="@+id/tv_period_day" android:layout_width="0dp"
             android:layout_height="wrap_content" android:layout_weight="1" android:gravity="center"
             android:layout_marginStart="6dp" android:text="日线" android:singleLine="true" android:padding="6dp"
@@ -72,19 +72,19 @@
         <TextView android:id="@+id/tv_vol" android:layout_width="wrap_content"
             android:layout_height="wrap_content" android:text="  成交量  " android:padding="6dp"
             android:layout_marginStart="8dp" android:textSize="14sp" android:textStyle="bold"
-            android:textColor="@color/up" android:background="@drawable/bg_indicator_on" />
+            android:textColor="@color/on_brand" android:background="@drawable/bg_indicator_on" />
         <TextView android:id="@+id/tv_macd" android:layout_width="wrap_content"
             android:layout_height="wrap_content" android:text="  MACD  " android:padding="6dp"
             android:layout_marginStart="8dp" android:textSize="14sp" android:textStyle="bold"
-            android:textColor="@color/up" android:background="@drawable/bg_indicator_on" />
+            android:textColor="@color/on_brand" android:background="@drawable/bg_indicator_on" />
         <TextView android:id="@+id/tv_boll" android:layout_width="wrap_content"
             android:layout_height="wrap_content" android:text="  BOLL  " android:padding="6dp"
             android:layout_marginStart="8dp" android:textSize="14sp" android:textStyle="bold"
-            android:textColor="@color/up" android:background="@drawable/bg_indicator_on" />
+            android:textColor="@color/on_brand" android:background="@drawable/bg_indicator_on" />
         <TextView android:id="@+id/tv_kdj" android:layout_width="wrap_content"
             android:layout_height="wrap_content" android:text="  KDJ  " android:padding="6dp"
             android:layout_marginStart="8dp" android:textSize="14sp" android:textStyle="bold"
-            android:textColor="@color/up" android:background="@drawable/bg_indicator_on" />
+            android:textColor="@color/on_brand" android:background="@drawable/bg_indicator_on" />
     </LinearLayout>
     </HorizontalScrollView>
 

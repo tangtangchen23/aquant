@@ -122,7 +122,7 @@
         android:layout_marginTop="2dp"
         android:gravity="center"
         android:text=""
-        android:textColor="@color/brand"
+        android:textColor="@color/on_brand"
         android:textSize="15sp"
         android:textStyle="bold" />
 

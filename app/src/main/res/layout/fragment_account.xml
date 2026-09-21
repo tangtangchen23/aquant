@@ -22,10 +22,10 @@
                 <TextView android:layout_width="0dp" android:layout_height="wrap_content"
                     android:layout_weight="1" android:text="持仓(点击查看K线)" android:textStyle="bold" android:textSize="16sp" />
                 <TextView android:id="@+id/btn_clear_positions" android:layout_width="wrap_content"
-                    android:layout_height="wrap_content" android:padding="6dp" android:textColor="@color/brand"
+                    android:layout_height="wrap_content" android:padding="6dp" android:textColor="@color/on_brand"
                     android:textSize="14sp" android:text="一键清仓" />
                 <TextView android:id="@+id/btn_refresh_positions" android:layout_width="wrap_content"
-                    android:layout_height="wrap_content" android:padding="6dp" android:textColor="@color/brand"
+                    android:layout_height="wrap_content" android:padding="6dp" android:textColor="@color/on_brand"
                     android:textSize="14sp" android:text="↻ 刷新市值" />
             </LinearLayout>
             <!-- 持仓列表：动态撑开，随持仓数增长，整页可滚动 -->
@@ -39,15 +39,15 @@
                 android:layout_marginTop="4dp" android:orientation="horizontal">
                 <Button android:id="@+id/btn_trade_all" android:layout_width="0dp" android:layout_height="40dp"
                     android:layout_weight="1" android:text="全部" android:textSize="13sp"
-                    android:textColor="#FFFFFF" android:background="@drawable/bg_btn_primary"
+                    android:textColor="@color/on_brand" android:background="@drawable/bg_btn_primary"
                     android:minHeight="0dp" />
                 <Button android:id="@+id/btn_trade_buy" android:layout_width="0dp" android:layout_height="40dp"
                     android:layout_weight="1" android:text="买入" android:textSize="13sp"
-                    android:textColor="#FFFFFF" android:layout_marginStart="6dp"
+                    android:textColor="@color/on_brand" android:layout_marginStart="6dp"
                     android:background="@drawable/bg_btn_primary" android:minHeight="0dp" />
                 <Button android:id="@+id/btn_trade_sell" android:layout_width="0dp" android:layout_height="40dp"
                     android:layout_weight="1" android:text="卖出" android:textSize="13sp"
-                    android:textColor="#FFFFFF" android:layout_marginStart="6dp"
+                    android:textColor="@color/on_brand" android:layout_marginStart="6dp"
                     android:background="@drawable/bg_btn_primary" android:minHeight="0dp" />
             </LinearLayout>
             <!-- 成交记录列表：动态撑开，多笔完全展示，随整页滚动 -->

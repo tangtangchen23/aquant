@@ -1,9 +1,9 @@
 <resources>
-    <!-- 品牌主色 -->
-    <color name="brand">#D32F2F</color>
-    <color name="brand_dark">#B71C1C</color>
-    <color name="brand_pressed">#B71C1C</color>
-    <color name="on_brand">#FFFFFF</color>
+    <!-- 品牌主色（方案B：中性灰阶，去高饱和红） -->
+    <color name="brand">#EDEFF2</color>
+    <color name="brand_dark">#D8DCE2</color>
+    <color name="brand_pressed">#D8DCE2</color>
+    <color name="on_brand">#2B2F36</color>
 
     <!-- 行情语义色：A股红涨绿跌 -->
     <color name="up">#E53935</color>
@@ -27,12 +27,12 @@
     <!-- 输入框边框/聚焦 -->
     <color name="input_border">#D7DAE0</color>
     <color name="input_bg">#FFFFFF</color>
-    <color name="input_focus_border">#D32F2F</color>
-    <color name="input_active_bg">#FFF7F7</color>
+    <color name="input_focus_border">#9AA2AC</color>
+    <color name="input_active_bg">#F4F5F7</color>
 
     <!-- 底部导航 -->
     <color name="nav_bg">#FFFFFF</color>
-    <color name="nav_active">#D32F2F</color>
+    <color name="nav_active">#2B2F36</color>
     <color name="nav_inactive">#8A8F99</color>
 
     <!-- 分割线背景（列表 Item 分隔） -->
@@ -42,11 +42,11 @@
     <color name="seg_bg">#F0F1F3</color>
     <color name="seg_text">#5C5F66</color>
     <color name="seg_active_bg">#FFFFFF</color>
-    <color name="seg_active_text">#D32F2F</color>
+    <color name="seg_active_text">#2B2F36</color>
 
     <!-- 危险/次操作 -->
-    <color name="danger">#D32F2F</color>
+    <color name="danger">#6B7178</color>
 
     <!-- 图标启动背景 -->
-    <color name="ic_launcher_background">#D32F2F</color>
+    <color name="ic_launcher_background">#EDEFF2</color>
 </resources>

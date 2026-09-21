@@ -339,7 +339,7 @@ class ChartFragment : Fragment() {
             .setNegativeButton("取消", null)
             .create()
         dialog.setOnShowListener {
-            dialog.getButton(AlertDialog.BUTTON_POSITIVE).setTextColor(ContextCompat.getColor(ctx, R.color.brand))
+            dialog.getButton(AlertDialog.BUTTON_POSITIVE).setTextColor(ContextCompat.getColor(ctx, R.color.on_brand))
             dialog.getButton(AlertDialog.BUTTON_POSITIVE).setOnClickListener {
                 val p = priceEt.text.toString().toDoubleOrNull()
                 if (p == null || p <= 0) { toast("成交价无效"); return@setOnClickListener }

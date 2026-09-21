@@ -1,9 +1,9 @@
 <resources>
-    <!-- 品牌主色 -->
-    <color name="brand">#EF5350</color>
-    <color name="brand_dark">#C62828</color>
-    <color name="brand_pressed">#C62828</color>
-    <color name="on_brand">#FFFFFF</color>
+    <!-- 品牌主色（方案B：中性灰阶，去高饱和红） -->
+    <color name="brand">#2A2D33</color>
+    <color name="brand_dark">#1C1F24</color>
+    <color name="brand_pressed">#363A42</color>
+    <color name="on_brand">#EDEFF2</color>
 
     <!-- 行情语义色：A股红涨绿跌（夜间加深做背景提升辨识度） -->
     <color name="up">#EF5350</color>
@@ -27,12 +27,12 @@
     <!-- 输入框 -->
     <color name="input_border">#3A3E45</color>
     <color name="input_bg">#23262B</color>
-    <color name="input_focus_border">#EF5350</color>
-    <color name="input_active_bg">#2B1E1E</color>
+    <color name="input_focus_border">#5E6B7A</color>
+    <color name="input_active_bg">#262A30</color>
 
     <!-- 底部导航 -->
     <color name="nav_bg">#1E2024</color>
-    <color name="nav_active">#EF5350</color>
+    <color name="nav_active">#EDEFF2</color>
     <color name="nav_inactive">#777D86</color>
 
     <!-- 列表分隔 -->
@@ -42,8 +42,9 @@
     <color name="seg_bg">#2A2D32</color>
     <color name="seg_text">#A5ABB4</color>
     <color name="seg_active_bg">#3A3E45</color>
-    <color name="seg_active_text">#EF5350</color>
+    <color name="seg_active_text">#EDEFF2</color>
 
     <!-- 危险/次操作 -->
-    <color name="danger">#EF5350</color>
+    <color name="danger">#A5ABB4</color>
+    <color name="ic_launcher_background">#2A2D33</color>
 </resources>
