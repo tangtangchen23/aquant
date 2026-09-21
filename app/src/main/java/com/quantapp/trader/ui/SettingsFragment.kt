@@ -245,10 +245,10 @@ class SettingsFragment : Fragment() {
                 st.tFrequency = if (rbTfreq60min.isChecked) 1 else 0
                 st.tBasePct = etTBase.text.toString().toDoubleOrNull()?.let { it.coerceIn(0.05, 1.0) } ?: st.tBasePct
                 st.tBandPct = etTBand.text.toString().toDoubleOrNull()?.let { it.coerceIn(0.05, 1.0) } ?: st.tBandPct
-                // 更换初始资金时重置模拟盘
+                // 仅更新建仓资金口径（positionTarget 依赖的初始资金），
+                // 保留既有模拟盘的持仓、现金与成交记录，不再清空数据。
                 if (Math.abs(st.initialCapital() - cap) > 0.01) {
                     st.setInitialCapital(cap)
-                    st.paper.reset(cap)
                 }
                 st.save()
                 probeGateway(tvGatewayStatus)
