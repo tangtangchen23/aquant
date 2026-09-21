@@ -1,20 +1,18 @@
 package com.quantapp.trader.ui
 
-import android.content.Context
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import android.widget.ArrayAdapter
-import android.widget.BaseAdapter
 import android.widget.Button
-import android.widget.ListView
+import android.widget.LinearLayout
 import android.widget.TextView
 import android.widget.Toast
 import androidx.core.content.ContextCompat
 import androidx.fragment.app.Fragment
 import com.quantapp.trader.R
 import com.quantapp.trader.data.MarketService
+import com.quantapp.trader.data.Quote
 import com.quantapp.trader.trading.App
 import com.quantapp.trader.trading.Position
 import com.quantapp.trader.trading.TradingEngine
@@ -24,138 +22,210 @@ import java.text.SimpleDateFormat
 
 class AccountFragment : Fragment() {
 
-    private var adapter: PositionAdapter? = null
+    /** 实时行情缓存：symbol -> Quote（null 表示已拉取过但失败）。 */
+    private val quotes = mutableMapOf<String, Quote?>()
+    private val positions = mutableListOf<Position>()
     private var btnRefresh: TextView? = null
     private var filterSide: String? = null // null=全部，"买入"/"卖出"
+    private var posContainer: LinearLayout? = null
+    private var tradeContainer: LinearLayout? = null
 
+    // ------------------------- 生命周期 -------------------------
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View {
         val root = inflater.inflate(R.layout.fragment_account, container, false)
         val tvSummary = root.findViewById<TextView>(R.id.tv_account_summary)
-        val listPos = root.findViewById<ListView>(R.id.list_positions)
-        val listTrades = root.findViewById<ListView>(R.id.list_trades)
-        val btnReset = root.findViewById<Button>(R.id.btn_reset)
         btnRefresh = root.findViewById(R.id.btn_refresh_positions)
 
-        // 持仓列表：实时估值 + 红涨绿跌，点击跳转K线图
-        adapter = PositionAdapter(requireContext(), App.appStore.paper.positions.values.toList())
-        listPos.adapter = adapter
-        adapter?.refresh()
-        listPos.setOnItemClickListener { _, _, p, _ ->
-            val pos = adapter?.getItem(p) as? Position
-            pos?.let { (activity as? MainActivity)?.openChart(it.symbol) }
-        }
+        // 持仓/成交：动态 LinearLayout 逐行注入，随数量增长并整页滚动
+        posContainer = root.findViewById(R.id.list_positions_container)
+        tradeContainer = root.findViewById(R.id.list_trades_container)
+        reloadPositions()
+        renderTrades()
 
-        // 一键清仓：按当前行情价卖出全部持仓（未拉到行情时按成本价）
-        // 注意：btn_clear_positions 在布局中是 TextView，不能按 Button 强转，否则打开页签即 ClassCastException 闪退
+        // 一键清仓
         root.findViewById<TextView>(R.id.btn_clear_positions).setOnClickListener {
-            val positions = App.appStore.paper.positions.values.toList()
-            if (positions.isEmpty()) {
+            val pos = App.appStore.paper.positions.values.toList()
+            if (pos.isEmpty()) {
                 Toast.makeText(requireContext(), "当前无持仓", Toast.LENGTH_SHORT).show()
                 return@setOnClickListener
             }
             android.app.AlertDialog.Builder(requireContext())
                 .setTitle("一键清仓")
-                .setMessage("确定以当前行情价卖出全部 ${positions.size} 只持仓吗？")
+                .setMessage("确定以当前行情价卖出全部 ${pos.size} 只持仓吗？")
                 .setPositiveButton("全部卖出") { _, _ ->
                     clearAll()
-                    refreshSummary(tvSummary)
-                    refreshTrades(listTrades)
+                    refreshAll(tvSummary)
                 }
                 .setNegativeButton("取消", null)
                 .show()
         }
 
-        // 成交记录筛选（全部/买入/卖出）
-        root.findViewById<Button>(R.id.btn_trade_all).setOnClickListener { updateFilter(null, listTrades) }
-        root.findViewById<Button>(R.id.btn_trade_buy).setOnClickListener { updateFilter("买入", listTrades) }
-        root.findViewById<Button>(R.id.btn_trade_sell).setOnClickListener { updateFilter("卖出", listTrades) }
-        updateFilterUi(listTrades)
+        // 成交记录筛选
+        root.findViewById<Button>(R.id.btn_trade_all).setOnClickListener { updateFilter(null) }
+        root.findViewById<Button>(R.id.btn_trade_buy).setOnClickListener { updateFilter("买入") }
+        root.findViewById<Button>(R.id.btn_trade_sell).setOnClickListener { updateFilter("卖出") }
+        updateFilterUi()
 
         refreshSummary(tvSummary)
-        refreshTrades(listTrades)
 
         TradingEngine.onTrade = { _ ->
             activity?.runOnUiThread {
-                adapter?.reload(App.appStore.paper.positions.values.toList())
-                adapter?.refresh()
+                reloadPositions()
                 refreshSummary(tvSummary)
-                refreshTrades(listTrades)
+                renderTrades()
             }
         }
 
         // 手动刷新持仓市值
         btnRefresh?.setOnClickListener {
             btnRefresh?.text = "刷新中..."
-            adapter?.refresh { btnRefresh?.text = "↻ 刷新市值" }
+            refreshQuotes { btnRefresh?.text = "↻ 刷新市值" }
         }
 
-        btnReset.setOnClickListener {
-            val capital = App.appStore.initialCapital()
-            App.appStore.paper.reset(capital)
-            App.appStore.save()
-            adapter?.reload(App.appStore.paper.positions.values.toList())
-            adapter?.refresh()
-            refreshSummary(tvSummary)
-            refreshTrades(listTrades)
-            Toast.makeText(requireContext(), "模拟盘已重置", Toast.LENGTH_SHORT).show()
-        }
         return root
     }
 
+    // ------------------------- 渲染 -------------------------
+    private fun reloadPositions() {
+        positions.clear()
+        positions.addAll(App.appStore.paper.positions.values)
+        val container = posContainer ?: return
+        if (container.childCount > 0) container.removeAllViews()
+        if (positions.isEmpty()) {
+            val empty = TextView(requireContext()).apply {
+                text = "（暂无持仓，可在策略页启动自动交易或做T自动建仓）"
+                setTextColor(ContextCompat.getColor(context, R.color.text_secondary))
+                textSize = 13f
+                setPadding(paddingStart, dp(10), paddingEnd, dp(10))
+            }
+            container.addView(empty)
+            return
+        }
+        positions.forEach { container.addView(positionRow(it)) }
+    }
+
+    /** 实时行情刷新后：清空并按最新缓存重排所有持仓行。 */
+    private fun refreshPositionsRows() {
+        reloadPositions()
+    }
+
+    private fun positionRow(pos: Position): View {
+        val v = LayoutInflater.from(requireContext()).inflate(R.layout.item_position, posContainer, false)
+        val q = quotes[pos.symbol]
+        val name = v.findViewById<TextView>(R.id.tv_p_name)
+        val day = v.findViewById<TextView>(R.id.tv_p_day)
+        val meta = v.findViewById<TextView>(R.id.tv_p_meta)
+        val pnl = v.findViewById<TextView>(R.id.tv_p_pnl)
+        name.text = if (pos.name.isNotBlank()) "${pos.name}  ${pos.symbol}" else pos.symbol
+        if (q != null) {
+            val price = q.price
+            val mv = pos.marketValue(price)
+            val pnlV = pos.pnl(price)
+            val c = ContextCompat.getColor(requireContext(), if (q.changePct >= 0) R.color.up else R.color.down)
+            day.text = "现价 ${fmt(price)}  ${sign(q.changePct)}${fmt(q.changePct)}%"
+            day.setTextColor(c)
+            meta.text = "数量${pos.qty}  成本${fmt(pos.costPrice)}  市值${fmt(mv)}"
+            pnl.text = "${sign(pnlV)}${fmt(pnlV)}（${sign(pos.pnlPct(price))}${fmt(pos.pnlPct(price))}%）"
+            pnl.setTextColor(c)
+        } else {
+            day.text = if (quotes.containsKey(pos.symbol)) "暂无行情" else "市值核算中..."
+            day.setTextColor(ContextCompat.getColor(requireContext(), R.color.down))
+            meta.text = "数量${pos.qty}  成本${fmt(pos.costPrice)}"
+            pnl.text = "--"
+            pnl.setTextColor(ContextCompat.getColor(requireContext(), R.color.down))
+        }
+        v.setOnClickListener { (activity as? MainActivity)?.openChart(pos.symbol) }
+        return v
+    }
+
+    private fun renderTrades() {
+        val container = tradeContainer ?: return
+        if (container.childCount > 0) container.removeAllViews()
+        val trades = App.appStore.paper.trades
+            .asReversed()
+            .filter { filterSide == null || it.side == filterSide }
+            .take(60)
+        if (trades.isEmpty()) {
+            val t = TextView(requireContext()).apply {
+                text = "（暂无成交记录）"
+                setTextColor(ContextCompat.getColor(context, R.color.text_secondary))
+                textSize = 13f
+                setPadding(paddingStart, dp(10), paddingEnd, dp(10))
+            }
+            container.addView(t)
+            return
+        }
+        val sdf = SimpleDateFormat("MM-dd HH:mm", java.util.Locale.getDefault())
+        trades.forEachIndexed { i, it ->
+            val row = TextView(requireContext()).apply {
+                text = "${sdf.format(java.util.Date(it.time))}  ${it.name}  ${it.side} ${it.qty}股 @ ${fmt(it.price)}"
+                textSize = 14f
+                setPadding(dp(10), dp(10), dp(10), dp(10))
+                // 买入红、卖出绿，与 A 股配色一致
+                setTextColor(ContextCompat.getColor(context, if (it.side == "买入") R.color.up else R.color.down))
+            }
+            if (i > 0) {
+                val div = View(context).apply {
+                    layoutParams = LinearLayout.LayoutParams(
+                        ViewGroup.LayoutParams.MATCH_PARENT, dp(1))
+                    setBackgroundColor(ContextCompat.getColor(context, R.color.divider))
+                }
+                container.addView(div)
+            }
+            container.addView(row)
+        }
+    }
+
+    // ------------------------- 逻辑 -------------------------
     private fun refreshSummary(tvSummary: TextView) {
         val st = App.appStore
         val pos = st.paper.positions.values
         val cash = st.paper.cash
-        // 用适配器已缓存的实时价估算总权益；未拉到的持仓按成本价兜底
         var mv = 0.0
         var pnl = 0.0
         for (p in pos) {
-            val q = adapter?.quoteOf(p.symbol)
+            val q = quotes[p.symbol]
             val price = q?.price ?: p.costPrice
             mv += p.marketValue(price)
             pnl += p.pnl(price)
         }
         val equity = cash + mv
-        val tv = tvSummary
-        tv.text = buildString {
+        tvSummary.text = buildString {
             append("可用资金：${fmt(cash)} 元\n")
             append("持仓市值：${fmt(mv)} 元\n")
             if (pos.isNotEmpty()) {
                 append("账户总权益：${fmt(equity)} 元（浮动盈亏 ${sign(pnl)}${fmt(pnl)} 元）\n")
-                tv.setTextColor(if (pnl >= 0)
+                tvSummary.setTextColor(if (pnl >= 0)
                     ContextCompat.getColor(requireContext(), R.color.up)
                 else ContextCompat.getColor(requireContext(), R.color.down))
             } else {
                 append("账户总权益：${fmt(equity)} 元\n")
-                tv.setTextColor(ContextCompat.getColor(requireContext(), R.color.down))
+                tvSummary.setTextColor(ContextCompat.getColor(requireContext(), R.color.down))
             }
             append("持仓数：${pos.size} 只　总成交：${st.paper.trades.size} 笔")
         }
     }
 
-    /** 一键清仓：按当前行情价卖出全部持仓（未拉到行情时按成本价兜底）。 */
     private fun clearAll() {
         val st = App.appStore
         st.paper.positions.values.toList().forEach { p ->
-            val q = adapter?.quoteOf(p.symbol)
+            val q = quotes[p.symbol]
             st.paper.sell(p.symbol, p.name, q?.price ?: p.costPrice)
         }
         st.save()
-        adapter?.reload(st.paper.positions.values.toList())
-        adapter?.refresh()
-        Toast.makeText(requireContext(), "已全部清仓", Toast.LENGTH_SHORT).show()
+        reloadPositions()
     }
 
-    private fun updateFilter(side: String?, listTrades: ListView) {
+    private fun updateFilter(side: String?) {
         filterSide = side
-        updateFilterUi(listTrades)
-        refreshTrades(listTrades)
+        updateFilterUi()
+        renderTrades()
     }
 
-    private fun updateFilterUi(listTrades: ListView) {
+    private fun updateFilterUi() {
         fun style(id: Int, active: Boolean) {
-            val btn = view?.findViewById<Button>(id) ?: listTrades.rootView.findViewById(id)
-            // 保持白色文字（置于品牌色底上），用 alpha/加粗区分选中态，浅色/深色主题均清晰
+            val btn = view?.findViewById<Button>(id)
+            if (btn == null) return
             btn.setTextColor(android.graphics.Color.WHITE)
             btn.alpha = if (active) 1f else 0.55f
             btn.setTypeface(null, if (active) android.graphics.Typeface.BOLD else android.graphics.Typeface.NORMAL)
@@ -165,74 +235,30 @@ class AccountFragment : Fragment() {
         style(R.id.btn_trade_sell, filterSide == "卖出")
     }
 
-    private fun refreshTrades(listTrades: ListView) {
-        val trades = App.appStore.paper.trades
-            .asReversed()
-            .filter { filterSide == null || it.side == filterSide }
-            .take(60)
-        listTrades.adapter = ArrayAdapter(requireContext(), android.R.layout.simple_list_item_1,
-            trades.takeIf { it.isNotEmpty() }
-                ?.map {
-                    val t = SimpleDateFormat("MM-dd HH:mm").format(java.util.Date(it.time))
-                    "$t  ${it.name} ${it.side} ${it.qty}股 @ ${fmt(it.price)}"
-                } ?: listOf("（暂无成交记录）"))
+    private fun refreshAll(tvSummary: TextView) {
+        reloadPositions()
+        refreshSummary(tvSummary)
+        renderTrades()
     }
 
-    /** 持仓列表适配器：实时估值，红涨绿跌，逐条异步拉行情。 */
-    private class PositionAdapter(ctx: Context, initial: List<Position>) : BaseAdapter() {
-        private val list = initial.toMutableList()
-        private val quotes = mutableMapOf<String, com.quantapp.trader.data.Quote?>()
-        private val ctx = ctx.applicationContext
-        override fun getCount() = list.size
-        override fun getItem(p: Int): Any = list[p]
-        override fun getItemId(p: Int): Long = p.toLong()
-        fun reload(p: List<Position>) { list.clear(); list.addAll(p); notifyDataSetChanged() }
-        fun quoteOf(symbol: String) = quotes[symbol]
-
-        override fun getView(p: Int, cv: View?, parent: ViewGroup): View {
-            val v = cv ?: LayoutInflater.from(ctx).inflate(R.layout.item_position, parent, false)
-            val pos = list[p]
-            val q = quotes[pos.symbol]
-            val name = v.findViewById<TextView>(R.id.tv_p_name)
-            val day = v.findViewById<TextView>(R.id.tv_p_day)
-            val meta = v.findViewById<TextView>(R.id.tv_p_meta)
-            val pnl = v.findViewById<TextView>(R.id.tv_p_pnl)
-            name.text = if (pos.name.isNotBlank()) "${pos.name}  ${pos.symbol}" else pos.symbol
-            if (q != null) {
-                val price = q.price
-                val mv = pos.marketValue(price)
-                val pnlV = pos.pnl(price)
-                val c = ctx.getColor(if (q.changePct >= 0) R.color.up else R.color.down)
-                day.text = "现价 ${fmt(price)}  ${sign(q.changePct)}${fmt(q.changePct)}%"
-                day.setTextColor(c)
-                meta.text = "数量${pos.qty}  成本${fmt(pos.costPrice)}  市值${fmt(mv)}"
-                pnl.text = "${sign(pnlV)}${fmt(pnlV)}（${sign(pos.pnlPct(price))}${fmt(pos.pnlPct(price))}%）"
-                pnl.setTextColor(c)
-            } else {
-                day.text = if (quotes.containsKey(pos.symbol)) "暂无行情" else "市值核算中..."
-                day.setTextColor(ctx.getColor(R.color.down))
-                meta.text = "数量${pos.qty}  成本${fmt(pos.costPrice)}"
-                pnl.text = "--"
-                pnl.setTextColor(ctx.getColor(R.color.down))
-            }
-            return v
-        }
-
-        fun refresh(onDone: (() -> Unit)? = null) {
-            val pending = list.toList()
-            AppScope.launch {
-                pending.forEach { pos ->
-                    try {
-                        quotes[pos.symbol] = withContext(Dispatchers.IO) { MarketService.fetchQuote(pos.symbol) }
-                    } catch (e: Exception) {
-                        quotes[pos.symbol] = null
-                    }
-                    notifyDataSetChanged()
+    /** 逐条异步拉取持仓实时行情，拉取完成后重写对应行，保留结构。 */
+    private fun refreshQuotes(onDone: (() -> Unit)? = null) {
+        val pending = positions.toList()
+        AppScope.launch {
+            pending.forEach { pos ->
+                try {
+                    quotes[pos.symbol] = withContext(Dispatchers.IO) { MarketService.fetchQuote(pos.symbol) }
+                } catch (e: Exception) {
+                    quotes[pos.symbol] = null
                 }
-                onDone?.invoke()
+                activity?.runOnUiThread { refreshPositionsRows() }
             }
+            onDone?.invoke()
         }
     }
+
+    private fun dp(v: Int): Int =
+        (v * resources.displayMetrics.density).toInt()
 }
 
 private fun fmt(v: Double) = String.format("%.2f", v)

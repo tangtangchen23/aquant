@@ -219,6 +219,22 @@ class SettingsFragment : Fragment() {
             if (id == R.id.rb_live) probeGateway(tvGatewayStatus)
         }
 
+        // 重置模拟盘（原交易页顶部按钮迁移至此，加二次确认防误点）
+        root.findViewById<Button>(R.id.btn_reset).setOnClickListener {
+            val st = App.appStore
+            android.app.AlertDialog.Builder(requireContext())
+                .setTitle("重置模拟盘")
+                .setMessage("确定清空当前模拟盘的持仓与成交记录，并重新注入 ${st.initialCapital().toLong()} 元初始资金吗？\n此操作不可撤销。")
+                .setPositiveButton("确认重置") { _, _ ->
+                    st.paper.reset(st.initialCapital())
+                    st.save()
+                    com.quantapp.trader.trading.TradingEngine.onTrade?.invoke("") // 通知交易页刷新持仓/成交
+                    Toast.makeText(requireContext(), "模拟盘已重置", Toast.LENGTH_SHORT).show()
+                }
+                .setNegativeButton("取消", null)
+                .show()
+        }
+
         btnSave.setOnClickListener {
             try {
                 val cap = etCapital.text.toString().toDoubleOrNull() ?: 100000.0
