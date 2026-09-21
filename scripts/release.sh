@@ -119,7 +119,30 @@ else
     --title "A股量化机器人 v$NEW_VERSION" --notes "$RELEASE_NOTES"
 fi
 
-# ---------- 4. 输出永久直链 ----------
+# ---------- 4. 同步更新 latest.json（应用内检测更新清单）----------
+LATEST_JSON="$ROOT_DIR/latest.json"
+if [ -f "$LATEST_JSON" ]; then
+  echo "[4/4] 同步 latest.json -> v$NEW_VERSION (versionCode=$NEW_VERSION_CODE)"
+  # 更新 JSON 里的 version / versionCode，并把最新版本信息追加到 changelog 前部
+  python3 - "$LATEST_JSON" "$NEW_VERSION" "$NEW_VERSION_CODE" "$RELEASE_NOTES" <<'PY'
+import json, sys, os
+path, ver, code, notes = sys.argv[1], sys.argv[2], int(sys.argv[3]), sys.argv[4]
+with open(path, encoding="utf-8") as f:
+    data = json.load(f)
+latest = data.get("latest", {})
+latest["version"] = ver
+latest["versionCode"] = code
+old = latest.get("changelog", "")
+latest["changelog"] = (notes + ("" if old == "" else "\n" + old))
+data["latest"] = latest
+with open(path, "w", encoding="utf-8") as f:
+    json.dump(data, f, ensure_ascii=False, indent=2)
+    f.write("\n")
+print("已更新", ver, code)
+PY
+fi
+
+# ---------- 5. 输出永久直链 ----------
 echo
 echo "========== ✅ 发布完成 =========="
 echo "  Release : https://github.com/$REPO/releases/tag/v$NEW_VERSION"
