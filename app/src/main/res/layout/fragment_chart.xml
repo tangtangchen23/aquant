@@ -60,7 +60,7 @@
             android:background="@drawable/bg_indicator_on" />
     </LinearLayout>
 
-    <!-- 指标开关：两行排布，保证“横盘”等入口在普通屏幕无需滚动即可见 -->
+    <!-- 指标开关：均线 / 成交量 / MACD / BOLL / KDJ -->
     <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content"
         android:layout_marginTop="6dp" android:orientation="vertical">
         <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content"
@@ -91,18 +91,21 @@
                 android:layout_marginStart="6dp" android:text="KDJ" android:padding="6dp"
                 android:textSize="14sp" android:textStyle="bold" android:textColor="?attr/indicatorActiveText"
                 android:background="@drawable/bg_indicator_on" />
-            <TextView android:id="@+id/tv_range" android:layout_width="0dp"
-                android:layout_height="wrap_content" android:layout_weight="1" android:gravity="center"
-                android:layout_marginStart="6dp" android:text="横盘" android:padding="6dp"
-                android:textSize="14sp" android:textStyle="bold" android:textColor="?attr/indicatorActiveText"
-                android:background="@drawable/bg_indicator_off" />
         </LinearLayout>
     </LinearLayout>
 
-    <com.github.mikephil.charting.charts.CombinedChart
-        android:id="@+id/kline_chart" android:layout_width="match_parent"
-        android:layout_height="0dp" android:layout_weight="1"
-        android:layout_marginTop="8dp" android:background="@color/card_bg" />
+    <!-- K线主图：右下角悬浮全屏图标，点击进入横屏全屏K线 -->
+    <FrameLayout android:layout_width="match_parent" android:layout_height="0dp"
+        android:layout_weight="1" android:layout_marginTop="8dp">
+        <com.github.mikephil.charting.charts.CombinedChart
+            android:id="@+id/kline_chart" android:layout_width="match_parent"
+            android:layout_height="match_parent" android:background="@color/card_bg" />
+        <ImageButton android:id="@+id/btn_fullscreen" android:layout_width="44dp"
+            android:layout_height="44dp" android:layout_gravity="bottom|end"
+            android:layout_margin="10dp" android:padding="12dp"
+            android:background="@drawable/bg_chart_overlay" android:src="@drawable/ic_fullscreen"
+            android:tint="@color/text_secondary" android:contentDescription="全屏K线" />
+    </FrameLayout>
 
     <com.github.mikephil.charting.charts.BarChart
         android:id="@+id/vol_chart" android:layout_width="match_parent"

@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- 二级弹窗次级动作按钮：浅色/深色为卡片底+描边，红色主题为品牌红底（配合白色文字） -->
+<selector xmlns:android="http://schemas.android.com/apk/res/android">
+    <item android:state_enabled="false">
+        <shape android:shape="rectangle">
+            <solid android:color="@color/text_disabled" />
+            <corners android:radius="12dp" />
+        </shape>
+    </item>
+    <item android:state_pressed="true">
+        <shape android:shape="rectangle">
+            <solid android:color="?attr/dialogActionSecondaryBgPressed" />
+            <corners android:radius="12dp" />
+        </shape>
+    </item>
+    <item>
+        <shape android:shape="rectangle">
+            <solid android:color="?attr/dialogActionSecondaryBg" />
+            <corners android:radius="12dp" />
+            <stroke android:width="1dp" android:color="@color/divider" />
+        </shape>
+    </item>
+</selector>

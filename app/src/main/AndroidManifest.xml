@@ -32,6 +32,13 @@
             </intent-filter>
         </activity>
 
+        <!-- 横屏全屏K线页：由K线图右下角全屏图标进入 -->
+        <activity
+            android:name=".ui.FullscreenChartActivity"
+            android:exported="false"
+            android:screenOrientation="landscape"
+            android:configChanges="orientation|screenSize|keyboardHidden" />
+
         <service
             android:name=".trading.EngineService"
             android:exported="false"

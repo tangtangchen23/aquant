@@ -19,6 +19,7 @@ import android.net.Uri
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatDelegate
 import androidx.core.content.ContextCompat
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.fragment.app.Fragment
 import com.quantapp.trader.BuildConfig
 import com.quantapp.trader.R
@@ -38,6 +39,42 @@ class SettingsFragment : Fragment() {
 
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Main)
 
+    /** 导出备份：创建文件（SAF）。 */
+    private val exportBackupLauncher =
+        registerForActivityResult(ActivityResultContracts.CreateDocument("application/json")) { uri ->
+            if (uri == null) return@registerForActivityResult
+            scope.launch(Dispatchers.IO) {
+                val ok = try {
+                    val json = App.appStore.exportJson()
+                    requireContext().contentResolver.openOutputStream(uri)?.use { it.write(json.toByteArray()) } != null
+                } catch (e: Exception) { false }
+                withContext(Dispatchers.Main) {
+                    Toast.makeText(requireContext(),
+                        if (ok) "备份已导出" else "导出失败，请重试", Toast.LENGTH_SHORT).show()
+                }
+            }
+        }
+
+    /** 导入恢复：打开文件（SAF）。 */
+    private val importBackupLauncher =
+        registerForActivityResult(ActivityResultContracts.OpenDocument()) { uri ->
+            if (uri == null) return@registerForActivityResult
+            scope.launch(Dispatchers.IO) {
+                val text = try {
+                    requireContext().contentResolver.openInputStream(uri)?.bufferedReader()?.use { it.readText() }
+                } catch (e: Exception) { null }
+                val restored = if (text != null) App.appStore.importJson(text) else false
+                withContext(Dispatchers.Main) {
+                    if (restored) {
+                        com.quantapp.trader.trading.TradingEngine.onTrade?.invoke("")
+                        Toast.makeText(requireContext(), "数据已成功恢复", Toast.LENGTH_LONG).show()
+                    } else {
+                        Toast.makeText(requireContext(), "恢复失败：文件无效或已损坏", Toast.LENGTH_LONG).show()
+                    }
+                }
+            }
+        }
+
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View {
         val root = inflater.inflate(R.layout.fragment_settings, container, false)
         val tvInfo = root.findViewById<TextView>(R.id.tv_info)
@@ -50,6 +87,7 @@ class SettingsFragment : Fragment() {
         root.findViewById<View>(R.id.row_risk).setOnClickListener { showRiskDialog(st) }
         root.findViewById<View>(R.id.row_alert).setOnClickListener { showAlertDialog() }
         root.findViewById<View>(R.id.row_ai).setOnClickListener { showAiDialog(st) }
+        root.findViewById<View>(R.id.row_backup).setOnClickListener { showBackupDialog() }
         root.findViewById<View>(R.id.row_live).setOnClickListener { showLiveDialog(st) }
         root.findViewById<View>(R.id.row_theme).setOnClickListener { showThemeDialog() }
         root.findViewById<View>(R.id.row_update).setOnClickListener { showSystemUpdateDialog(st) }
@@ -309,6 +347,25 @@ class SettingsFragment : Fragment() {
         }
     }
 
+    /** 数据备份与恢复：导出为 JSON 文件，或从备份文件导入覆盖。 */
+    private fun showBackupDialog() {
+        val ctx = requireContext()
+        val s = App.appStore
+        val v = LayoutInflater.from(ctx).inflate(R.layout.dialog_settings_backup, null)
+        val tvStatus = v.findViewById<TextView>(R.id.tv_backup_status)
+        v.findViewById<Button>(R.id.btn_backup_export).setOnClickListener {
+            tvStatus.text = ""
+            exportBackupLauncher.launch("quant_backup_${System.currentTimeMillis()}.json")
+        }
+        v.findViewById<Button>(R.id.btn_backup_import).setOnClickListener {
+            tvStatus.text = ""
+            importBackupLauncher.launch(arrayOf("application/json"))
+        }
+        val cap = s.initialCapital().toLong()
+        tvStatus.text = "包含：模拟盘（当前资金 $cap）、自选、提醒、挂单、策略参数与全部设置。"
+        openSaveDialog(v, saveText = "完成") { }
+    }
+
     /** 外观主题：分段选项即时生效。 */
     private fun showThemeDialog() {
         val ctx = requireContext()
@@ -428,8 +485,9 @@ class SettingsFragment : Fragment() {
         val v = dp(ctx, 8)
         dialog.window?.decorView?.setPadding(h, v, h, v)
         val brand = themeColor(ctx, R.attr.brand, ContextCompat.getColor(ctx, R.color.brand))
-        val onBrand = themeColor(ctx, R.attr.onBrand, ContextCompat.getColor(ctx, R.color.on_brand))
-        dialog.getButton(AlertDialog.BUTTON_POSITIVE)?.let { pillButton(it, null, brand, onBrand, ctx) }
+        // 确认按钮文字色：红色主题下为黑，其余主题沿用 onBrand（由 dialogConfirmText 属性控制）
+        val confirmText = themeColor(ctx, R.attr.dialogConfirmText, ContextCompat.getColor(ctx, R.color.on_brand))
+        dialog.getButton(AlertDialog.BUTTON_POSITIVE)?.let { pillButton(it, null, brand, confirmText, ctx) }
         dialog.getButton(AlertDialog.BUTTON_NEGATIVE)?.let { ghostButton(it, ctx) }
     }
 

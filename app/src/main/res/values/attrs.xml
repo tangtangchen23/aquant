@@ -15,5 +15,14 @@
         <attr name="segActiveText" format="color" />
         <!-- K线周期/指标切换按钮的激活文字色：浅色=黑,红色=红 -->
         <attr name="indicatorActiveText" format="color" />
+
+        <!-- 二级弹窗动作按钮文字色：红色主题下为白色，其余主题保持现有取值 -->
+        <attr name="dialogActionOnPrimary" format="color" />
+        <attr name="dialogActionOnSecondary" format="color" />
+        <!-- 二级弹窗次级动作按钮背景色：红色主题下为品牌红，其余主题保持现有取值 -->
+        <attr name="dialogActionSecondaryBg" format="color" />
+        <attr name="dialogActionSecondaryBgPressed" format="color" />
+        <!-- 二级弹窗右下角确认按钮文字色：红色主题下为黑色，其余主题保持现有取值 -->
+        <attr name="dialogConfirmText" format="color" />
     </declare-styleable>
 </resources>

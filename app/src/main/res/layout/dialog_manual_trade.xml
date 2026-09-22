@@ -16,16 +16,15 @@
             android:textColor="@color/text_secondary"
             android:text="现价已自动填入，可手工修改；仅挂单模式，现价触及后自动成交。" />
 
-        <View android:layout_width="match_parent" android:layout_height="1dp"
-            android:layout_marginTop="16dp" android:layout_marginBottom="12dp"
-            android:background="@color/divider" />
-
         <!-- 下单信息 -->
         <TextView android:id="@+id/tv_manual_section" android:layout_width="wrap_content"
-            android:layout_height="wrap_content" android:text="下单信息" android:textSize="14sp"
-            android:textStyle="bold" />
+            android:layout_height="wrap_content" android:layout_marginTop="18dp"
+            android:text="下单信息" android:textSize="14sp" android:textStyle="bold" />
+        <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content"
+            android:orientation="vertical" android:layout_marginTop="10dp"
+            android:padding="14dp" android:background="@drawable/bg_card">
         <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
-            android:layout_marginTop="10dp" android:text="挂单价格（现价触及后成交，可修改）"
+            android:text="挂单价格（现价触及后成交，可修改）"
             android:textSize="12sp" android:textColor="@color/text_secondary" />
         <EditText android:id="@+id/et_price_dialog" android:layout_width="match_parent"
             android:layout_height="44dp" android:layout_marginTop="6dp"
@@ -58,6 +57,7 @@
         <TextView android:id="@+id/tv_trade_hint" android:layout_width="match_parent"
             android:layout_height="wrap_content" android:layout_marginTop="10dp"
             android:textSize="12sp" android:textColor="@color/text_secondary" />
+        </LinearLayout><!-- /下单信息卡片 -->
 
         <View android:layout_width="match_parent" android:layout_height="1dp"
             android:layout_marginTop="16dp" android:layout_marginBottom="12dp"

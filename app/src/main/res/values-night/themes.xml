@@ -17,5 +17,12 @@
         <item name="navActive">@color/nav_active</item>
         <item name="segActiveText">@color/seg_active_text</item>
         <item name="indicatorActiveText">@color/text_primary</item>
+
+        <!-- 二级弹窗动作按钮 / 确认按钮文字色（深色取值，与浅色一致，颜色资源按夜间自动解析） -->
+        <item name="dialogActionOnPrimary">@color/on_brand</item>
+        <item name="dialogActionOnSecondary">@color/text_primary</item>
+        <item name="dialogActionSecondaryBg">@color/seg_active_bg</item>
+        <item name="dialogActionSecondaryBgPressed">@color/seg_bg</item>
+        <item name="dialogConfirmText">@color/on_brand</item>
     </style>
 </resources>

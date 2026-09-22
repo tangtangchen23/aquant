@@ -67,6 +67,8 @@
     <color name="set_live">#0E7C7B</color>
     <color name="set_theme">#5E6AB0</color>
     <color name="set_update">#546E7A</color>
+    <color name="set_tint_backup">#EAF2F7</color>
+    <color name="set_backup">#0E7490</color>
 
     <!-- 红色主题（改版前的经典红浅色主题）品牌色 -->
     <color name="red_brand">#D32F2F</color>

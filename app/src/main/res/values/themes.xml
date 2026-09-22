@@ -17,6 +17,13 @@
         <item name="navActive">@color/nav_active</item>
         <item name="segActiveText">@color/seg_active_text</item>
         <item name="indicatorActiveText">@color/text_primary</item>
+
+        <!-- 二级弹窗动作按钮 / 确认按钮文字色（浅色取值；红色主题单独覆盖） -->
+        <item name="dialogActionOnPrimary">@color/on_brand</item>
+        <item name="dialogActionOnSecondary">@color/text_primary</item>
+        <item name="dialogActionSecondaryBg">@color/seg_active_bg</item>
+        <item name="dialogActionSecondaryBgPressed">@color/seg_bg</item>
+        <item name="dialogConfirmText">@color/on_brand</item>
     </style>
 
     <!-- 红色主题（改版前的经典红浅色主题，浅色底+红色品牌） -->
@@ -36,5 +43,12 @@
         <item name="navActive">@color/red_nav_active</item>
         <item name="segActiveText">@color/red_seg_active_text</item>
         <item name="indicatorActiveText">@color/up</item>
+
+        <!-- 红色主题：动作按钮文字白、次级动作按钮品牌红底、确认按钮文字黑 -->
+        <item name="dialogActionOnPrimary">@android:color/white</item>
+        <item name="dialogActionOnSecondary">@android:color/white</item>
+        <item name="dialogActionSecondaryBg">@color/red_brand</item>
+        <item name="dialogActionSecondaryBgPressed">@color/red_brand_pressed</item>
+        <item name="dialogConfirmText">@android:color/black</item>
     </style>
 </resources>

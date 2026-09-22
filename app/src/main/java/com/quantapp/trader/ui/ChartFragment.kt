@@ -1,6 +1,7 @@
 package com.quantapp.trader.ui
 
 import android.content.Context
+import android.content.Intent
 import android.graphics.Color
 import android.graphics.drawable.GradientDrawable
 import android.os.Bundle
@@ -12,6 +13,7 @@ import android.view.View
 import android.view.ViewGroup
 import android.widget.Button
 import android.widget.EditText
+import android.widget.ImageButton
 import android.widget.LinearLayout
 import android.widget.TextView
 import android.widget.Toast
@@ -23,7 +25,6 @@ import com.github.mikephil.charting.charts.BarChart
 import com.github.mikephil.charting.charts.BarLineChartBase
 import com.github.mikephil.charting.charts.CombinedChart
 import com.github.mikephil.charting.components.AxisBase
-import com.github.mikephil.charting.components.LimitLine
 import com.github.mikephil.charting.components.XAxis
 import com.github.mikephil.charting.components.YAxis
 import com.github.mikephil.charting.data.BarData
@@ -70,7 +71,6 @@ class ChartFragment : Fragment() {
     private var showMACD = true
     private var showBOLL = false
     private var showKDJ = false
-    private var showRange = false
     private var signals: List<BuySellSignal> = emptyList()
 
     private lateinit var chart: CombinedChart
@@ -82,7 +82,6 @@ class ChartFragment : Fragment() {
     private lateinit var tvMACD: TextView
     private lateinit var tvBOLL: TextView
     private lateinit var tvKDJ: TextView
-    private lateinit var tvRange: TextView
     private lateinit var tvInfo: TextView
 
     private val UP_COLOR = "#E53935"
@@ -116,7 +115,6 @@ class ChartFragment : Fragment() {
         tvMACD = root.findViewById(R.id.tv_macd)
         tvBOLL = root.findViewById(R.id.tv_boll)
         tvKDJ = root.findViewById(R.id.tv_kdj)
-        tvRange = root.findViewById(R.id.tv_range)
         tvInfo = root.findViewById(R.id.tv_chart_info)
         tvInfo.setTextColor(ContextCompat.getColor(requireContext(), R.color.text_secondary))
 
@@ -159,7 +157,6 @@ class ChartFragment : Fragment() {
         tvMACD.setOnClickListener { showMACD = !showMACD; refreshIndicatorAppearance(); if (period != Period.MINUTE) renderCharts() else renderTrendMacd() }
         tvBOLL.setOnClickListener { showBOLL = !showBOLL; refreshIndicatorAppearance(); if (period != Period.MINUTE) renderCharts() }
         tvKDJ.setOnClickListener { showKDJ = !showKDJ; refreshIndicatorAppearance(); if (period != Period.MINUTE) renderCharts() else renderTrendKdj() }
-        tvRange.setOnClickListener { showRange = !showRange; refreshIndicatorAppearance(); if (period != Period.MINUTE) renderCharts() }
         refreshIndicatorAppearance()
 
         // 去除了输入股票代码加载——该功能与行情页重复。symbol 由行情页点击自选股/卡片时注入。
@@ -182,6 +179,9 @@ class ChartFragment : Fragment() {
         root.findViewById<Button>(R.id.btn_manual_buy).setOnClickListener { manualTrade(isBuy = true) }
         root.findViewById<Button>(R.id.btn_manual_sell).setOnClickListener { manualTrade(isBuy = false) }
 
+        // 全屏横看K线：点击右下角全屏图标进入横屏全屏K线页
+        root.findViewById<ImageButton>(R.id.btn_fullscreen).setOnClickListener { openFullscreen() }
+
         if (symbol.isBlank()) {
             tvInfo.text = "未指定股票"
         } else {
@@ -198,6 +198,13 @@ class ChartFragment : Fragment() {
             }
         }
         return root
+    }
+
+    /** 进入横屏全屏K线页（独立Activity，展示日K+均线，可开关BOLL）。 */
+    private fun openFullscreen() {
+        if (symbol.isBlank()) { toast("未指定股票"); return }
+        startActivity(Intent(requireContext(), FullscreenChartActivity::class.java)
+            .putExtra(FullscreenChartActivity.EXTRA_SYMBOL, symbol))
     }
 
     private fun switchPeriod(p: Period) {
@@ -504,7 +511,6 @@ class ChartFragment : Fragment() {
         tvMACD.setBackgroundResource(if (showMACD) R.drawable.bg_indicator_on else R.drawable.bg_indicator_off)
         tvBOLL.setBackgroundResource(if (showBOLL) R.drawable.bg_indicator_on else R.drawable.bg_indicator_off)
         tvKDJ.setBackgroundResource(if (showKDJ) R.drawable.bg_indicator_on else R.drawable.bg_indicator_off)
-        tvRange.setBackgroundResource(if (showRange) R.drawable.bg_indicator_on else R.drawable.bg_indicator_off)
     }
 
     /** 分时图：以折线绘制每分钟价格。 */
@@ -695,15 +701,6 @@ class ChartFragment : Fragment() {
             // B/S 买卖点标记（叠加在主图之上）
             signals = detectBuySell()
             renderer = SignalRenderer(this, animator, viewPortHandler) { signals }
-            // 横盘区间：识别出震荡箱体后在上沿/下沿画虚线
-            axisLeft.removeAllLimitLines()
-            if (showRange) {
-                val range = detectRange()
-                if (range != null) {
-                    axisLeft.addLimitLine(range.first)
-                    axisLeft.addLimitLine(range.second)
-                }
-            }
             invalidate()
         }
     }
@@ -1005,40 +1002,6 @@ class ChartFragment : Fragment() {
             }
         }
         return out
-    }
-
-    /**
-     * 横盘箱体识别：取最近 min(30, n) 根K线，若振幅 (箱顶-箱底)/箱底 < 8% 视为横盘，
-     * 返回箱顶/箱底两条虚线 LimitLine；否则返回 null（不画）。
-     */
-    private fun detectRange(): Pair<LimitLine, LimitLine>? {
-        if (bars.size < 10) return null
-        val win = minOf(30, bars.size)
-        val start = bars.size - win
-        var hi = Double.MIN_VALUE
-        var lo = Double.MAX_VALUE
-        for (i in start until bars.size) {
-            if (bars[i].high > hi) hi = bars[i].high
-            if (bars[i].low < lo) lo = bars[i].low
-        }
-        if (lo <= 0 || (hi - lo) / lo >= 0.08) return null
-        val top = LimitLine(hi.toFloat(), "箱顶").apply {
-            lineColor = Color.parseColor("#7E57C2")
-            lineWidth = 1.2f
-            enableDashedLine(10f, 8f, 0f)
-            textColor = Color.parseColor("#7E57C2")
-            textSize = 10f
-            labelPosition = LimitLine.LimitLabelPosition.RIGHT_TOP
-        }
-        val bottom = LimitLine(lo.toFloat(), "箱底").apply {
-            lineColor = Color.parseColor("#7E57C2")
-            lineWidth = 1.2f
-            enableDashedLine(10f, 8f, 0f)
-            textColor = Color.parseColor("#7E57C2")
-            textSize = 10f
-            labelPosition = LimitLine.LimitLabelPosition.RIGHT_BOTTOM
-        }
-        return Pair(top, bottom)
     }
 
     private fun dateFormatter() = object : ValueFormatter() {

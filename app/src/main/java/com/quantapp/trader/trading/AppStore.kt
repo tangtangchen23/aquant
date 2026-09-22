@@ -285,6 +285,60 @@ class AppStore(context: Context) {
 
     private var strategies = loadActive()
 
+    // =========================== 数据备份 / 恢复 ===========================
+
+    /**
+     * 把整个 SharedPreferences 导出为 JSON 字符串。
+     * 覆盖全部设置、模拟盘、自选、提醒、挂单、策略与日志。
+     */
+    fun exportJson(): String {
+        val o = JSONObject()
+        val all = prefs.all
+        for ((k, v) in all) {
+            when (v) {
+                is String -> o.put(k, v)
+                is Int -> o.put(k, v)
+                is Long -> o.put(k, v)
+                is Float -> o.put(k, v.toDouble())
+                is Double -> o.put(k, v)
+                is Boolean -> o.put(k, v)
+            }
+        }
+        // 版本标记（用于校验文件是否为本应用导出的备份）。
+        o.put("__quant_backup__", 1)
+        return o.toString()
+    }
+
+    /** 从备份 JSON 恢复。覆盖当前全部数据，并重新加载内存状态。 */
+    fun importJson(json: String): Boolean {
+        if (json.isBlank()) return false
+        val o = try { JSONObject(json) } catch (e: Exception) { return false }
+        if (o.optInt("__quant_backup__", 0) != 1) return false
+        try {
+            val ed = prefs.edit().clear()
+            val it = o.keys()
+            while (it.hasNext()) {
+                val k = it.next()
+                if (k == "__quant_backup__") continue
+                when (val v = o.opt(k)) {
+                    is String -> ed.putString(k, v)
+                    is Int -> ed.putInt(k, v)
+                    is Long -> ed.putLong(k, v)
+                    is Double -> ed.putFloat(k, v.toFloat())
+                    is Boolean -> ed.putBoolean(k, v)
+                }
+            }
+            ed.apply()
+        } catch (e: Exception) { return false }
+
+        // 重新载入内存状态（paper / 策略 / 提醒 / 挂单）。
+        load()
+        strategies = loadActive()
+        alerts = loadAlerts()
+        pendingOrders = loadPendingOrders()
+        return true
+    }
+
     // ---------- 引擎运行/信号日志 ----------
     private var engineLogs = loadLogs()
 
