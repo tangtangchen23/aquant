@@ -1,8 +1,8 @@
 {
   "latest": {
-    "version": "2.11.0",
-    "versionCode": 72,
+    "version": "2.12.0",
+    "versionCode": 73,
     "apkUrl": "https://github.com/tangtangchen23/aquant/releases/latest/download/aquant-release.apk",
-    "changelog": "## v2.11.0\n- 手动买入/卖出价格自动获取实时价，且可手工修改\n- 检查更新提示只保留最新版本迭代内容\n- 修复升级弹窗“立即升级”按钮字体颜色看不清\n- 策略页移除查询历史列表\n- 设置页重构为二级弹窗入口，页面更简洁\n- 取消运行中策略增加二次确认，防误触"
+    "changelog": "## v2.12.0\n- 重新设计设置页：菜单改为带分类图标/副标题/箭头的列表行，增加点击反馈\n- 二级弹窗分节加入与菜单呼应的分类色强调条，统一字号与间距\n- 新增浅色/深色主题下的低饱和分类色 token，提升夜间可读性"
   }
 }
