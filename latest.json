@@ -1,8 +1,8 @@
 {
   "latest": {
-    "version": "2.21.0",
-    "versionCode": 87,
+    "version": "2.22.0",
+    "versionCode": 88,
     "apkUrl": "https://github.com/tangtangchen23/aquant/releases/latest/download/aquant-release.apk",
-    "changelog": "设置页调整：将「数据备份与恢复」入口移动到「系统更新」上方。"
+    "changelog": "红色主题下二级弹窗按钮文字适配：动作按钮(重置模拟盘/添加/测试连接/保存AI配置/备份/恢复/检查更新)文字改白、确认按钮文字改黑；手动买卖确认按钮统一为白色。"
   }
 }
