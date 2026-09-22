@@ -1,8 +1,8 @@
 {
   "latest": {
-    "version": "2.20.0",
-    "versionCode": 86,
+    "version": "2.21.0",
+    "versionCode": 87,
     "apkUrl": "https://github.com/tangtangchen23/aquant/releases/latest/download/aquant-release.apk",
-    "changelog": "界面细节优化：1) 手动买卖下单页「确认」按钮文字改为黑色，浅色/红色主题下更清晰；2) 设置二级弹窗头部彩色文字与一级设置项图标文字一致；3) 交易/做T/外观主题弹窗分段选项按钮与重置模拟盘按钮文字改为深色；4) 行情提醒弹窗触发方向下拉与添加按钮水平对齐。"
+    "changelog": "设置页调整：将「数据备份与恢复」入口移动到「系统更新」上方。"
   }
 }
