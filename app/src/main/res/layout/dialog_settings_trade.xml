@@ -1,0 +1,93 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent" android:layout_height="wrap_content">
+
+    <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content"
+        android:orientation="vertical" android:paddingTop="2dp" android:paddingBottom="4dp">
+
+        <!-- 分类徽标 -->
+        <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
+            android:paddingStart="14dp" android:paddingEnd="14dp"
+            android:paddingTop="7dp" android:paddingBottom="7dp"
+            android:background="@drawable/chip_trade"
+            android:text="交易设置" android:textSize="15sp" android:textStyle="bold"
+            android:textColor="@color/set_trade" />
+        <TextView android:layout_width="match_parent" android:layout_height="wrap_content"
+            android:layout_marginTop="8dp" android:textSize="12sp"
+            android:textColor="@color/text_secondary"
+            android:text="切换模拟盘 / 实盘信号模式，配置初始资金与下单节奏。" />
+
+        <!-- 交易模式 -->
+        <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
+            android:layout_marginTop="18dp" android:text="交易模式" android:textSize="14sp"
+            android:textStyle="bold" android:textColor="@color/set_trade" />
+        <RadioGroup android:id="@+id/rg_mode_dialog" android:layout_width="match_parent"
+            android:layout_height="wrap_content" android:orientation="horizontal"
+            android:layout_marginTop="8dp">
+            <RadioButton android:id="@+id/rb_dialog_paper" android:layout_width="0dp"
+                android:layout_height="44dp" android:layout_weight="1"
+                android:minHeight="0dp" android:gravity="center" android:textSize="13sp"
+                android:button="@android:color/transparent"
+                android:background="@drawable/bg_option" android:textColor="@color/t_option"
+                android:text="模拟盘" />
+            <RadioButton android:id="@+id/rb_dialog_live" android:layout_width="0dp"
+                android:layout_height="44dp" android:layout_weight="1"
+                android:minHeight="0dp" android:gravity="center" android:textSize="13sp"
+                android:layout_marginStart="8dp" android:button="@android:color/transparent"
+                android:background="@drawable/bg_option" android:textColor="@color/t_option"
+                android:text="实盘信号" />
+        </RadioGroup>
+        <TextView android:id="@+id/tv_mode_hint" android:layout_width="match_parent"
+            android:layout_height="wrap_content" android:layout_marginTop="8dp"
+            android:textSize="12sp" android:textColor="@color/text_secondary" />
+
+        <View android:layout_width="match_parent" android:layout_height="1dp"
+            android:layout_marginTop="16dp" android:layout_marginBottom="16dp"
+            android:background="@color/divider" />
+
+        <!-- 资金与下单 -->
+        <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
+            android:text="资金与下单" android:textSize="14sp" android:textStyle="bold"
+            android:textColor="@color/set_trade" />
+        <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
+            android:layout_marginTop="10dp" android:text="模拟初始资金" android:textSize="12sp"
+            android:textColor="@color/text_secondary" />
+        <EditText android:id="@+id/et_capital_dialog" android:layout_width="match_parent"
+            android:layout_height="44dp" android:layout_marginTop="6dp"
+            android:minHeight="0dp" android:paddingStart="12dp" android:paddingEnd="12dp"
+            android:background="@drawable/bg_input"
+            android:textSize="13sp" android:textColor="@color/text_primary"
+            android:textColorHint="@color/text_hint" android:hint="如 100000"
+            android:inputType="numberDecimal" android:importantForAutofill="no" />
+        <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
+            android:layout_marginTop="12dp" android:text="轮询间隔（秒，>=5）" android:textSize="12sp"
+            android:textColor="@color/text_secondary" />
+        <EditText android:id="@+id/et_poll_dialog" android:layout_width="match_parent"
+            android:layout_height="44dp" android:layout_marginTop="6dp"
+            android:minHeight="0dp" android:paddingStart="12dp" android:paddingEnd="12dp"
+            android:background="@drawable/bg_input"
+            android:textSize="13sp" android:textColor="@color/text_primary"
+            android:textColorHint="@color/text_hint" android:hint="15"
+            android:inputType="number" android:importantForAutofill="no" />
+        <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
+            android:layout_marginTop="12dp" android:text="单次开仓资金比例（0~1）" android:textSize="12sp"
+            android:textColor="@color/text_secondary" />
+        <EditText android:id="@+id/et_pct_dialog" android:layout_width="match_parent"
+            android:layout_height="44dp" android:layout_marginTop="6dp"
+            android:minHeight="0dp" android:paddingStart="12dp" android:paddingEnd="12dp"
+            android:background="@drawable/bg_input"
+            android:textSize="13sp" android:textColor="@color/text_primary"
+            android:textColorHint="@color/text_hint" android:hint="0.8"
+            android:inputType="numberDecimal" android:importantForAutofill="no" />
+
+        <View android:layout_width="match_parent" android:layout_height="1dp"
+            android:layout_marginTop="16dp" android:layout_marginBottom="14dp"
+            android:background="@color/divider" />
+
+        <!-- 重置模拟盘（破坏性操作，红色标识） -->
+        <Button android:id="@+id/btn_reset" android:layout_width="match_parent"
+            android:layout_height="46dp" android:minHeight="0dp"
+            android:text="重置模拟盘（清空持仓与成交）" android:textSize="14sp"
+            android:textColor="#C0392B" android:background="@drawable/bg_btn_secondary" />
+    </LinearLayout>
+</ScrollView>

@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent" android:layout_height="wrap_content">
+
+    <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content"
+        android:orientation="vertical" android:paddingTop="2dp" android:paddingBottom="4dp">
+
+        <!-- 分类徽标 -->
+        <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
+            android:paddingStart="14dp" android:paddingEnd="14dp"
+            android:paddingTop="7dp" android:paddingBottom="7dp"
+            android:background="@drawable/chip_theme"
+            android:text="外观主题" android:textSize="15sp" android:textStyle="bold"
+            android:textColor="@color/set_theme" />
+        <TextView android:layout_width="match_parent" android:layout_height="wrap_content"
+            android:layout_marginTop="8dp" android:textSize="12sp"
+            android:textColor="@color/text_secondary"
+            android:text="选择应用的全局配色风格，切换后立即生效。" />
+
+        <!-- 选项 -->
+        <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
+            android:layout_marginTop="18dp" android:text="主题风格" android:textSize="14sp"
+            android:textStyle="bold" android:textColor="@color/set_theme" />
+        <RadioGroup android:id="@+id/rg_theme_dialog" android:layout_width="match_parent"
+            android:layout_height="wrap_content" android:orientation="vertical"
+            android:layout_marginTop="8dp">
+            <RadioButton android:id="@+id/rb_theme_sys_dialog" android:layout_width="match_parent"
+                android:layout_height="48dp" android:minHeight="0dp" android:gravity="center_vertical"
+                android:paddingStart="14dp" android:paddingEnd="14dp"
+                android:button="@android:color/transparent"
+                android:background="@drawable/bg_option" android:textColor="@color/t_option"
+                android:textSize="14sp" android:text="跟随系统" />
+            <RadioButton android:id="@+id/rb_theme_light_dialog" android:layout_width="match_parent"
+                android:layout_height="48dp" android:minHeight="0dp" android:gravity="center_vertical"
+                android:layout_marginTop="8dp" android:paddingStart="14dp" android:paddingEnd="14dp"
+                android:button="@android:color/transparent"
+                android:background="@drawable/bg_option" android:textColor="@color/t_option"
+                android:textSize="14sp" android:text="浅色" />
+            <RadioButton android:id="@+id/rb_theme_dark_dialog" android:layout_width="match_parent"
+                android:layout_height="48dp" android:minHeight="0dp" android:gravity="center_vertical"
+                android:layout_marginTop="8dp" android:paddingStart="14dp" android:paddingEnd="14dp"
+                android:button="@android:color/transparent"
+                android:background="@drawable/bg_option" android:textColor="@color/t_option"
+                android:textSize="14sp" android:text="深色" />
+            <RadioButton android:id="@+id/rb_theme_red_dialog" android:layout_width="match_parent"
+                android:layout_height="48dp" android:minHeight="0dp" android:gravity="center_vertical"
+                android:layout_marginTop="8dp" android:paddingStart="14dp" android:paddingEnd="14dp"
+                android:button="@android:color/transparent"
+                android:background="@drawable/bg_option" android:textColor="@color/t_option"
+                android:textSize="14sp" android:text="红色（经典）" />
+        </RadioGroup>
+    </LinearLayout>
+</ScrollView>

@@ -3,409 +3,254 @@
     android:layout_width="match_parent" android:layout_height="match_parent">
 
     <ScrollView android:layout_width="match_parent" android:layout_height="match_parent"
-        android:fillViewport="true"
-        android:paddingBottom="76dp">
+        android:fillViewport="true">
 
         <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content"
-            android:orientation="vertical" android:padding="14dp">
+            android:orientation="vertical" android:padding="14dp" android:paddingBottom="24dp">
 
             <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
                 android:text="设置" android:textSize="22sp" android:textStyle="bold"
                 android:textColor="@color/text_primary" />
 
-            <!-- 交易设置 -->
             <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
-                android:layout_marginTop="16dp" android:text="交易设置" android:textStyle="bold"
+                android:layout_marginTop="18dp" android:text="设置项" android:textStyle="bold"
                 android:textSize="14sp" android:textColor="@color/text_secondary" />
-            <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content"
-                android:layout_marginTop="6dp" android:orientation="vertical"
-                android:padding="14dp" android:background="@drawable/bg_card">
+
+            <!-- 交易设置 -->
+            <LinearLayout android:id="@+id/row_trade" android:layout_width="match_parent"
+                android:layout_height="wrap_content" android:layout_marginTop="8dp"
+                android:orientation="horizontal" android:gravity="center_vertical"
+                android:padding="14dp" android:background="@drawable/bg_row"
+                android:clickable="true" android:focusable="true">
+                <LinearLayout android:layout_width="44dp" android:layout_height="44dp"
+                    android:gravity="center" android:background="@drawable/bg_row_icon"
+                    android:backgroundTint="@color/set_tint_trade">
+                    <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
+                        android:text="交易" android:textSize="12sp" android:textStyle="bold"
+                        android:textColor="@color/set_trade" />
+                </LinearLayout>
+                <LinearLayout android:layout_width="0dp" android:layout_height="wrap_content"
+                    android:layout_weight="1" android:layout_marginStart="14dp"
+                    android:orientation="vertical">
+                    <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
+                        android:text="交易设置" android:textSize="15sp" android:textStyle="bold"
+                        android:textColor="@color/text_primary" />
+                    <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
+                        android:text="交易模式 · 资金 · 仓位 · 重置模拟盘"
+                        android:textSize="12sp" android:layout_marginTop="3dp"
+                        android:textColor="@color/text_secondary" />
+                </LinearLayout>
                 <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
-                    android:text="交易模式" android:textStyle="bold" android:textSize="14sp" />
-                <RadioGroup android:id="@+id/rg_mode" android:layout_width="wrap_content"
-                    android:layout_height="wrap_content" android:orientation="horizontal"
-                    android:layout_marginTop="6dp">
-                    <RadioButton android:id="@+id/rb_paper" android:layout_width="wrap_content"
-                        android:layout_height="wrap_content" android:text="模拟盘(默认)" />
-                    <RadioButton android:id="@+id/rb_live" android:layout_width="wrap_content"
-                        android:layout_height="wrap_content" android:text="实盘信号" />
-                </RadioGroup>
-                <TextView android:id="@+id/tv_mode_hint" android:layout_width="match_parent"
-                    android:layout_height="wrap_content" android:layout_marginTop="4dp"
-                    android:textSize="12sp" android:textColor="@color/text_secondary" />
-
-                <View android:layout_width="match_parent" android:layout_height="1dp"
-                    android:layout_marginTop="14dp" android:layout_marginBottom="2dp"
-                    android:background="@color/divider" />
-
-                <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
-                    android:layout_marginTop="10dp" android:text="模拟初始资金" android:textSize="13sp"
-                    android:textColor="@color/text_secondary" />
-                <EditText android:id="@+id/et_capital" android:layout_width="match_parent"
-                    android:layout_height="46dp" android:layout_marginTop="4dp"
-                    android:minHeight="0dp" android:paddingStart="12dp" android:paddingEnd="12dp"
-                    android:background="@drawable/bg_input"
-                    android:textSize="13sp" android:inputType="numberDecimal" />
-
-                <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
-                    android:layout_marginTop="12dp" android:text="轮询间隔(秒,>=5)" android:textSize="13sp"
-                    android:textColor="@color/text_secondary" />
-                <EditText android:id="@+id/et_poll" android:layout_width="match_parent"
-                    android:layout_height="46dp" android:layout_marginTop="4dp"
-                    android:minHeight="0dp" android:paddingStart="12dp" android:paddingEnd="12dp"
-                    android:background="@drawable/bg_input"
-                    android:textSize="13sp" android:inputType="number" />
-
-                <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
-                    android:layout_marginTop="12dp" android:text="单次开仓资金比例(0~1)" android:textSize="13sp"
-                    android:textColor="@color/text_secondary" />
-                <EditText android:id="@+id/et_pct" android:layout_width="match_parent"
-                    android:layout_height="46dp" android:layout_marginTop="4dp"
-                    android:minHeight="0dp" android:paddingStart="12dp" android:paddingEnd="12dp"
-                    android:background="@drawable/bg_input"
-                    android:textSize="13sp" android:inputType="numberDecimal" />
-
-                <Button android:id="@+id/btn_reset" android:layout_width="match_parent"
-                    android:layout_height="44dp" android:layout_marginTop="12dp"
-                    android:text="重置模拟盘(清空持仓与成交)" android:textSize="14sp"
-                    android:background="@drawable/bg_btn_secondary" />
+                    android:text="›" android:textSize="26sp"
+                    android:textColor="@color/text_hint" />
             </LinearLayout>
 
             <!-- 做T设置 -->
-            <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
-                android:layout_marginTop="14dp" android:text="做T设置(日内多次高抛低吸)" android:textStyle="bold"
-                android:textSize="14sp" android:textColor="@color/text_secondary" />
-            <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content"
-                android:layout_marginTop="6dp" android:orientation="vertical"
-                android:padding="14dp" android:background="@drawable/bg_card">
+            <LinearLayout android:id="@+id/row_tband" android:layout_width="match_parent"
+                android:layout_height="wrap_content" android:layout_marginTop="8dp"
+                android:orientation="horizontal" android:gravity="center_vertical"
+                android:padding="14dp" android:background="@drawable/bg_row"
+                android:clickable="true" android:focusable="true">
+                <LinearLayout android:layout_width="44dp" android:layout_height="44dp"
+                    android:gravity="center" android:background="@drawable/bg_row_icon"
+                    android:backgroundTint="@color/set_tint_tband">
+                    <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
+                        android:text="做T" android:textSize="12sp" android:textStyle="bold"
+                        android:textColor="@color/set_tband" />
+                </LinearLayout>
+                <LinearLayout android:layout_width="0dp" android:layout_height="wrap_content"
+                    android:layout_weight="1" android:layout_marginStart="14dp"
+                    android:orientation="vertical">
+                    <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
+                        android:text="做T设置" android:textSize="15sp" android:textStyle="bold"
+                        android:textColor="@color/text_primary" />
+                    <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
+                        android:text="日内高抛低吸 · 数据源与档位"
+                        android:textSize="12sp" android:layout_marginTop="3dp"
+                        android:textColor="@color/text_secondary" />
+                </LinearLayout>
                 <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
-                    android:text="做T数据源" android:textStyle="bold" android:textSize="14sp" />
-                <RadioGroup android:id="@+id/rg_tfreq" android:layout_width="wrap_content"
-                    android:layout_height="wrap_content" android:orientation="horizontal"
-                    android:layout_marginTop="6dp">
-                    <RadioButton android:id="@+id/rb_tfreq_1min" android:layout_width="wrap_content"
-                        android:layout_height="wrap_content" android:text="分时线(更频繁)" />
-                    <RadioButton android:id="@+id/rb_tfreq_60min" android:layout_width="wrap_content"
-                        android:layout_height="wrap_content" android:text="60分K线(更稳)" />
-                </RadioGroup>
-
-                <View android:layout_width="match_parent" android:layout_height="1dp"
-                    android:layout_marginTop="14dp" android:layout_marginBottom="2dp"
-                    android:background="@color/divider" />
-
-                <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
-                    android:layout_marginTop="10dp" android:text="做T底仓占目标仓位比例(0~1)" android:textSize="13sp"
-                    android:textColor="@color/text_secondary" />
-                <EditText android:id="@+id/et_t_base" android:layout_width="match_parent"
-                    android:layout_height="46dp" android:layout_marginTop="4dp"
-                    android:minHeight="0dp" android:paddingStart="12dp" android:paddingEnd="12dp"
-                    android:background="@drawable/bg_input"
-                    android:textSize="13sp" android:inputType="numberDecimal" />
-
-                <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
-                    android:layout_marginTop="12dp" android:text="做T每档交易占比(0~1)" android:textSize="13sp"
-                    android:textColor="@color/text_secondary" />
-                <EditText android:id="@+id/et_t_band" android:layout_width="match_parent"
-                    android:layout_height="46dp" android:layout_marginTop="4dp"
-                    android:minHeight="0dp" android:paddingStart="12dp" android:paddingEnd="12dp"
-                    android:background="@drawable/bg_input"
-                    android:textSize="13sp" android:inputType="numberDecimal" />
+                    android:text="›" android:textSize="26sp"
+                    android:textColor="@color/text_hint" />
             </LinearLayout>
 
-            <!-- 风控 -->
-            <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
-                android:layout_marginTop="14dp" android:text="风控设置" android:textStyle="bold"
-                android:textSize="14sp" android:textColor="@color/text_secondary" />
-            <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content"
-                android:layout_marginTop="6dp" android:orientation="vertical"
-                android:padding="14dp" android:background="@drawable/bg_card">
+            <!-- 风控设置 -->
+            <LinearLayout android:id="@+id/row_risk" android:layout_width="match_parent"
+                android:layout_height="wrap_content" android:layout_marginTop="8dp"
+                android:orientation="horizontal" android:gravity="center_vertical"
+                android:padding="14dp" android:background="@drawable/bg_row"
+                android:clickable="true" android:focusable="true">
+                <LinearLayout android:layout_width="44dp" android:layout_height="44dp"
+                    android:gravity="center" android:background="@drawable/bg_row_icon"
+                    android:backgroundTint="@color/set_tint_risk">
+                    <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
+                        android:text="风控" android:textSize="12sp" android:textStyle="bold"
+                        android:textColor="@color/set_risk" />
+                </LinearLayout>
+                <LinearLayout android:layout_width="0dp" android:layout_height="wrap_content"
+                    android:layout_weight="1" android:layout_marginStart="14dp"
+                    android:orientation="vertical">
+                    <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
+                        android:text="风控设置" android:textSize="15sp" android:textStyle="bold"
+                        android:textColor="@color/text_primary" />
+                    <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
+                        android:text="止损止盈 · 回撤 · 移动止盈 · 加仓"
+                        android:textSize="12sp" android:layout_marginTop="3dp"
+                        android:textColor="@color/text_secondary" />
+                </LinearLayout>
                 <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
-                    android:text="风控规则(0表示关闭)" android:textStyle="bold" android:textSize="14sp" />
-                <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content"
-                    android:orientation="horizontal" android:layout_marginTop="8dp">
-                    <EditText android:id="@+id/et_stop_loss" android:layout_width="0dp"
-                        android:layout_height="46dp" android:layout_weight="1"
-                        android:minHeight="0dp" android:paddingStart="12dp" android:paddingEnd="12dp"
-                        android:background="@drawable/bg_input"
-                        android:hint="单票止损%" android:textSize="13sp" android:inputType="numberDecimal" />
-                    <EditText android:id="@+id/et_take_profit" android:layout_width="0dp"
-                        android:layout_height="46dp" android:layout_weight="1"
-                        android:minHeight="0dp" android:paddingStart="12dp" android:paddingEnd="12dp"
-                        android:background="@drawable/bg_input"
-                        android:layout_marginStart="6dp"
-                        android:hint="单票止盈%" android:textSize="13sp" android:inputType="numberDecimal" />
-                    <EditText android:id="@+id/et_max_dd" android:layout_width="0dp"
-                        android:layout_height="46dp" android:layout_weight="1"
-                        android:minHeight="0dp" android:paddingStart="12dp" android:paddingEnd="12dp"
-                        android:background="@drawable/bg_input"
-                        android:layout_marginStart="6dp"
-                        android:hint="回撤熔断%" android:textSize="13sp" android:inputType="numberDecimal" />
-                </LinearLayout>
-
-                <View android:layout_width="match_parent" android:layout_height="1dp"
-                    android:layout_marginTop="12dp" android:layout_marginBottom="2dp"
-                    android:background="@color/divider" />
-
-                <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
-                    android:layout_marginTop="10dp" android:text="出场策略(自动交易生效)" android:textStyle="bold"
-                    android:textSize="14sp" />
-
-                <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content"
-                    android:orientation="horizontal" android:layout_marginTop="10dp">
-                    <LinearLayout android:layout_width="0dp" android:layout_height="wrap_content"
-                        android:layout_weight="1" android:orientation="vertical">
-                        <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
-                            android:textSize="13sp" android:textColor="@color/text_secondary"
-                            android:text="移动止盈·启动盈利%" />
-                        <EditText android:id="@+id/et_trail_activate" android:layout_width="match_parent"
-                            android:layout_height="42dp" android:layout_marginTop="4dp"
-                            android:minHeight="0dp" android:paddingStart="12dp" android:paddingEnd="12dp"
-                            android:background="@drawable/bg_input"
-                            android:textSize="13sp" android:inputType="numberDecimal" />
-                    </LinearLayout>
-                    <LinearLayout android:layout_width="0dp" android:layout_height="wrap_content"
-                        android:layout_weight="1" android:layout_marginStart="6dp" android:orientation="vertical">
-                        <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
-                            android:textSize="13sp" android:textColor="@color/text_secondary"
-                            android:text="移动止盈·回撤离场%" />
-                        <EditText android:id="@+id/et_trail_stop" android:layout_width="match_parent"
-                            android:layout_height="42dp" android:layout_marginTop="4dp"
-                            android:minHeight="0dp" android:paddingStart="12dp" android:paddingEnd="12dp"
-                            android:background="@drawable/bg_input"
-                            android:textSize="13sp" android:inputType="numberDecimal" />
-                    </LinearLayout>
-                </LinearLayout>
-                <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content"
-                    android:orientation="horizontal" android:layout_marginTop="10dp">
-                    <LinearLayout android:layout_width="0dp" android:layout_height="wrap_content"
-                        android:layout_weight="1" android:orientation="vertical">
-                        <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
-                            android:textSize="13sp" android:textColor="@color/text_secondary"
-                            android:text="保本止损·启动%" />
-                        <EditText android:id="@+id/et_breakeven" android:layout_width="match_parent"
-                            android:layout_height="42dp" android:layout_marginTop="4dp"
-                            android:minHeight="0dp" android:paddingStart="12dp" android:paddingEnd="12dp"
-                            android:background="@drawable/bg_input"
-                            android:textSize="13sp" android:inputType="numberDecimal" />
-                    </LinearLayout>
-                    <LinearLayout android:layout_width="0dp" android:layout_height="wrap_content"
-                        android:layout_weight="1" android:layout_marginStart="6dp" android:orientation="vertical">
-                        <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
-                            android:textSize="13sp" android:textColor="@color/text_secondary"
-                            android:text="ATR止损·开关(1/0)" />
-                        <EditText android:id="@+id/et_atr_enabled" android:layout_width="match_parent"
-                            android:layout_height="42dp" android:layout_marginTop="4dp"
-                            android:minHeight="0dp" android:paddingStart="12dp" android:paddingEnd="12dp"
-                            android:background="@drawable/bg_input"
-                            android:textSize="13sp" android:inputType="number" />
-                    </LinearLayout>
-                </LinearLayout>
-                <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content"
-                    android:orientation="horizontal" android:layout_marginTop="10dp">
-                    <LinearLayout android:layout_width="0dp" android:layout_height="wrap_content"
-                        android:layout_weight="1" android:orientation="vertical">
-                        <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
-                            android:textSize="13sp" android:textColor="@color/text_secondary"
-                            android:text="ATR止损·倍数" />
-                        <EditText android:id="@+id/et_atr_mult" android:layout_width="match_parent"
-                            android:layout_height="42dp" android:layout_marginTop="4dp"
-                            android:minHeight="0dp" android:paddingStart="12dp" android:paddingEnd="12dp"
-                            android:background="@drawable/bg_input"
-                            android:textSize="13sp" android:inputType="numberDecimal" />
-                    </LinearLayout>
-                    <LinearLayout android:layout_width="0dp" android:layout_height="wrap_content"
-                        android:layout_weight="1" android:layout_marginStart="6dp" android:orientation="vertical">
-                        <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
-                            android:textSize="13sp" android:textColor="@color/text_secondary"
-                            android:text="建仓·首仓比例" />
-                        <EditText android:id="@+id/et_first_buy" android:layout_width="match_parent"
-                            android:layout_height="42dp" android:layout_marginTop="4dp"
-                            android:minHeight="0dp" android:paddingStart="12dp" android:paddingEnd="12dp"
-                            android:background="@drawable/bg_input"
-                            android:textSize="13sp" android:inputType="numberDecimal" />
-                    </LinearLayout>
-                </LinearLayout>
-                <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content"
-                    android:orientation="horizontal" android:layout_marginTop="10dp">
-                    <LinearLayout android:layout_width="0dp" android:layout_height="wrap_content"
-                        android:layout_weight="1" android:orientation="vertical">
-                        <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
-                            android:textSize="13sp" android:textColor="@color/text_secondary"
-                            android:text="加仓·每档比例" />
-                        <EditText android:id="@+id/et_add_pct" android:layout_width="match_parent"
-                            android:layout_height="42dp" android:layout_marginTop="4dp"
-                            android:minHeight="0dp" android:paddingStart="12dp" android:paddingEnd="12dp"
-                            android:background="@drawable/bg_input"
-                            android:textSize="13sp" android:inputType="numberDecimal" />
-                    </LinearLayout>
-                    <LinearLayout android:layout_width="0dp" android:layout_height="wrap_content"
-                        android:layout_weight="1" android:layout_marginStart="6dp" android:orientation="vertical">
-                        <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
-                            android:textSize="13sp" android:textColor="@color/text_secondary"
-                            android:text="加仓·盈利档位%" />
-                        <EditText android:id="@+id/et_add_thr" android:layout_width="match_parent"
-                            android:layout_height="42dp" android:layout_marginTop="4dp"
-                            android:minHeight="0dp" android:paddingStart="12dp" android:paddingEnd="12dp"
-                            android:background="@drawable/bg_input"
-                            android:textSize="13sp" android:inputType="numberDecimal" />
-                    </LinearLayout>
-                </LinearLayout>
+                    android:text="›" android:textSize="26sp"
+                    android:textColor="@color/text_hint" />
             </LinearLayout>
 
             <!-- 行情提醒 -->
-            <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
-                android:layout_marginTop="14dp" android:text="行情提醒" android:textStyle="bold"
-                android:textSize="14sp" android:textColor="@color/text_secondary" />
-            <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content"
-                android:layout_marginTop="6dp" android:orientation="vertical"
-                android:padding="14dp" android:background="@drawable/bg_card">
+            <LinearLayout android:id="@+id/row_alert" android:layout_width="match_parent"
+                android:layout_height="wrap_content" android:layout_marginTop="8dp"
+                android:orientation="horizontal" android:gravity="center_vertical"
+                android:padding="14dp" android:background="@drawable/bg_row"
+                android:clickable="true" android:focusable="true">
+                <LinearLayout android:layout_width="44dp" android:layout_height="44dp"
+                    android:gravity="center" android:background="@drawable/bg_row_icon"
+                    android:backgroundTint="@color/set_tint_alert">
+                    <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
+                        android:text="提醒" android:textSize="12sp" android:textStyle="bold"
+                        android:textColor="@color/set_alert" />
+                </LinearLayout>
+                <LinearLayout android:layout_width="0dp" android:layout_height="wrap_content"
+                    android:layout_weight="1" android:layout_marginStart="14dp"
+                    android:orientation="vertical">
+                    <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
+                        android:text="行情提醒" android:textSize="15sp" android:textStyle="bold"
+                        android:textColor="@color/text_primary" />
+                    <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
+                        android:text="到价推送通知 · 上穿/跌破目标价"
+                        android:textSize="12sp" android:layout_marginTop="3dp"
+                        android:textColor="@color/text_secondary" />
+                </LinearLayout>
                 <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
-                    android:text="行情到价提醒" android:textStyle="bold" android:textSize="14sp" />
-                <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content"
-                    android:orientation="horizontal" android:layout_marginTop="8dp">
-                    <EditText android:id="@+id/et_alert_symbol" android:layout_width="0dp"
-                        android:layout_height="46dp" android:layout_weight="1"
-                        android:minHeight="0dp" android:paddingStart="12dp" android:paddingEnd="12dp"
-                        android:background="@drawable/bg_input"
-                        android:textSize="13sp" android:hint="代码，如600519" />
-                    <EditText android:id="@+id/et_alert_price" android:layout_width="0dp"
-                        android:layout_height="46dp" android:layout_weight="1"
-                        android:minHeight="0dp" android:paddingStart="12dp" android:paddingEnd="12dp"
-                        android:background="@drawable/bg_input"
-                        android:layout_marginStart="6dp"
-                        android:textSize="13sp" android:hint="目标价" android:inputType="numberDecimal" />
-                </LinearLayout>
-                <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content"
-                    android:orientation="horizontal" android:layout_marginTop="6dp">
-                    <Spinner android:id="@+id/sp_alert_dir" android:layout_width="0dp"
-                        android:layout_height="wrap_content" android:layout_weight="1" />
-                    <Button android:id="@+id/btn_add_alert" android:layout_width="wrap_content"
-                        android:layout_height="44dp" android:layout_marginStart="8dp" android:text="添加"
-                        android:minWidth="0dp" android:paddingStart="20dp" android:paddingEnd="20dp"
-                        android:background="@drawable/bg_btn_primary" />
-                </LinearLayout>
-                <TextView android:id="@+id/tv_alerts" android:layout_width="match_parent"
-                    android:layout_height="wrap_content" android:layout_marginTop="8dp"
-                    android:textSize="13sp" android:textColor="@color/text_secondary" />
+                    android:text="›" android:textSize="26sp"
+                    android:textColor="@color/text_hint" />
             </LinearLayout>
 
-            <!-- 连接与 AI -->
-            <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
-                android:layout_marginTop="14dp" android:text="连接与 AI" android:textStyle="bold"
-                android:textSize="14sp" android:textColor="@color/text_secondary" />
-            <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content"
-                android:layout_marginTop="6dp" android:orientation="vertical"
-                android:padding="14dp" android:background="@drawable/bg_card">
-                <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
-                    android:text="实盘网关URL(可选,对接QMT/EasyTrader)" android:textStyle="bold"
-                    android:textSize="14sp" />
-                <EditText android:id="@+id/et_gateway" android:layout_width="match_parent"
-                    android:layout_height="46dp" android:layout_marginTop="6dp"
-                    android:minHeight="0dp" android:paddingStart="12dp" android:paddingEnd="12dp"
-                    android:background="@drawable/bg_input"
-                    android:textSize="13sp" android:inputType="textUri" />
-                <TextView android:id="@+id/tv_gateway_status" android:layout_width="match_parent"
-                    android:layout_height="wrap_content" android:layout_marginTop="4dp"
-                    android:textSize="12sp" android:textColor="@color/text_secondary" />
-
-                <View android:layout_width="match_parent" android:layout_height="1dp"
-                    android:layout_marginTop="14dp" android:layout_marginBottom="2dp"
-                    android:background="@color/divider" />
-
-                <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
-                    android:layout_marginTop="10dp" android:text="AI 大模型（可选）" android:textStyle="bold"
-                    android:textSize="14sp" />
-                <Spinner android:id="@+id/sp_ai_provider" android:layout_width="match_parent"
-                    android:layout_height="wrap_content" android:layout_marginTop="6dp" />
-                <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
-                    android:layout_marginTop="10dp" android:text="API Key（仅存本机）"
-                    android:textSize="13sp" android:textColor="@color/text_secondary" />
-                <EditText android:id="@+id/et_ai_key" android:layout_width="match_parent"
-                    android:layout_height="46dp" android:layout_marginTop="4dp"
-                    android:minHeight="0dp" android:paddingStart="12dp" android:paddingEnd="12dp"
-                    android:background="@drawable/bg_input"
-                    android:textSize="13sp" android:hint="粘贴 API Key"
-                    android:inputType="textPassword" />
-                <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
-                    android:layout_marginTop="12dp" android:text="模型名称"
-                    android:textSize="13sp" android:textColor="@color/text_secondary" />
-                <EditText android:id="@+id/et_ai_model" android:layout_width="match_parent"
-                    android:layout_height="46dp" android:layout_marginTop="4dp"
-                    android:minHeight="0dp" android:paddingStart="12dp" android:paddingEnd="12dp"
-                    android:background="@drawable/bg_input"
-                    android:textSize="13sp" android:hint="如 gpt-3.5-turbo" android:singleLine="true" />
-                <TextView android:layout_width="match_parent" android:layout_height="wrap_content"
-                    android:layout_marginTop="4dp" android:textSize="11sp"
-                    android:textColor="@color/text_secondary"
-                    android:text="用于回测/持仓的AI深度解读。密钥仅保存在本机，AI只做分析与建议，不会接触交易。" />
-                <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content"
-                    android:orientation="horizontal" android:layout_marginTop="8dp">
-                    <Button android:id="@+id/btn_ai_test" android:layout_width="0dp"
-                        android:layout_height="44dp" android:layout_weight="1"
-                        android:text="测试连接" android:background="@drawable/bg_btn_secondary" />
-                    <Button android:id="@+id/btn_ai_save" android:layout_width="0dp"
-                        android:layout_height="44dp" android:layout_weight="1"
-                        android:layout_marginStart="8dp"
-                        android:text="保存AI配置" android:background="@drawable/bg_btn_secondary" />
+            <!-- AI设置 -->
+            <LinearLayout android:id="@+id/row_ai" android:layout_width="match_parent"
+                android:layout_height="wrap_content" android:layout_marginTop="8dp"
+                android:orientation="horizontal" android:gravity="center_vertical"
+                android:padding="14dp" android:background="@drawable/bg_row"
+                android:clickable="true" android:focusable="true">
+                <LinearLayout android:layout_width="44dp" android:layout_height="44dp"
+                    android:gravity="center" android:background="@drawable/bg_row_icon"
+                    android:backgroundTint="@color/set_tint_ai">
+                    <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
+                        android:text="AI" android:textSize="14sp" android:textStyle="bold"
+                        android:textColor="@color/set_ai" />
                 </LinearLayout>
-                <TextView android:id="@+id/tv_ai_status" android:layout_width="match_parent"
-                    android:layout_height="wrap_content" android:layout_marginTop="4dp"
-                    android:textSize="12sp" android:textColor="@color/text_secondary" />
+                <LinearLayout android:layout_width="0dp" android:layout_height="wrap_content"
+                    android:layout_weight="1" android:layout_marginStart="14dp"
+                    android:orientation="vertical">
+                    <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
+                        android:text="AI设置" android:textSize="15sp" android:textStyle="bold"
+                        android:textColor="@color/text_primary" />
+                    <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
+                        android:text="大模型连接 · API Key · 深度解读"
+                        android:textSize="12sp" android:layout_marginTop="3dp"
+                        android:textColor="@color/text_secondary" />
+                </LinearLayout>
+                <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
+                    android:text="›" android:textSize="26sp"
+                    android:textColor="@color/text_hint" />
             </LinearLayout>
 
-            <!-- 外观 -->
-            <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
-                android:layout_marginTop="14dp" android:text="外观" android:textStyle="bold"
-                android:textSize="14sp" android:textColor="@color/text_secondary" />
-            <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content"
-                android:layout_marginTop="6dp" android:orientation="vertical"
-                android:padding="14dp" android:background="@drawable/bg_card">
+            <!-- 实盘设置 -->
+            <LinearLayout android:id="@+id/row_live" android:layout_width="match_parent"
+                android:layout_height="wrap_content" android:layout_marginTop="8dp"
+                android:orientation="horizontal" android:gravity="center_vertical"
+                android:padding="14dp" android:background="@drawable/bg_row"
+                android:clickable="true" android:focusable="true">
+                <LinearLayout android:layout_width="44dp" android:layout_height="44dp"
+                    android:gravity="center" android:background="@drawable/bg_row_icon"
+                    android:backgroundTint="@color/set_tint_live">
+                    <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
+                        android:text="实盘" android:textSize="12sp" android:textStyle="bold"
+                        android:textColor="@color/set_live" />
+                </LinearLayout>
+                <LinearLayout android:layout_width="0dp" android:layout_height="wrap_content"
+                    android:layout_weight="1" android:layout_marginStart="14dp"
+                    android:orientation="vertical">
+                    <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
+                        android:text="实盘设置" android:textSize="15sp" android:textStyle="bold"
+                        android:textColor="@color/text_primary" />
+                    <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
+                        android:text="信号网关 · 输出到 QMT/EasyTrader"
+                        android:textSize="12sp" android:layout_marginTop="3dp"
+                        android:textColor="@color/text_secondary" />
+                </LinearLayout>
                 <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
-                    android:text="外观主题" android:textStyle="bold" android:textSize="14sp" />
-                <RadioGroup android:id="@+id/rg_theme" android:layout_width="wrap_content"
-                    android:layout_height="wrap_content" android:orientation="horizontal"
-                    android:layout_marginTop="6dp">
-                    <RadioButton android:id="@+id/rb_theme_sys" android:layout_width="wrap_content"
-                        android:layout_height="wrap_content" android:text="跟随系统" />
-                    <RadioButton android:id="@+id/rb_theme_light" android:layout_width="wrap_content"
-                        android:layout_height="wrap_content" android:text="浅色" />
-                    <RadioButton android:id="@+id/rb_theme_dark" android:layout_width="wrap_content"
-                        android:layout_height="wrap_content" android:text="深色" />
-                    <RadioButton android:id="@+id/rb_theme_red" android:layout_width="wrap_content"
-                        android:layout_height="wrap_content" android:text="红色" />
-                </RadioGroup>
+                    android:text="›" android:textSize="26sp"
+                    android:textColor="@color/text_hint" />
             </LinearLayout>
 
-            <!-- 关于 -->
-            <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
-                android:layout_marginTop="14dp" android:text="关于与更新" android:textStyle="bold"
-                android:textSize="14sp" android:textColor="@color/text_secondary" />
-            <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content"
-                android:layout_marginTop="6dp" android:orientation="vertical"
-                android:padding="14dp" android:background="@drawable/bg_card">
+            <!-- 外观主题 -->
+            <LinearLayout android:id="@+id/row_theme" android:layout_width="match_parent"
+                android:layout_height="wrap_content" android:layout_marginTop="8dp"
+                android:orientation="horizontal" android:gravity="center_vertical"
+                android:padding="14dp" android:background="@drawable/bg_row"
+                android:clickable="true" android:focusable="true">
+                <LinearLayout android:layout_width="44dp" android:layout_height="44dp"
+                    android:gravity="center" android:background="@drawable/bg_row_icon"
+                    android:backgroundTint="@color/set_tint_theme">
+                    <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
+                        android:text="主题" android:textSize="12sp" android:textStyle="bold"
+                        android:textColor="@color/set_theme" />
+                </LinearLayout>
+                <LinearLayout android:layout_width="0dp" android:layout_height="wrap_content"
+                    android:layout_weight="1" android:layout_marginStart="14dp"
+                    android:orientation="vertical">
+                    <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
+                        android:text="外观主题" android:textSize="15sp" android:textStyle="bold"
+                        android:textColor="@color/text_primary" />
+                    <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
+                        android:text="浅色 · 深色 · 跟随系统 · 红色"
+                        android:textSize="12sp" android:layout_marginTop="3dp"
+                        android:textColor="@color/text_secondary" />
+                </LinearLayout>
                 <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
-                    android:text="当前版本" android:textStyle="bold" android:textSize="14sp" />
-                <TextView android:id="@+id/tv_version" android:layout_width="match_parent"
-                    android:layout_height="wrap_content" android:layout_marginTop="2dp"
-                    android:textSize="14sp" />
+                    android:text="›" android:textSize="26sp"
+                    android:textColor="@color/text_hint" />
+            </LinearLayout>
+
+            <!-- 系统更新 -->
+            <LinearLayout android:id="@+id/row_update" android:layout_width="match_parent"
+                android:layout_height="wrap_content" android:layout_marginTop="8dp"
+                android:orientation="horizontal" android:gravity="center_vertical"
+                android:padding="14dp" android:background="@drawable/bg_row"
+                android:clickable="true" android:focusable="true">
+                <LinearLayout android:layout_width="44dp" android:layout_height="44dp"
+                    android:gravity="center" android:background="@drawable/bg_row_icon"
+                    android:backgroundTint="@color/set_tint_update">
+                    <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
+                        android:text="升级" android:textSize="12sp" android:textStyle="bold"
+                        android:textColor="@color/set_update" />
+                </LinearLayout>
+                <LinearLayout android:layout_width="0dp" android:layout_height="wrap_content"
+                    android:layout_weight="1" android:layout_marginStart="14dp"
+                    android:orientation="vertical">
+                    <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
+                        android:text="系统更新" android:textSize="15sp" android:textStyle="bold"
+                        android:textColor="@color/text_primary" />
+                    <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
+                        android:text="当前版本 · 检查与升级"
+                        android:textSize="12sp" android:layout_marginTop="3dp"
+                        android:textColor="@color/text_secondary" />
+                </LinearLayout>
                 <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
-                    android:layout_marginTop="10dp" android:text="新版本将直接从内置升级地址下载安装"
-                    android:textSize="12sp" android:textColor="@color/text_secondary" />
-                <Button android:id="@+id/btn_check_update" android:layout_width="match_parent"
-                    android:layout_height="44dp" android:layout_marginTop="8dp" android:text="检查更新"
-                    android:background="@drawable/bg_btn_secondary" />
+                    android:text="›" android:textSize="26sp"
+                    android:textColor="@color/text_hint" />
             </LinearLayout>
 
             <TextView android:id="@+id/tv_info" android:layout_width="match_parent"
-                android:layout_height="wrap_content" android:layout_marginTop="14dp"
+                android:layout_height="wrap_content" android:layout_marginTop="18dp"
                 android:textSize="12sp" android:textColor="@color/text_secondary" />
         </LinearLayout>
     </ScrollView>
-
-    <!-- 底部固定保存按钮 -->
-    <Button android:id="@+id/btn_save" android:layout_width="match_parent"
-        android:layout_height="52dp" android:layout_gravity="bottom"
-        android:layout_margin="14dp"
-        android:text="保存设置" android:textSize="16sp"
-        android:background="@drawable/bg_btn_primary" />
 </FrameLayout>

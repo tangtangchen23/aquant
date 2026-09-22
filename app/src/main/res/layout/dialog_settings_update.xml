@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent" android:layout_height="wrap_content">
+
+    <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content"
+        android:orientation="vertical" android:paddingTop="2dp" android:paddingBottom="4dp">
+
+        <!-- 分类徽标 -->
+        <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
+            android:paddingStart="14dp" android:paddingEnd="14dp"
+            android:paddingTop="7dp" android:paddingBottom="7dp"
+            android:background="@drawable/chip_update"
+            android:text="系统更新" android:textSize="15sp" android:textStyle="bold"
+            android:textColor="@color/set_update" />
+        <TextView android:layout_width="match_parent" android:layout_height="wrap_content"
+            android:layout_marginTop="8dp" android:textSize="12sp"
+            android:textColor="@color/text_secondary"
+            android:text="查看当前版本并检测是否有新版本可升级。" />
+
+        <!-- 当前版本 -->
+        <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
+            android:layout_marginTop="18dp" android:text="当前版本" android:textSize="14sp"
+            android:textStyle="bold" android:textColor="@color/set_update" />
+        <TextView android:id="@+id/tv_version_dialog" android:layout_width="match_parent"
+            android:layout_height="wrap_content" android:layout_marginTop="6dp"
+            android:textSize="15sp" android:textColor="@color/text_primary" />
+        <TextView android:layout_width="match_parent" android:layout_height="wrap_content"
+            android:layout_marginTop="4dp" android:textSize="12sp"
+            android:textColor="@color/text_secondary"
+            android:text="新版本将直接从内置升级地址下载安装。" />
+
+        <View android:layout_width="match_parent" android:layout_height="1dp"
+            android:layout_marginTop="16dp" android:layout_marginBottom="16dp"
+            android:background="@color/divider" />
+
+        <!-- 检测 -->
+        <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
+            android:text="检测升级" android:textSize="14sp" android:textStyle="bold"
+            android:textColor="@color/set_update" />
+        <Button android:id="@+id/btn_check_update_dialog" android:layout_width="match_parent"
+            android:layout_height="46dp" android:layout_marginTop="10dp" android:minHeight="0dp"
+            android:text="检查更新" android:textSize="15sp"
+            android:textColor="@color/on_brand" android:background="@drawable/bg_btn_primary" />
+    </LinearLayout>
+</ScrollView>

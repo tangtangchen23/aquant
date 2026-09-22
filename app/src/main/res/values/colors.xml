@@ -61,6 +61,12 @@
     <color name="set_tint_risk">#EAF6EE</color>
     <color name="set_tint_alert">#EAF2FB</color>
     <color name="set_tint_ai">#F1EDFB</color>
+    <color name="set_tint_live">#E6F6F5</color>
+    <color name="set_tint_theme">#EDEFFB</color>
+    <color name="set_tint_update">#EDF1F3</color>
+    <color name="set_live">#0E7C7B</color>
+    <color name="set_theme">#5E6AB0</color>
+    <color name="set_update">#546E7A</color>
 
     <!-- 红色主题（改版前的经典红浅色主题）品牌色 -->
     <color name="red_brand">#D32F2F</color>

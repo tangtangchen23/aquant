@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent" android:layout_height="wrap_content">
+
+    <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content"
+        android:orientation="vertical" android:paddingTop="2dp" android:paddingBottom="4dp">
+
+        <!-- 分类徽标 -->
+        <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
+            android:paddingStart="14dp" android:paddingEnd="14dp"
+            android:paddingTop="7dp" android:paddingBottom="7dp"
+            android:background="@drawable/chip_live"
+            android:text="实盘设置" android:textSize="15sp" android:textStyle="bold"
+            android:textColor="@color/set_live" />
+        <TextView android:layout_width="match_parent" android:layout_height="wrap_content"
+            android:layout_marginTop="8dp" android:textSize="12sp"
+            android:textColor="@color/text_secondary"
+            android:text="对接自有网关（QMT/EasyTrader 等）接收买卖信号并执行下单，风险自担。" />
+
+        <!-- 网关配置 -->
+        <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
+            android:layout_marginTop="18dp" android:text="实盘网关URL" android:textSize="14sp"
+            android:textStyle="bold" android:textColor="@color/set_live" />
+        <TextView android:layout_width="match_parent" android:layout_height="wrap_content"
+            android:layout_marginTop="4dp" android:textSize="12sp"
+            android:textColor="@color/text_secondary"
+            android:text="引擎将把买卖信号 POST 到该地址（可选，留空则不发送信号）。" />
+        <EditText android:id="@+id/et_gateway_dialog" android:layout_width="match_parent"
+            android:layout_height="46dp" android:layout_marginTop="8dp"
+            android:minHeight="0dp" android:paddingStart="12dp" android:paddingEnd="12dp"
+            android:background="@drawable/bg_input"
+            android:textSize="13sp" android:textColor="@color/text_primary"
+            android:textColorHint="@color/text_hint" android:hint="http://127.0.0.1:8080/order"
+            android:inputType="textUri" android:singleLine="true" android:importantForAutofill="no" />
+        <TextView android:id="@+id/tv_gateway_status_dialog" android:layout_width="match_parent"
+            android:layout_height="wrap_content" android:layout_marginTop="6dp"
+            android:textSize="12sp" android:textColor="@color/text_secondary" />
+
+        <View android:layout_width="match_parent" android:layout_height="1dp"
+            android:layout_marginTop="16dp" android:layout_marginBottom="16dp"
+            android:background="@color/divider" />
+
+        <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
+            android:text="说明" android:textSize="14sp" android:textStyle="bold"
+            android:textColor="@color/set_live" />
+        <TextView android:layout_width="match_parent" android:layout_height="wrap_content"
+            android:layout_marginTop="6dp" android:textSize="12sp"
+            android:textColor="@color/text_secondary" android:lineSpacingExtra="3dp"
+            android:text="实盘信号模式下引擎只输出信号并发送到网关，不直接成交。\n请务必先在网关侧接入券商通道，并做好失败重试与人工监控。" />
+    </LinearLayout>
+</ScrollView>
