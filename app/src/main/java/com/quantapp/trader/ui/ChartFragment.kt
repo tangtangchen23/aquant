@@ -44,6 +44,7 @@ import com.quantapp.trader.data.MarketService
 import com.quantapp.trader.data.MarketService.TrendPoint
 import com.quantapp.trader.data.WatchStore
 import com.quantapp.trader.trading.App
+import com.quantapp.trader.trading.PendingOrder
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.isActive
@@ -125,6 +126,11 @@ class ChartFragment : Fragment() {
             isUpAt = { idx -> markerUp(idx) }
         )
         chart.setDrawMarkers(true)
+        // 关键修复：CombinedChart 默认 mHighlightFullBarEnabled=true，触摸产生的高亮 dataIndex 恒为 -1，
+        // 而绘制十字光标时 CombinedChart.drawMarkers() 会用 dataIndex=-1 去 getDataByIndex(-1) 取数据，
+        // 触发 getAllData().get(-1) 的 IndexOutOfBoundsException（发生在 onDraw 主线程，try-catch 拦不住），
+        // 导致“点按/滑动图表后切换周期即闪退”。关闭整柱高亮后高亮保留真实 dataSetIndex，绘制安全。
+        chart.setHighlightFullBarEnabled(false)
 
         // 主图缩放/平移时，联动可见成交量/MACD/KDJ子图保持同一X轴范围
         chart.setOnChartGestureListener(object : OnChartGestureListener {
@@ -197,6 +203,8 @@ class ChartFragment : Fragment() {
         if (period == p) return
         period = p
         updatePeriodButtonAppearance()
+        // 切换周期前清除旧周期的十字光标高亮，避免旧高亮(陈旧 dataSetIndex)在重绘时引发越界
+        chart.highlightValue(null)
         loadPeriod(p)
     }
 
@@ -250,7 +258,15 @@ class ChartFragment : Fragment() {
                     Period.MINUTE -> {
                         withContext(Dispatchers.IO) { trend = MarketService.fetchTrend(symbol) }
                         if (trend.isEmpty()) tvInfo.text = "未获取到分时数据"
-                        else { renderTrend(); tvInfo.text = "$symbol　分时图（最后一分钟 ${String.format("%.2f", trend.last().price)}）" }
+                        else {
+                            try {
+                                renderTrend()
+                            } catch (e: Exception) {
+                                tvInfo.text = "分时渲染失败：${e.message}"
+                                return@launch
+                            }
+                            tvInfo.text = "$symbol　分时图（最后一分钟 ${String.format("%.2f", trend.last().price)}）"
+                        }
                     }
                     Period.DAY -> {
                         bars = withContext(Dispatchers.IO) { MarketService.fetchKline(symbol, 240) }
@@ -280,7 +296,13 @@ class ChartFragment : Fragment() {
             tvInfo.text = "未获取到${p.label}数据"
             return
         }
-        renderCharts()
+        try {
+            renderCharts()
+        } catch (e: Exception) {
+            // 兜底：任一子图渲染异常都不应让应用闪退，给出提示
+            tvInfo.text = "${p.label}渲染失败：${e.message}"
+            return
+        }
         val last = bars.last()
         tvInfo.text = "$symbol　$label　共${bars.size}根　最新收盘 ${String.format("%.2f", last.close)}"
     }
@@ -317,7 +339,12 @@ class ChartFragment : Fragment() {
         val ctx = requireContext()
         val maxQty = pos?.qty ?: 0
 
-        val priceEt = tradeField(ctx, value = String.format("%.2f", price), inputType = InputType.TYPE_CLASS_NUMBER or InputType.TYPE_NUMBER_FLAG_DECIMAL, hint = "成交价，可修改")
+        // 挂单价格默认自动填实时行情，也可手工修改
+        val priceEt = tradeField(ctx, value = String.format("%.2f", price),
+            inputType = InputType.TYPE_CLASS_NUMBER or InputType.TYPE_NUMBER_FLAG_DECIMAL,
+            hint = "挂单价格（现价触及后成交，可修改）").apply {
+            setTextColor(ContextCompat.getColor(ctx, R.color.text_primary))
+        }
         val qtyEt = tradeField(ctx, value = "", inputType = InputType.TYPE_CLASS_NUMBER,
             hint = if (isBuy) "100的整数倍，留空则按金额算" else "留空=全部，最多 $maxQty 股")
         val amountEt = if (isBuy) tradeField(ctx, value = "",
@@ -369,7 +396,8 @@ class ChartFragment : Fragment() {
         })
 
         val col = LinearLayout(ctx).apply { orientation = LinearLayout.VERTICAL; setPadding(48, 4, 48, 0) }
-        appendTradeField(col, "成交价", priceEt)
+        // 仅保留挂单模式：现价触及挂单价格后才成交
+        appendTradeField(col, "挂单价格（现价触及后自动成交，可修改）", priceEt)
         appendTradeField(col, if (isBuy) "买入股数" else "卖出股数", qtyEt)
         if (amountEt != null) appendTradeField(col, "买入金额", amountEt)
         col.addView(hint)
@@ -394,19 +422,30 @@ class ChartFragment : Fragment() {
             )
             dialog.getButton(AlertDialog.BUTTON_POSITIVE).setOnClickListener {
                 val p = priceEt.text.toString().toDoubleOrNull()
-                if (p == null || p <= 0) { toast("成交价无效"); return@setOnClickListener }
+                if (p == null || p <= 0) { toast("价格无效"); return@setOnClickListener }
                 var qty = qtyEt.text.toString().toIntOrNull() ?: 0
+                var buyAmount = 0.0
                 if (isBuy) {
                     if (qty <= 0) {
-                        val amt = (amountEt?.text?.toString())?.toDoubleOrNull() ?: 0.0
-                        if (amt <= 0) { toast("请输入买入股数或金额"); return@setOnClickListener }
-                        qty = (amt / p / 100.0).toInt() * 100
+                        buyAmount = (amountEt?.text?.toString())?.toDoubleOrNull() ?: 0.0
+                        if (buyAmount <= 0) { toast("请输入买入股数或金额"); return@setOnClickListener }
+                        qty = (buyAmount / p / 100.0).toInt() * 100
+                    } else {
+                        buyAmount = qty * p
                     }
                     if (qty < 100) { toast("买入股数需为100的整数倍且≥100股"); return@setOnClickListener }
                 } else {
-                    if (qty <= 0) qty = maxQty // 留空=全部
+                    if (qty <= 0) qty = maxQty
+                    if (qty <= 0) { toast("当前无可卖持仓"); return@setOnClickListener }
                 }
-                executeManual(isBuy, code, name, p, qty)
+                // 挂单模式：现价触及挂单价格后才成交
+                val side = if (isBuy) "买入" else "卖出"
+                val order = PendingOrder(code, name, side, p,
+                    qtyTarget = if (!isBuy) qty else 0,
+                    amountTarget = if (isBuy) buyAmount else 0.0)
+                store.addPendingOrder(order)
+                store.save()
+                toast("已挂单：现价触及 ${"%.2f".format(p)} 后自动$side（可在账户页查看/撤销）")
                 dialog.dismiss()
             }
         }
@@ -422,7 +461,7 @@ class ChartFragment : Fragment() {
             if (value.isNotEmpty()) setText(value)
         }
 
-    private fun appendTradeField(col: LinearLayout, label: String, et: EditText) {
+    private fun appendTradeField(col: LinearLayout, label: String, et: EditText): TextView {
         val ctx = col.context
         val tv = TextView(ctx).apply {
             text = label
@@ -431,7 +470,7 @@ class ChartFragment : Fragment() {
             layoutParams = LinearLayout.LayoutParams(
                 LinearLayout.LayoutParams.MATCH_PARENT,
                 LinearLayout.LayoutParams.WRAP_CONTENT
-            ).apply { topMargin = if (col.childCount == 0) 0 else 18 }
+            ).apply { topMargin = 18 }
         }
         col.addView(tv)
         et.layoutParams = LinearLayout.LayoutParams(
@@ -439,6 +478,7 @@ class ChartFragment : Fragment() {
             LinearLayout.LayoutParams.WRAP_CONTENT
         ).apply { topMargin = 4 }
         col.addView(et)
+        return tv
     }
 
     private fun textWatcher(onChanged: () -> Unit): android.text.TextWatcher =
@@ -447,25 +487,6 @@ class ChartFragment : Fragment() {
             override fun beforeTextChanged(s: CharSequence?, st: Int, c: Int, a: Int) {}
             override fun onTextChanged(s: CharSequence?, st: Int, c: Int, a: Int) {}
         }
-
-    private fun executeManual(isBuy: Boolean, code: String, name: String, price: Double, qty: Int) {
-        val store = App.appStore
-        if (isBuy) {
-            val q = (qty.coerceAtLeast(0))
-            val target = q * price
-            val t = store.paper.buy(code, name, price, target)
-            if (t == null) toast("买入失败：现金不足或不足一手")
-            else toast("已买入 $name ${t.qty}股 @ ${"%.2f".format(price)}")
-        } else {
-            val pos = store.paper.positions[code]
-            if (pos == null) { toast("当前无 $code 持仓"); return }
-            val q = if (pos.qty == 0) 0 else qty.coerceIn(1, pos.qty)
-            val t = store.paper.sell(code, name, price, q)
-            if (t == null) toast("卖出失败")
-            else toast("已卖出 $name ${t.qty}股 @ ${"%.2f".format(price)}")
-        }
-        store.save()
-    }
 
     private fun toast(msg: String) {
         Toast.makeText(requireContext(), msg, Toast.LENGTH_SHORT).show()
@@ -542,8 +563,6 @@ class ChartFragment : Fragment() {
             xAxis.valueFormatter = trendFormatter()
             axisRight.isEnabled = false
             axisLeft.axisMinimum = 0f
-            setScaleEnabled(true)
-            setPinchZoom(true)
             styleChart(this)
             invalidate()
         }
@@ -594,8 +613,6 @@ class ChartFragment : Fragment() {
             xAxis.labelCount = 6
             xAxis.valueFormatter = trendFormatter()
             axisRight.isEnabled = false
-            setScaleEnabled(true)
-            setPinchZoom(true)
             styleChart(this)
             invalidate()
         }
@@ -704,8 +721,6 @@ class ChartFragment : Fragment() {
             legend.isEnabled = false
             axisRight.isEnabled = false
             axisLeft.axisMinimum = 0f
-            setScaleEnabled(true)
-            setPinchZoom(true)
             styleDateAxis(this)
             styleChart(this)
             invalidate()
@@ -715,6 +730,16 @@ class ChartFragment : Fragment() {
     private fun renderMacd() {
         if (!showMACD) { macdChart.visibility = View.GONE; return }
         macdChart.visibility = View.VISIBLE
+        // 数据不足一个MACD周期(26)时无法计算，渲染空面板避免 NaN 越界闪退
+        if (bars.size < 26) {
+            macdChart.data = CombinedData()
+            macdChart.description.isEnabled = false
+            macdChart.legend.isEnabled = false
+            styleDateAxis(macdChart)
+            styleChart(macdChart)
+            macdChart.invalidate()
+            return
+        }
         val (dif, dea, hist) = macd(bars.map { it.close })
 
         val colors = ArrayList<Int>()
@@ -751,8 +776,6 @@ class ChartFragment : Fragment() {
             legend.isEnabled = true
             legend.textSize = 10f
             axisRight.isEnabled = false
-            setScaleEnabled(true)
-            setPinchZoom(true)
             styleDateAxis(this)
             styleChart(this)
             invalidate()
@@ -805,8 +828,6 @@ class ChartFragment : Fragment() {
             axisRight.isEnabled = false
             axisLeft.axisMinimum = 0f
             axisLeft.axisMaximum = 100f
-            setScaleEnabled(true)
-            setPinchZoom(true)
             styleChart(this)
             invalidate()
         }
@@ -873,6 +894,8 @@ class ChartFragment : Fragment() {
         v.mapIndexed { i, x -> Entry(i.toFloat(), x.toFloat()) }
 
     private fun ema(values: DoubleArray, period: Int): DoubleArray {
+        // 数据不足一个周期时返回全 NaN，避免数组越界崩溃；调用方据此不绘制
+        if (values.size < period) return DoubleArray(values.size) { Double.NaN }
         val out = DoubleArray(values.size)
         var seed = 0.0
         for (i in 0 until period) seed += values[i]
@@ -929,14 +952,14 @@ class ChartFragment : Fragment() {
     /**
      * 主图缩放/平移后，把当前可见的X轴数据区间同步给可见子图，
      * 实现成交量/MACD/KDJ 随主图一起放大缩小。
+     * 子图始终禁用独立手势（见 disableSubGestures），其 X 轴范围仅由主图驱动，
+     * 因此直接改写 axisMinimum/axisMaximum 即可让图形(而非仅坐标文字)跟随缩放。
      */
     private fun syncSubCharts() {
-        val vp = chart.viewPortHandler
-        if (vp.contentLeft() >= vp.contentRight()) return
-        val t = chart.getTransformer(YAxis.AxisDependency.LEFT)
-        val l = t.getValuesByTouchPoint(vp.contentLeft(), 0f).x.toFloat()
-        val r = t.getValuesByTouchPoint(vp.contentRight(), 0f).x.toFloat()
-        if (l >= r) return
+        if (chart == null || chart.data == null) return
+        val l = chart.lowestVisibleX.toFloat()
+        val r = chart.highestVisibleX.toFloat()
+        if (!l.isFinite() || !r.isFinite() || l >= r) return
         listOf(volChart, macdChart, kdjChart)
             .filter { it.visibility == View.VISIBLE }
             .forEach { c ->

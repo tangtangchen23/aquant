@@ -1,8 +1,8 @@
 {
   "latest": {
-    "version": "2.13.1",
-    "versionCode": 75,
+    "version": "2.13.2",
+    "versionCode": 76,
     "apkUrl": "https://github.com/tangtangchen23/aquant/releases/latest/download/aquant-release.apk",
-    "changelog": "## v2.13.1\n- 修复打开设置页时闪退问题"
+    "changelog": "## v2.13.2\n- 手动买入/卖出仅保留挂单模式，移除即时成交"
   }
 }
