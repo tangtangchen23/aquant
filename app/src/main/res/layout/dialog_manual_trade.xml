@@ -1,0 +1,75 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent" android:layout_height="wrap_content">
+
+    <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content"
+        android:orientation="vertical" android:paddingTop="2dp" android:paddingBottom="4dp">
+
+        <!-- 分类徽标：买卖方向色由代码动态设置 text/background -->
+        <TextView android:id="@+id/tv_manual_badge" android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:paddingStart="14dp" android:paddingEnd="14dp"
+            android:paddingTop="7dp" android:paddingBottom="7dp"
+            android:textSize="15sp" android:textStyle="bold" />
+        <TextView android:id="@+id/tv_manual_sub" android:layout_width="match_parent"
+            android:layout_height="wrap_content" android:layout_marginTop="8dp" android:textSize="12sp"
+            android:textColor="@color/text_secondary"
+            android:text="现价已自动填入，可手工修改；仅挂单模式，现价触及后自动成交。" />
+
+        <View android:layout_width="match_parent" android:layout_height="1dp"
+            android:layout_marginTop="16dp" android:layout_marginBottom="12dp"
+            android:background="@color/divider" />
+
+        <!-- 下单信息 -->
+        <TextView android:id="@+id/tv_manual_section" android:layout_width="wrap_content"
+            android:layout_height="wrap_content" android:text="下单信息" android:textSize="14sp"
+            android:textStyle="bold" />
+        <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
+            android:layout_marginTop="10dp" android:text="挂单价格（现价触及后成交，可修改）"
+            android:textSize="12sp" android:textColor="@color/text_secondary" />
+        <EditText android:id="@+id/et_price_dialog" android:layout_width="match_parent"
+            android:layout_height="44dp" android:layout_marginTop="6dp"
+            android:minHeight="0dp" android:paddingStart="12dp" android:paddingEnd="12dp"
+            android:background="@drawable/bg_input"
+            android:textSize="13sp" android:textColor="@color/text_primary"
+            android:textColorHint="@color/text_hint" android:inputType="numberDecimal"
+            android:importantForAutofill="no" />
+        <TextView android:id="@+id/tv_label_qty" android:layout_width="wrap_content"
+            android:layout_height="wrap_content" android:layout_marginTop="12dp"
+            android:textSize="12sp" android:textColor="@color/text_secondary" />
+        <EditText android:id="@+id/et_qty_dialog" android:layout_width="match_parent"
+            android:layout_height="44dp" android:layout_marginTop="6dp"
+            android:minHeight="0dp" android:paddingStart="12dp" android:paddingEnd="12dp"
+            android:background="@drawable/bg_input"
+            android:textSize="13sp" android:textColor="@color/text_primary"
+            android:textColorHint="@color/text_hint" android:inputType="number"
+            android:importantForAutofill="no" />
+        <TextView android:id="@+id/tv_label_amount" android:layout_width="wrap_content"
+            android:layout_height="wrap_content" android:layout_marginTop="12dp"
+            android:text="买入金额（选填，自动换算股数）" android:textSize="12sp"
+            android:textColor="@color/text_secondary" />
+        <EditText android:id="@+id/et_amount_dialog" android:layout_width="match_parent"
+            android:layout_height="44dp" android:layout_marginTop="6dp"
+            android:minHeight="0dp" android:paddingStart="12dp" android:paddingEnd="12dp"
+            android:background="@drawable/bg_input"
+            android:textSize="13sp" android:textColor="@color/text_primary"
+            android:textColorHint="@color/text_hint" android:inputType="numberDecimal"
+            android:importantForAutofill="no" />
+        <TextView android:id="@+id/tv_trade_hint" android:layout_width="match_parent"
+            android:layout_height="wrap_content" android:layout_marginTop="10dp"
+            android:textSize="12sp" android:textColor="@color/text_secondary" />
+
+        <View android:layout_width="match_parent" android:layout_height="1dp"
+            android:layout_marginTop="16dp" android:layout_marginBottom="12dp"
+            android:background="@color/divider" />
+
+        <!-- 说明 -->
+        <TextView android:id="@+id/tv_manual_section2" android:layout_width="wrap_content"
+            android:layout_height="wrap_content" android:text="说明" android:textSize="14sp"
+            android:textStyle="bold" />
+        <TextView android:id="@+id/tv_manual_note" android:layout_width="match_parent"
+            android:layout_height="wrap_content" android:layout_marginTop="6dp" android:textSize="12sp"
+            android:textColor="@color/text_secondary" android:lineSpacingExtra="3dp"
+            android:text="仅挂单模式：现价触及挂单价格后自动成交，可在账户页查看或撤销。" />
+    </LinearLayout>
+</ScrollView>

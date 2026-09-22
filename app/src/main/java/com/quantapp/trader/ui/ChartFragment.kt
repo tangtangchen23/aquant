@@ -339,24 +339,48 @@ class ChartFragment : Fragment() {
         val ctx = requireContext()
         val maxQty = pos?.qty ?: 0
 
-        // 挂单价格默认自动填实时行情，也可手工修改
-        val priceEt = tradeField(ctx, value = String.format("%.2f", price),
-            inputType = InputType.TYPE_CLASS_NUMBER or InputType.TYPE_NUMBER_FLAG_DECIMAL,
-            hint = "挂单价格（现价触及后成交，可修改）").apply {
-            setTextColor(ContextCompat.getColor(ctx, R.color.text_primary))
+        val v = LayoutInflater.from(ctx).inflate(R.layout.dialog_manual_trade, null)
+        val priceEt = v.findViewById<EditText>(R.id.et_price_dialog)
+        val qtyEt = v.findViewById<EditText>(R.id.et_qty_dialog)
+        val amountEt = v.findViewById<EditText>(R.id.et_amount_dialog)
+        val tvLabelQty = v.findViewById<TextView>(R.id.tv_label_qty)
+        val tvLabelAmount = v.findViewById<TextView>(R.id.tv_label_amount)
+        val hint = v.findViewById<TextView>(R.id.tv_trade_hint)
+        val badge = v.findViewById<TextView>(R.id.tv_manual_badge)
+        val sub = v.findViewById<TextView>(R.id.tv_manual_sub)
+        val section = v.findViewById<TextView>(R.id.tv_manual_section)
+        val section2 = v.findViewById<TextView>(R.id.tv_manual_section2)
+        val note = v.findViewById<TextView>(R.id.tv_manual_note)
+
+        // 分节/徽标：A股红买绿卖
+        val accent = ContextCompat.getColor(ctx, if (isBuy) R.color.up else R.color.down)
+        badge.text = if (isBuy) "手动买入 $name" else "手动卖出 $name"
+        badge.setBackgroundResource(if (isBuy) R.drawable.chip_buy else R.drawable.chip_sell)
+        badge.setTextColor(accent)
+        sub.text = if (isBuy)
+            "现价已自动填入，可手工修改；仅挂单模式，现价触及后自动成交。"
+        else "现价已自动填入，可手工修改；留空股数则卖出全部持仓。"
+        section.setTextColor(accent)
+        section2.setTextColor(accent)
+        note.text = if (isBuy)
+            "仅挂单模式：现价触及后自动成交，可在账户页查看或撤销。"
+        else "仅挂单模式：现价触及后自动卖出 ${maxQty} 股，可在账户页查看或撤销。"
+
+        // 字段初始化
+        priceEt.setHint("挂单价格（可修改）")
+        priceEt.inputType = InputType.TYPE_CLASS_NUMBER or InputType.TYPE_NUMBER_FLAG_DECIMAL
+        priceEt.setText(String.format("%.2f", price))
+        tvLabelQty.text = if (isBuy) "买入股数（100的整数倍）"
+            else "卖出股数（留空=全部，最多 $maxQty 股）"
+        qtyEt.inputType = InputType.TYPE_CLASS_NUMBER
+        if (!isBuy) {
+            tvLabelAmount.visibility = View.GONE
+            amountEt.visibility = View.GONE
+        } else {
+            amountEt.inputType = InputType.TYPE_CLASS_NUMBER or InputType.TYPE_NUMBER_FLAG_DECIMAL
         }
-        val qtyEt = tradeField(ctx, value = "", inputType = InputType.TYPE_CLASS_NUMBER,
-            hint = if (isBuy) "100的整数倍，留空则按金额算" else "留空=全部，最多 $maxQty 股")
-        val amountEt = if (isBuy) tradeField(ctx, value = "",
-            inputType = InputType.TYPE_CLASS_NUMBER or InputType.TYPE_NUMBER_FLAG_DECIMAL, hint = "输入金额自动换算股数") else null
 
         // 实时换算提示行
-        val hint = TextView(ctx).apply {
-            textSize = 12f
-            setTextColor(ContextCompat.getColor(ctx, R.color.text_secondary))
-            setPadding(8, 6, 0, 0)
-        }
-
         var suppress = false
         fun refreshHint() {
             val p = priceEt.text.toString().toDoubleOrNull() ?: 0.0
@@ -394,91 +418,54 @@ class ChartFragment : Fragment() {
                 if (q >= 100) setQty(q) else refreshHint()
             } else refreshHint()
         })
-
-        val col = LinearLayout(ctx).apply { orientation = LinearLayout.VERTICAL; setPadding(48, 4, 48, 0) }
-        // 仅保留挂单模式：现价触及挂单价格后才成交
-        appendTradeField(col, "挂单价格（现价触及后自动成交，可修改）", priceEt)
-        appendTradeField(col, if (isBuy) "买入股数" else "卖出股数", qtyEt)
-        if (amountEt != null) appendTradeField(col, "买入金额", amountEt)
-        col.addView(hint)
         refreshHint()
 
-        val title = if (isBuy) "手动买入 $name"
-            else "手动卖出 $name" + if (!isBuy && pos != null) "（持仓 $maxQty 股）" else ""
         val dialog = AlertDialog.Builder(ctx)
-            .setTitle(title)
-            .setView(col)
+            .setView(v)
             .setPositiveButton("确认", null) // null: 手动校验后再 dismiss
             .setNegativeButton("取消", null)
-            .create()
-        dialog.setOnShowListener {
-            // 确认按钮：买入用红色，卖出用绿色（A股语义）
-            dialog.getButton(AlertDialog.BUTTON_POSITIVE).setTextColor(
-                ContextCompat.getColor(ctx, if (isBuy) R.color.up else R.color.down)
-            )
-            // 取消按钮：用主文字色，保证浅色/红色主题下清晰可读
-            dialog.getButton(AlertDialog.BUTTON_NEGATIVE).setTextColor(
-                ContextCompat.getColor(ctx, R.color.text_primary)
-            )
-            dialog.getButton(AlertDialog.BUTTON_POSITIVE).setOnClickListener {
-                val p = priceEt.text.toString().toDoubleOrNull()
-                if (p == null || p <= 0) { toast("价格无效"); return@setOnClickListener }
-                var qty = qtyEt.text.toString().toIntOrNull() ?: 0
-                var buyAmount = 0.0
-                if (isBuy) {
-                    if (qty <= 0) {
-                        buyAmount = (amountEt?.text?.toString())?.toDoubleOrNull() ?: 0.0
-                        if (buyAmount <= 0) { toast("请输入买入股数或金额"); return@setOnClickListener }
-                        qty = (buyAmount / p / 100.0).toInt() * 100
-                    } else {
-                        buyAmount = qty * p
+            .create().apply {
+                window?.setBackgroundDrawableResource(R.drawable.bg_dialog)
+                setOnShowListener {
+                    // 确认按钮：买入用红色，卖出用绿色（A股语义）
+                    getButton(AlertDialog.BUTTON_POSITIVE).setTextColor(
+                        ContextCompat.getColor(ctx, if (isBuy) R.color.up else R.color.down)
+                    )
+                    // 取消按钮：用主文字色，保证浅色/红色主题下清晰可读
+                    getButton(AlertDialog.BUTTON_NEGATIVE).setTextColor(
+                        ContextCompat.getColor(ctx, R.color.text_primary)
+                    )
+                    getButton(AlertDialog.BUTTON_POSITIVE).setOnClickListener {
+                        val p = priceEt.text.toString().toDoubleOrNull()
+                        if (p == null || p <= 0) { toast("价格无效"); return@setOnClickListener }
+                        var qty = qtyEt.text.toString().toIntOrNull() ?: 0
+                        var buyAmount = 0.0
+                        if (isBuy) {
+                            if (qty <= 0) {
+                                buyAmount = (amountEt?.text?.toString())?.toDoubleOrNull() ?: 0.0
+                                if (buyAmount <= 0) { toast("请输入买入股数或金额"); return@setOnClickListener }
+                                qty = (buyAmount / p / 100.0).toInt() * 100
+                            } else {
+                                buyAmount = qty * p
+                            }
+                            if (qty < 100) { toast("买入股数需为100的整数倍且≥100股"); return@setOnClickListener }
+                        } else {
+                            if (qty <= 0) qty = maxQty
+                            if (qty <= 0) { toast("当前无可卖持仓"); return@setOnClickListener }
+                        }
+                        // 挂单模式：现价触及挂单价格后才成交
+                        val side = if (isBuy) "买入" else "卖出"
+                        val order = PendingOrder(code, name, side, p,
+                            qtyTarget = if (!isBuy) qty else 0,
+                            amountTarget = if (isBuy) buyAmount else 0.0)
+                        store.addPendingOrder(order)
+                        store.save()
+                        toast("已挂单：现价触及 ${"%.2f".format(p)} 后自动$side（可在账户页查看/撤销）")
+                        dismiss()
                     }
-                    if (qty < 100) { toast("买入股数需为100的整数倍且≥100股"); return@setOnClickListener }
-                } else {
-                    if (qty <= 0) qty = maxQty
-                    if (qty <= 0) { toast("当前无可卖持仓"); return@setOnClickListener }
                 }
-                // 挂单模式：现价触及挂单价格后才成交
-                val side = if (isBuy) "买入" else "卖出"
-                val order = PendingOrder(code, name, side, p,
-                    qtyTarget = if (!isBuy) qty else 0,
-                    amountTarget = if (isBuy) buyAmount else 0.0)
-                store.addPendingOrder(order)
-                store.save()
-                toast("已挂单：现价触及 ${"%.2f".format(p)} 后自动$side（可在账户页查看/撤销）")
-                dialog.dismiss()
+                show()
             }
-        }
-        dialog.show()
-    }
-
-    private fun tradeField(ctx: Context, value: String, inputType: Int, hint: String): EditText =
-        EditText(ctx).apply {
-            this.inputType = inputType
-            this.hint = hint
-            textSize = 14f
-            setHintTextColor(ContextCompat.getColor(ctx, R.color.text_secondary))
-            if (value.isNotEmpty()) setText(value)
-        }
-
-    private fun appendTradeField(col: LinearLayout, label: String, et: EditText): TextView {
-        val ctx = col.context
-        val tv = TextView(ctx).apply {
-            text = label
-            setTextSize(13f)
-            setTextColor(ContextCompat.getColor(ctx, R.color.text_secondary))
-            layoutParams = LinearLayout.LayoutParams(
-                LinearLayout.LayoutParams.MATCH_PARENT,
-                LinearLayout.LayoutParams.WRAP_CONTENT
-            ).apply { topMargin = 18 }
-        }
-        col.addView(tv)
-        et.layoutParams = LinearLayout.LayoutParams(
-            LinearLayout.LayoutParams.MATCH_PARENT,
-            LinearLayout.LayoutParams.WRAP_CONTENT
-        ).apply { topMargin = 4 }
-        col.addView(et)
-        return tv
     }
 
     private fun textWatcher(onChanged: () -> Unit): android.text.TextWatcher =
