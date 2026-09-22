@@ -50,6 +50,18 @@
     <!-- 图标启动背景 -->
     <color name="ic_launcher_background">#EDEFF2</color>
 
+    <!-- 设置页分类强调色（弱饱和、贴合中性灰品牌，用于菜单图标气泡与弹窗分节色条） -->
+    <color name="set_trade">#C0392B</color>
+    <color name="set_tband">#B26A18</color>
+    <color name="set_risk">#2E7D32</color>
+    <color name="set_alert">#2B6CB0</color>
+    <color name="set_ai">#6D4FC8</color>
+    <color name="set_tint_trade">#FDECEB</color>
+    <color name="set_tint_tband">#FBF3E7</color>
+    <color name="set_tint_risk">#EAF6EE</color>
+    <color name="set_tint_alert">#EAF2FB</color>
+    <color name="set_tint_ai">#F1EDFB</color>
+
     <!-- 红色主题（改版前的经典红浅色主题）品牌色 -->
     <color name="red_brand">#D32F2F</color>
     <color name="red_brand_dark">#B71C1C</color>

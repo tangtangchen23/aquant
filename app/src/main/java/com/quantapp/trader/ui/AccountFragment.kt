@@ -33,6 +33,7 @@ class AccountFragment : Fragment() {
     private var filterSide: String? = null // null=全部，"买入"/"卖出"
     private var posContainer: LinearLayout? = null
     private var tradeContainer: LinearLayout? = null
+    private var pendingContainer: LinearLayout? = null
     private var refreshJob: Job? = null
 
     // ------------------------- 生命周期 -------------------------
@@ -44,7 +45,9 @@ class AccountFragment : Fragment() {
         // 持仓/成交：动态 LinearLayout 逐行注入，随数量增长并整页滚动
         posContainer = root.findViewById(R.id.list_positions_container)
         tradeContainer = root.findViewById(R.id.list_trades_container)
+        pendingContainer = root.findViewById(R.id.list_pending_container)
         reloadPositions()
+        renderPending()
         renderTrades()
         refreshSummary()
 
@@ -76,6 +79,7 @@ class AccountFragment : Fragment() {
         TradingEngine.onTrade = { _ ->
             activity?.runOnUiThread {
                 reloadPositions()
+                renderPending()
                 refreshQuotes()
             }
         }
@@ -198,6 +202,62 @@ class AccountFragment : Fragment() {
                 container.addView(div)
             }
             container.addView(row)
+        }
+    }
+
+    // ------------------------- 挂单渲染 -------------------------
+    private fun renderPending() {
+        val container = pendingContainer ?: return
+        if (container.childCount > 0) container.removeAllViews()
+        val orders = App.appStore.pendingOrders().reversed()
+        if (orders.isEmpty()) {
+            val t = TextView(requireContext()).apply {
+                text = "（暂无挂单，可在行情页「手动买入/卖出」选挂单等待）"
+                setTextColor(ContextCompat.getColor(context, R.color.text_secondary))
+                textSize = 13f
+                setPadding(paddingStart, dp(10), paddingEnd, dp(10))
+            }
+            container.addView(t)
+            return
+        }
+        val sdf = SimpleDateFormat("MM-dd HH:mm", java.util.Locale.getDefault())
+        orders.forEachIndexed { idx, o ->
+            val row = LinearLayout(requireContext()).apply {
+                orientation = LinearLayout.HORIZONTAL
+                gravity = android.view.Gravity.CENTER_VERTICAL
+                setPadding(dp(10), dp(8), dp(8), dp(8))
+            }
+            val info = TextView(requireContext()).apply {
+                val tn = if (o.name.isNotBlank()) o.name else o.symbol
+                text = "$tn 挂单${o.side}\n" +
+                    "价格 ${fmt(o.limitPrice)} 元 · ${sdf.format(java.util.Date(o.createdAt))}"
+                textSize = 14f
+                setTextColor(ContextCompat.getColor(context, R.color.text_primary))
+                layoutParams = LinearLayout.LayoutParams(
+                    0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f)
+            }
+            val cancelBtn = TextView(requireContext()).apply {
+                text = "撤销"
+                textSize = 13f
+                setPadding(dp(10), dp(6), dp(10), dp(6))
+                themeAttrColor(context, R.attr.onBrand).also { setTextColor(it) }
+                setOnClickListener {
+                    App.appStore.removePendingOrder(o.symbol, o.createdAt)
+                    Toast.makeText(requireContext(), "已撤销挂单", Toast.LENGTH_SHORT).show()
+                    renderPending()
+                }
+            }
+            row.addView(info)
+            row.addView(cancelBtn)
+            container.addView(row)
+            if (idx > 0) {
+                val div = View(context).apply {
+                    layoutParams = LinearLayout.LayoutParams(
+                        ViewGroup.LayoutParams.MATCH_PARENT, dp(1))
+                    setBackgroundColor(ContextCompat.getColor(context, R.color.divider))
+                }
+                container.addView(div)
+            }
         }
     }
 

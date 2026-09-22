@@ -59,6 +59,8 @@ class CrosshairMarker(
         val right = vp.contentRight()
         val bottom = vp.contentBottom()
         if (left >= right || top >= bottom) return
+        // 触摸坐标异常（轴未就绪产生 NaN）时直接跳过，避免绘制异常
+        if (!posx.isFinite() || !posy.isFinite()) return
 
         // 十字虚线
         crossPaint.pathEffect = DashPathEffect(floatArrayOf(8f, 6f), 0f)

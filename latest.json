@@ -1,8 +1,8 @@
 {
   "latest": {
-    "version": "2.13.2",
-    "versionCode": 76,
+    "version": "2.13.3",
+    "versionCode": 77,
     "apkUrl": "https://github.com/tangtangchen23/aquant/releases/latest/download/aquant-release.apk",
-    "changelog": "## v2.13.2\n- 手动买入/卖出仅保留挂单模式，移除即时成交"
+    "changelog": "## v2.13.3\n- 设置页二级弹窗UI全新改版：圆角卡片容器、统一图标+标题头部、胶囊式分段选卡、分组卡片收纳，视觉更专业统一"
   }
 }

@@ -123,7 +123,8 @@ fi
 LATEST_JSON="$ROOT_DIR/latest.json"
 if [ -f "$LATEST_JSON" ]; then
   echo "[4/4] 同步 latest.json -> v$NEW_VERSION (versionCode=$NEW_VERSION_CODE)"
-  # 更新 JSON 里的 version / versionCode，并把最新版本信息追加到 changelog 前部
+  # 更新 JSON 里的 version / versionCode，并把最新版本的更新日志覆盖到 changelog。
+  # 用覆盖而非追加：保证应用内检测更新时只展示最新版本的迭代内容，不堆叠历史版本。
   python3 - "$LATEST_JSON" "$NEW_VERSION" "$NEW_VERSION_CODE" "$RELEASE_NOTES" <<'PY'
 import json, sys, os
 path, ver, code, notes = sys.argv[1], sys.argv[2], int(sys.argv[3]), sys.argv[4]
@@ -133,7 +134,7 @@ latest = data.get("latest", {})
 latest["version"] = ver
 latest["versionCode"] = code
 old = latest.get("changelog", "")
-latest["changelog"] = (notes + ("" if old == "" else "\n" + old))
+latest["changelog"] = notes  # 覆盖：仅保留最新版本更新内容
 data["latest"] = latest
 with open(path, "w", encoding="utf-8") as f:
     json.dump(data, f, ensure_ascii=False, indent=2)

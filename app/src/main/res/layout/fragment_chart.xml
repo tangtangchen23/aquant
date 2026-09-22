@@ -60,37 +60,44 @@
             android:background="@drawable/bg_indicator_on" />
     </LinearLayout>
 
-    <!-- 指标开关 -->
-    <HorizontalScrollView android:layout_width="match_parent" android:layout_height="wrap_content"
-        android:layout_marginTop="6dp" android:scrollbars="none">
-    <LinearLayout android:layout_width="wrap_content" android:layout_height="wrap_content"
-        android:orientation="horizontal" android:gravity="center_vertical">
-        <TextView android:id="@+id/tv_ma" android:layout_width="wrap_content"
-            android:layout_height="wrap_content" android:text="  均线  " android:padding="6dp"
-            android:textSize="14sp" android:textStyle="bold" android:textColor="?attr/indicatorActiveText"
-            android:background="@drawable/bg_indicator_on" />
-        <TextView android:id="@+id/tv_vol" android:layout_width="wrap_content"
-            android:layout_height="wrap_content" android:text="  成交量  " android:padding="6dp"
-            android:layout_marginStart="8dp" android:textSize="14sp" android:textStyle="bold"
-            android:textColor="?attr/indicatorActiveText" android:background="@drawable/bg_indicator_on" />
-        <TextView android:id="@+id/tv_macd" android:layout_width="wrap_content"
-            android:layout_height="wrap_content" android:text="  MACD  " android:padding="6dp"
-            android:layout_marginStart="8dp" android:textSize="14sp" android:textStyle="bold"
-            android:textColor="?attr/indicatorActiveText" android:background="@drawable/bg_indicator_on" />
-        <TextView android:id="@+id/tv_boll" android:layout_width="wrap_content"
-            android:layout_height="wrap_content" android:text="  BOLL  " android:padding="6dp"
-            android:layout_marginStart="8dp" android:textSize="14sp" android:textStyle="bold"
-            android:textColor="?attr/indicatorActiveText" android:background="@drawable/bg_indicator_on" />
-        <TextView android:id="@+id/tv_kdj" android:layout_width="wrap_content"
-            android:layout_height="wrap_content" android:text="  KDJ  " android:padding="6dp"
-            android:layout_marginStart="8dp" android:textSize="14sp" android:textStyle="bold"
-            android:textColor="?attr/indicatorActiveText" android:background="@drawable/bg_indicator_on" />
-        <TextView android:id="@+id/tv_range" android:layout_width="wrap_content"
-            android:layout_height="wrap_content" android:text="  横盘  " android:padding="6dp"
-            android:layout_marginStart="8dp" android:textSize="14sp" android:textStyle="bold"
-            android:textColor="?attr/indicatorActiveText" android:background="@drawable/bg_indicator_off" />
+    <!-- 指标开关：两行排布，保证“横盘”等入口在普通屏幕无需滚动即可见 -->
+    <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content"
+        android:layout_marginTop="6dp" android:orientation="vertical">
+        <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content"
+            android:orientation="horizontal" android:gravity="center_vertical">
+            <TextView android:id="@+id/tv_ma" android:layout_width="0dp"
+                android:layout_height="wrap_content" android:layout_weight="1" android:gravity="center"
+                android:text="均线" android:padding="6dp" android:textSize="14sp" android:textStyle="bold"
+                android:textColor="?attr/indicatorActiveText" android:background="@drawable/bg_indicator_on" />
+            <TextView android:id="@+id/tv_vol" android:layout_width="0dp"
+                android:layout_height="wrap_content" android:layout_weight="1" android:gravity="center"
+                android:layout_marginStart="6dp" android:text="成交量" android:padding="6dp"
+                android:textSize="14sp" android:textStyle="bold" android:textColor="?attr/indicatorActiveText"
+                android:background="@drawable/bg_indicator_on" />
+            <TextView android:id="@+id/tv_macd" android:layout_width="0dp"
+                android:layout_height="wrap_content" android:layout_weight="1" android:gravity="center"
+                android:layout_marginStart="6dp" android:text="MACD" android:padding="6dp"
+                android:textSize="14sp" android:textStyle="bold" android:textColor="?attr/indicatorActiveText"
+                android:background="@drawable/bg_indicator_on" />
+        </LinearLayout>
+        <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content"
+            android:layout_marginTop="6dp" android:orientation="horizontal" android:gravity="center_vertical">
+            <TextView android:id="@+id/tv_boll" android:layout_width="0dp"
+                android:layout_height="wrap_content" android:layout_weight="1" android:gravity="center"
+                android:text="BOLL" android:padding="6dp" android:textSize="14sp" android:textStyle="bold"
+                android:textColor="?attr/indicatorActiveText" android:background="@drawable/bg_indicator_on" />
+            <TextView android:id="@+id/tv_kdj" android:layout_width="0dp"
+                android:layout_height="wrap_content" android:layout_weight="1" android:gravity="center"
+                android:layout_marginStart="6dp" android:text="KDJ" android:padding="6dp"
+                android:textSize="14sp" android:textStyle="bold" android:textColor="?attr/indicatorActiveText"
+                android:background="@drawable/bg_indicator_on" />
+            <TextView android:id="@+id/tv_range" android:layout_width="0dp"
+                android:layout_height="wrap_content" android:layout_weight="1" android:gravity="center"
+                android:layout_marginStart="6dp" android:text="横盘" android:padding="6dp"
+                android:textSize="14sp" android:textStyle="bold" android:textColor="?attr/indicatorActiveText"
+                android:background="@drawable/bg_indicator_off" />
+        </LinearLayout>
     </LinearLayout>
-    </HorizontalScrollView>
 
     <com.github.mikephil.charting.charts.CombinedChart
         android:id="@+id/kline_chart" android:layout_width="match_parent"

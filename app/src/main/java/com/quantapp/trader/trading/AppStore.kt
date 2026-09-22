@@ -57,6 +57,34 @@ data class PriceAlert(
 }
 
 /**
+ * 挂单（限价单）：用户设定挂单价格，当现价触及该价格时才成交。
+ * 买入：现价 <= 挂单价；卖出：现价 >= 挂单价。
+ * 买入挂单保存投入金额 amountTarget（成交时按挂单价换算股数）；
+ * 卖出挂单保存目标数量 qtyTarget。
+ */
+data class PendingOrder(
+    val symbol: String,
+    val name: String,
+    val side: String,         // "买入"/"卖出"
+    val limitPrice: Double,
+    val qtyTarget: Int = 0,   // 卖出目标数量
+    val amountTarget: Double = 0.0, // 买入目标金额
+    val createdAt: Long = System.currentTimeMillis()
+) {
+    fun id() = "$symbol|$side|$createdAt"
+    fun toJson() = JSONObject()
+        .put("symbol", symbol).put("name", name).put("side", side)
+        .put("limitPrice", limitPrice).put("qtyTarget", qtyTarget)
+        .put("amountTarget", amountTarget).put("createdAt", createdAt).toString()
+    companion object {
+        fun fromJson(o: JSONObject) = PendingOrder(
+            o.getString("symbol"), o.optString("name", ""), o.getString("side"),
+            o.optDouble("limitPrice", 0.0), o.optInt("qtyTarget", 0),
+            o.optDouble("amountTarget", 0.0), o.optLong("createdAt", System.currentTimeMillis()))
+    }
+}
+
+/**
  * 应用级状态仓库：模拟盘账户 + 运行中策略 + 全局设置。
  * 依赖 SharedPreferences 做 JSON 持久化。
  */
@@ -319,6 +347,41 @@ class AppStore(context: Context) {
         try {
             val arr = JSONArray(prefs.getString("price_alerts", "[]") ?: "[]")
             for (i in 0 until arr.length()) out.add(PriceAlert.fromJson(arr.getJSONObject(i)))
+        } catch (e: Exception) { /* ignore */ }
+        return out
+    }
+
+    // ---------- 挂单 ----------
+    private var pendingOrders = loadPendingOrders()
+
+    fun pendingOrders(): List<PendingOrder> = pendingOrders
+
+    fun addPendingOrder(o: PendingOrder) {
+        pendingOrders = (pendingOrders.filter { it.id() != o.id() } + o).toMutableList()
+        persistPendingOrders()
+    }
+
+    fun removePendingOrderById(id: String) {
+        pendingOrders = pendingOrders.filter { it.id() != id }.toMutableList()
+        persistPendingOrders()
+    }
+
+    fun removePendingOrder(symbol: String, createdAt: Long) {
+        pendingOrders = pendingOrders.filter { !(it.symbol == symbol && it.createdAt == createdAt) }.toMutableList()
+        persistPendingOrders()
+    }
+
+    private fun persistPendingOrders() {
+        val arr = JSONArray()
+        for (o in pendingOrders) arr.put(JSONObject(o.toJson()))
+        prefs.edit().putString("pending_orders", arr.toString()).apply()
+    }
+
+    private fun loadPendingOrders(): MutableList<PendingOrder> {
+        val out = mutableListOf<PendingOrder>()
+        try {
+            val arr = JSONArray(prefs.getString("pending_orders", "[]") ?: "[]")
+            for (i in 0 until arr.length()) out.add(PendingOrder.fromJson(arr.getJSONObject(i)))
         } catch (e: Exception) { /* ignore */ }
         return out
     }

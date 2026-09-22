@@ -161,8 +161,9 @@ private class ScreenHitAdapter(
         val added = WatchStore.contains(hit.code)
         btn.text = if (added) "已加" else "＋ 自选"
         btn.isEnabled = !added
-        btn.backgroundTintList = ColorStateList.valueOf(
-            ctx.getColor(if (added) R.color.text_secondary else themeAttrColor(ctx, R.attr.brand)))
+        // themeAttrColor 返回的已是解析后的 ARGB 颜色值，不能再用 getColor(int)（会当资源 id 查找而抛异常）
+        val tint = if (added) ctx.getColor(R.color.text_secondary) else themeAttrColor(ctx, R.attr.brand)
+        btn.backgroundTintList = ColorStateList.valueOf(tint)
         btn.setOnClickListener {
             if (WatchStore.add(hit.code, hit.name)) {
                 btn.text = "已加"

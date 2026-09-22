@@ -15,4 +15,4 @@ local.properties
 # 签名密钥严禁入库（安全）
 /keystore/
 # 发布 token 严禁入库（安全）
-.release-token
+.release-token.kotlin/

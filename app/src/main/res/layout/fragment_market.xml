@@ -22,6 +22,12 @@
             android:text="查询" android:minWidth="0dp" android:paddingStart="20dp" android:paddingEnd="20dp" />
     </LinearLayout>
 
+    <!-- 查询历史：一行胶囊展示，超过一行时用“更多”点开 -->
+    <LinearLayout android:id="@+id/history_row"
+        android:layout_width="match_parent" android:layout_height="wrap_content"
+        android:layout_marginTop="6dp" android:orientation="horizontal"
+        android:gravity="center_vertical" />
+
     <TextView android:id="@+id/btn_clear_history" android:layout_width="wrap_content"
         android:layout_height="wrap_content" android:layout_marginTop="2dp"
         android:padding="6dp" android:textColor="@color/text_primary" android:text="清除查询历史" />

@@ -33,11 +33,13 @@ class SignalRenderer(
 
     override fun drawData(c: Canvas) {
         super.drawData(c)
-        val ch = mChart as CombinedChart
+        val ch = mChart as? CombinedChart ?: return
         val transformer = ch.getTransformer(YAxis.AxisDependency.LEFT)
         for (s in signals()) {
             val pt = transformer.getPixelForValues(s.index.toFloat(), s.price)
             val x = pt.x.toFloat()
+            // 越界/非法坐标（如轴未就绪产生 NaN/Infinity）时跳过，避免绘制异常
+            if (!x.isFinite() || !pt.y.isFinite()) continue
             val isBuy = s.type == ChartFragment.BUY
             circlePaint.color = if (isBuy) 0xFFE53935.toInt() else 0xFF43A047.toInt()
             val radius = 13f

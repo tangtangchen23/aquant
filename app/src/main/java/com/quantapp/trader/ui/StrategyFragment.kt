@@ -491,10 +491,29 @@ class StrategyFragment : Fragment() {
         }
         for (s in list_) {
             val text = "${s.symbol}  ${s.name}  ${strategyLabel(s.strategyId)}  [${s.lastAction.ifEmpty { "未触发" }}] ${s.lastReason}"
-            container.addView(activeRow(requireContext(), s.symbol, text) {
-                App.appStore.removeStrategy(it)
-                refreshActive(container)
-                Toast.makeText(requireContext(), "已移除 $it", Toast.LENGTH_SHORT).show()
+            container.addView(activeRow(requireContext(), s.symbol, text) { code ->
+                // 二次确认，防止误触取消正在运行的策略
+                AlertDialog.Builder(requireContext())
+                    .setTitle("取消策略")
+                    .setMessage("确定取消策略“${s.symbol} ${s.name.ifEmpty { "" }}”吗？\n取消后该标的不再自动交易。")
+                    .setPositiveButton("确定取消", null)
+                    .setNegativeButton("取消", null)
+                    .create().apply {
+                        setOnShowListener {
+                            getButton(AlertDialog.BUTTON_POSITIVE).setTextColor(
+                                android.graphics.Color.parseColor("#E53935"))
+                            getButton(AlertDialog.BUTTON_NEGATIVE).setTextColor(
+                                com.quantapp.trader.R.color.text_primary.let {
+                                    androidx.core.content.ContextCompat.getColor(requireContext(), it)
+                                })
+                            getButton(AlertDialog.BUTTON_POSITIVE).setOnClickListener {
+                                App.appStore.removeStrategy(code)
+                                refreshActive(container)
+                                Toast.makeText(requireContext(), "已取消 $code", Toast.LENGTH_SHORT).show()
+                                dismiss()
+                            }
+                        }
+                    }.show()
             })
         }
     }

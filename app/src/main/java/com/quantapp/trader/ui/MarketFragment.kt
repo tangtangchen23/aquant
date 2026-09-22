@@ -4,10 +4,9 @@ import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import android.widget.ArrayAdapter
 import android.widget.AutoCompleteTextView
-import android.widget.Filter
 import android.widget.Button
+import android.widget.LinearLayout
 import android.widget.ListView
 import android.widget.TextView
 import android.widget.Toast
@@ -85,10 +84,55 @@ class MarketFragment : Fragment() {
         watchAdapter.refresh()
         startAutoRefresh(list)
 
-        // 查询历史自动补全（输入时弹出，仅作为联想，不随聚焦自动展开）
-        val historyAdapter = historyAdapter()
-        etCode.setAdapter(historyAdapter)
+        // 相互调用的两个局部函数，用可变引用占位以支持相互引用（Kotlin 局部函数不可前向引用）
+        var doQueryRef: ((String) -> Unit)? = null
+
+        // 查询历史：在搜索框下方以一行胶囊展示，点击即查询；超过一行时用“更多”点开
+        val historyRow = root.findViewById<LinearLayout>(R.id.history_row)
+        fun renderHistoryRow() {
+            historyRow.post {
+                QueryHistoryRow.bind(historyRow, queryHistory) { item -> doQueryRef?.invoke(item) }
+            }
+        }
+
+        // 统一查询动作：名称→代码→拉实时行情→填充报价卡片，并收录进查询历史
+        fun doQuery(raw0: String) {
+            val raw = raw0.trim()
+            if (raw.isEmpty()) return
+            btnQuery.isEnabled = false
+            setQuoteLoading()
+            AppScope.launch {
+                try {
+                    val code = MarketService.resolveCode(raw)
+                    if (code != raw) etCode.setText(code)
+                    val quote = withContext(Dispatchers.IO) { MarketService.fetchQuote(code) }
+                    putHistory(quote.name)
+                    renderHistoryRow()
+                    fillQuoteCard(quote)
+                } catch (e: Exception) {
+                    resetQuoteCard()
+                    val code = try { MarketService.resolveCode(raw) } catch (e2: Exception) { "" }
+                    val nm = if (code.isNotEmpty())
+                        try { withContext(Dispatchers.IO) { MarketService.fetchName(code) } }
+                        catch (e3: Exception) { "" } else ""
+                    if (nm.isNotEmpty()) {
+                        fillQuoteFallback(code, nm)
+                        putHistory(if (code != raw) raw else nm)
+                        renderHistoryRow()
+                    } else {
+                        tvQName?.text = "查询失败"
+                    }
+                } finally {
+                    btnQuery.isEnabled = true
+                }
+            }
+        }
+
+        // 相互调用收尾：把 doQuery 挂到占位引用上，供 renderHistoryRow 回调
+        doQueryRef = ::doQuery
+
         if (queryHistory.isNotEmpty()) etCode.setText(queryHistory.lastOrNull() ?: "")
+        renderHistoryRow()
 
         // 清除查询历史
         btnClearHistory.setOnClickListener {
@@ -97,9 +141,8 @@ class MarketFragment : Fragment() {
                 return@setOnClickListener
             }
             clearHistory()
-            etCode.setAdapter(historyAdapter())
-            etCode.dismissDropDown()
             etCode.setText("")
+            renderHistoryRow()
             Toast.makeText(requireContext(), "查询历史已清除", Toast.LENGTH_SHORT).show()
         }
 
@@ -110,41 +153,9 @@ class MarketFragment : Fragment() {
             Toast.makeText(requireContext(), "已请求刷新自选股行情", Toast.LENGTH_SHORT).show()
         }
 
-        btnQuery.setOnClickListener { q ->
-            etCode.dismissDropDown()
-            val raw = etCode.text.toString().trim()
-            if (raw.isNotEmpty()) {
-                q.isEnabled = false
-                setQuoteLoading()
-                AppScope.launch {
-                    try {
-                        // 支持名称：先解析为代码再查询
-                        val code = MarketService.resolveCode(raw)
-                        if (code != raw) etCode.setText(code)
-                        val quote = withContext(Dispatchers.IO) { MarketService.fetchQuote(code) }
-                        // 查询历史统一存股票名称（查名称或代码都显示为名称）
-                        putHistory(quote.name)
-                        refreshHistory(etCode)
-                        fillQuoteCard(quote)
-                    } catch (e: Exception) {
-                        resetQuoteCard()
-                        // 实时行情接口暂不可用：退回用搜索接口展示名称，价格留空
-                        val code = try { MarketService.resolveCode(raw) } catch (e2: Exception) { "" }
-                        val nm = if (code.isNotEmpty())
-                            try { withContext(Dispatchers.IO) { MarketService.fetchName(code) } }
-                            catch (e3: Exception) { "" } else ""
-                        if (nm.isNotEmpty()) {
-                            fillQuoteFallback(code, nm)
-                            putHistory(if (code != raw) raw else nm)
-                            refreshHistory(etCode)
-                        } else {
-                            tvQName?.text = "查询失败"
-                        }
-                    } finally {
-                        q.isEnabled = true
-                    }
-                }
-            }
+        btnQuery.setOnClickListener {
+            val raw = etCode.text.toString()
+            if (raw.isNotBlank()) doQuery(raw)
         }
 
         fun addWatch() {
@@ -167,7 +178,7 @@ class MarketFragment : Fragment() {
                         watchAdapter.refresh()
                     }
                     putHistory(displayName)
-                    refreshHistory(etCode)
+                    renderHistoryRow()
                     Toast.makeText(requireContext(), "已加入自选：$displayName($code)", Toast.LENGTH_SHORT).show()
                 } catch (e: Exception) {
                     Toast.makeText(requireContext(), "加入自选失败：${e.message}", Toast.LENGTH_SHORT).show()
@@ -284,31 +295,6 @@ class MarketFragment : Fragment() {
         tvQVolume?.text = "行情接口暂不可用"
         tvQTime?.text = ""
     }
-
-    private fun refreshHistory(etCode: AutoCompleteTextView) {
-        etCode.setAdapter(historyAdapter())
-    }
-
-    // 历史下拉适配器：不按已填文本过滤，始终展示全部历史记录
-    private fun historyAdapter(): ArrayAdapter<String> =
-        object : ArrayAdapter<String>(
-            requireContext(), android.R.layout.simple_dropdown_item_1line, queryHistory) {
-            override fun getFilter(): Filter = object : Filter() {
-                override fun performFiltering(constraint: CharSequence?): FilterResults {
-                    val r = FilterResults()
-                    val copy = ArrayList<String>().apply { addAll(queryHistory) }
-                    r.values = copy
-                    r.count = copy.size
-                    return r
-                }
-                @Suppress("UNCHECKED_CAST")
-                override fun publishResults(constraint: CharSequence?, results: FilterResults?) {
-                    clear()
-                    results?.values?.let { addAll(it as List<String>) }
-                    notifyDataSetChanged()
-                }
-            }
-        }
 
     // ---------- 持久化：自选 ----------
     private fun prefs() = App.context.getSharedPreferences("watch", 0)

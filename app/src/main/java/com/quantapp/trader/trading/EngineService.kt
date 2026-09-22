@@ -68,6 +68,7 @@ class EngineService : Service() {
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
         if (intent?.action == ACTION_STOP) {
             AlertWatcher.stop()
+            PendingOrderWatcher.stop()
             TradingEngine.stop()
             updateJob?.cancel()
             stopForeground(STOP_FOREGROUND_REMOVE)
@@ -77,6 +78,7 @@ class EngineService : Service() {
 
         startForeground(NOTIF_ID, buildNotification("引擎启动中..."))
         AlertWatcher.start()
+        PendingOrderWatcher.start()
         if (App.appStore.activeStrategies().isNotEmpty()) {
             TradingEngine.start()
         }
@@ -98,6 +100,7 @@ class EngineService : Service() {
         else append("引擎已停止")
         append(" · 策略 ${App.appStore.activeStrategies().size} 个")
         append(" · 提醒 ${App.appStore.alerts().count { it.enabled }} 条")
+        append(" · 挂单 ${App.appStore.pendingOrders().size} 单")
     }
 
     private fun updateStatus(text: String) {

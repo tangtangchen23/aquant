@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- 下拉选择框：圆角容器，与输入框风格统一 -->
+<selector xmlns:android="http://schemas.android.com/apk/res/android">
+    <item android:state_focused="true">
+        <shape android:shape="rectangle">
+            <solid android:color="?attr/inputActiveBg" />
+            <corners android:radius="10dp" />
+            <stroke android:width="1.5dp" android:color="?attr/inputFocusBorder" />
+        </shape>
+    </item>
+    <item>
+        <shape android:shape="rectangle">
+            <solid android:color="@color/input_bg" />
+            <corners android:radius="10dp" />
+            <stroke android:width="1dp" android:color="@color/input_border" />
+        </shape>
+    </item>
+</selector>

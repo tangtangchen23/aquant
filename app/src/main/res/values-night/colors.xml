@@ -47,4 +47,16 @@
     <!-- 危险/次操作 -->
     <color name="danger">#A5ABB4</color>
     <color name="ic_launcher_background">#2A2D33</color>
+
+    <!-- 设置页分类强调色（夜间加深底色、提亮文字色） -->
+    <color name="set_trade">#EF9A9A</color>
+    <color name="set_tband">#F0C48A</color>
+    <color name="set_risk">#A5D6A7</color>
+    <color name="set_alert">#90CDF4</color>
+    <color name="set_ai">#C5AEF5</color>
+    <color name="set_tint_trade">#3A2222</color>
+    <color name="set_tint_tband">#38291A</color>
+    <color name="set_tint_risk">#1F3327</color>
+    <color name="set_tint_alert">#1F2C3A</color>
+    <color name="set_tint_ai">#2A2438</color>
 </resources>

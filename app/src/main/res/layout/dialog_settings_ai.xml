@@ -1,0 +1,86 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent" android:layout_height="wrap_content">
+
+    <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content"
+        android:orientation="vertical" android:padding="22dp">
+
+        <!-- 弹窗头部：图标气泡 + 标题 + 副标题 -->
+        <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content"
+            android:orientation="horizontal" android:gravity="center_vertical">
+            <LinearLayout android:layout_width="42dp" android:layout_height="42dp"
+                android:gravity="center" android:background="@drawable/bg_row_icon"
+                android:backgroundTint="@color/set_tint_ai">
+                <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
+                    android:text="AI" android:textSize="16sp" android:textStyle="bold"
+                    android:textColor="@color/set_ai" />
+            </LinearLayout>
+            <LinearLayout android:layout_width="0dp" android:layout_height="wrap_content"
+                android:layout_weight="1" android:layout_marginStart="12dp"
+                android:orientation="vertical">
+                <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
+                    android:text="AI 设置" android:textStyle="bold" android:textSize="17sp"
+                    android:textColor="@color/text_primary" />
+                <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
+                    android:layout_marginTop="2dp" android:text="大模型连接 · API Key · 深度解读"
+                    android:textSize="12sp" android:textColor="@color/text_secondary" />
+            </LinearLayout>
+        </LinearLayout>
+
+        <!-- 连接配置 -->
+        <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content"
+            android:layout_marginTop="20dp" android:background="@drawable/bg_card"
+            android:orientation="vertical" android:padding="14dp">
+            <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
+                android:text="服务提供方" android:textSize="13sp"
+                android:textColor="@color/text_secondary" />
+            <Spinner android:id="@+id/sp_ai_provider_dialog" android:layout_width="match_parent"
+                android:layout_height="46dp" android:layout_marginTop="4dp"
+                android:background="@drawable/bg_spinner" android:minHeight="0dp"
+                android:paddingStart="12dp" android:paddingEnd="12dp" />
+
+            <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
+                android:layout_marginTop="14dp" android:text="API Key（仅存本机）"
+                android:textSize="13sp" android:textColor="@color/text_secondary" />
+            <EditText android:id="@+id/et_ai_key_dialog" android:layout_width="match_parent"
+                android:layout_height="46dp" android:layout_marginTop="4dp"
+                android:minHeight="0dp" android:paddingStart="14dp" android:paddingEnd="14dp"
+                android:background="@drawable/bg_input"
+                android:textSize="13sp" android:textColor="@color/text_primary"
+                android:hint="粘贴 API Key"
+                android:inputType="textPassword" />
+
+            <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
+                android:layout_marginTop="14dp" android:text="模型名称"
+                android:textSize="13sp" android:textColor="@color/text_secondary" />
+            <EditText android:id="@+id/et_ai_model_dialog" android:layout_width="match_parent"
+                android:layout_height="46dp" android:layout_marginTop="4dp"
+                android:minHeight="0dp" android:paddingStart="14dp" android:paddingEnd="14dp"
+                android:background="@drawable/bg_input"
+                android:textSize="13sp" android:textColor="@color/text_primary"
+                android:hint="如 deepseek-chat" android:singleLine="true" />
+        </LinearLayout>
+
+        <!-- 操作按钮 -->
+        <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content"
+            android:orientation="horizontal" android:layout_marginTop="14dp">
+            <Button android:id="@+id/btn_ai_test_dialog" android:layout_width="0dp"
+                android:layout_height="46dp" android:layout_weight="1"
+                android:text="测试连接" android:background="@drawable/bg_btn_secondary" />
+            <Button android:id="@+id/btn_ai_save_dialog" android:layout_width="0dp"
+                android:layout_height="46dp" android:layout_weight="1"
+                android:layout_marginStart="8dp"
+                android:text="保存AI配置" android:background="@drawable/bg_btn_secondary" />
+        </LinearLayout>
+
+        <!-- 状态/提示 -->
+        <TextView android:id="@+id/tv_ai_status_dialog" android:layout_width="match_parent"
+            android:layout_height="wrap_content" android:layout_marginTop="8dp"
+            android:textSize="12sp" android:textColor="@color/text_secondary" />
+        <TextView android:layout_width="match_parent" android:layout_height="wrap_content"
+            android:layout_marginTop="2dp" android:textSize="11sp"
+            android:lineSpacingExtra="3dp"
+            android:textColor="@color/text_hint"
+            android:text="用于回测/持仓的AI深度解读。密钥仅保存在本机，AI只做分析与建议，不会接触交易。" />
+    </LinearLayout>
+</ScrollView>
