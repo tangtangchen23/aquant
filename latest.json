@@ -1,8 +1,8 @@
 {
   "latest": {
-    "version": "2.12.0",
-    "versionCode": 73,
+    "version": "2.13.0",
+    "versionCode": 74,
     "apkUrl": "https://github.com/tangtangchen23/aquant/releases/latest/download/aquant-release.apk",
-    "changelog": "## v2.12.0\n- 重新设计设置页：菜单改为带分类图标/副标题/箭头的列表行，增加点击反馈\n- 二级弹窗分节加入与菜单呼应的分类色强调条，统一字号与间距\n- 新增浅色/深色主题下的低饱和分类色 token，提升夜间可读性"
+    "changelog": "## v2.13.0\n- 手动买入/卖出新增【挂单】模式：设定挂单价格，现价触及后自动成交\n- 买入挂单：现价跌至设定价自动买入；卖出挂单：现价涨至设定价自动卖出\n- 账户页新增挂单列表，支持随时撤销\n- 后台自动轮询撮合，成交后推送通知并刷新账户"
   }
 }
