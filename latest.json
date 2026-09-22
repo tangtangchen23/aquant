@@ -1,8 +1,8 @@
 {
   "latest": {
-    "version": "2.18.0",
-    "versionCode": 83,
+    "version": "2.19.0",
+    "versionCode": 84,
     "apkUrl": "https://github.com/tangtangchen23/aquant/releases/latest/download/aquant-release.apk",
-    "changelog": "优化设置页二级弹窗与手动买入/卖出弹窗 UI：统一为'图标+标题+副标题'头部、深色分节标题并引入卡片式内容分组，弹窗对浅色/深色/红色主题适配。"
+    "changelog": "设置页新增「数据备份与恢复」：可把全部数据（模拟盘、自选、提醒、挂单、策略与设置）导出为 JSON 备份文件并在换机/重装后一键恢复，UI 与设置项二级弹窗风格一致。"
   }
 }
