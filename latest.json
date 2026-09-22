@@ -1,8 +1,8 @@
 {
   "latest": {
-    "version": "2.22.0",
-    "versionCode": 88,
+    "version": "2.23.0",
+    "versionCode": 89,
     "apkUrl": "https://github.com/tangtangchen23/aquant/releases/latest/download/aquant-release.apk",
-    "changelog": "红色主题下二级弹窗按钮文字适配：动作按钮(重置模拟盘/添加/测试连接/保存AI配置/备份/恢复/检查更新)文字改白、确认按钮文字改黑；手动买卖确认按钮统一为白色。"
+    "changelog": "K线图页优化：删除无效\"横盘\"按钮，新增右下角全屏图标，点击进入横屏沉浸式全屏K线页（日K+均线，可开关BOLL）；设置页改版：重排入口并新增实盘设置/外观主题/系统更新等二级弹窗。"
   }
 }
