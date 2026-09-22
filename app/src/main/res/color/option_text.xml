@@ -1,6 +1,0 @@
-<?xml version="1.0" encoding="utf-8"?>
-<!-- 分段选卡文字色：选中用高亮文字色，未选用次级文字色 -->
-<selector xmlns:android="http://schemas.android.com/apk/res/android">
-    <item android:state_checked="true" android:color="?attr/segActiveText" />
-    <item android:color="@color/seg_text" />
-</selector>
