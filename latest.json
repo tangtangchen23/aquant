@@ -1,8 +1,8 @@
 {
   "latest": {
-    "version": "2.13.0",
-    "versionCode": 74,
+    "version": "2.13.1",
+    "versionCode": 75,
     "apkUrl": "https://github.com/tangtangchen23/aquant/releases/latest/download/aquant-release.apk",
-    "changelog": "## v2.13.0\n- 手动买入/卖出新增【挂单】模式：设定挂单价格，现价触及后自动成交\n- 买入挂单：现价跌至设定价自动买入；卖出挂单：现价涨至设定价自动卖出\n- 账户页新增挂单列表，支持随时撤销\n- 后台自动轮询撮合，成交后推送通知并刷新账户"
+    "changelog": "## v2.13.1\n- 修复打开设置页时闪退问题"
   }
 }
