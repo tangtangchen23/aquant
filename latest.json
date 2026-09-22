@@ -1,8 +1,8 @@
 {
   "latest": {
-    "version": "2.15.0",
-    "versionCode": 80,
+    "version": "2.16.0",
+    "versionCode": 81,
     "apkUrl": "https://github.com/tangtangchen23/aquant/releases/latest/download/aquant-release.apk",
-    "changelog": "## v2.15.0\n- 设置页重构：交易/做T/风控/行情提醒/AI/实盘设置/外观主题/系统更新 全部改为二级弹窗，UI全面美化\n- 删除设置页底部“保存设置”大按钮，实盘网关改在【实盘设置】弹窗内配置"
+    "changelog": "## v2.16.0\n- 优化手动买入/卖出下单弹窗UI，对齐设置页二级弹窗风格：分类徽标、聚焦输入框、分节标题、买卖红绿配色\n- 保留现价自动填充且可手工修改，以及 价↔金额↔股数 联动换算与挂单功能"
   }
 }
