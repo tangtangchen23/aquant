@@ -1,8 +1,8 @@
 {
   "latest": {
-    "version": "2.16.0",
-    "versionCode": 81,
+    "version": "2.17.0",
+    "versionCode": 82,
     "apkUrl": "https://github.com/tangtangchen23/aquant/releases/latest/download/aquant-release.apk",
-    "changelog": "## v2.16.0\n- 优化手动买入/卖出下单弹窗UI，对齐设置页二级弹窗风格：分类徽标、聚焦输入框、分节标题、买卖红绿配色\n- 保留现价自动填充且可手工修改，以及 价↔金额↔股数 联动换算与挂单功能"
+    "changelog": "## v2.17.0\n- 优化设置页二级弹窗与手动买入/卖出弹窗 UI：内容四周留白，不再贴着弹窗边缘\n- 弹窗底部按钮改为统一胶囊样式，配色与浅色/深色/红色主题协调\n- 修正弹窗内文字配色与按钮对比度，整体更美观协调\n\nA股量化机器人 v2.17.0 更新。\n通过一键发布脚本打包并托管到 GitHub Releases。"
   }
 }

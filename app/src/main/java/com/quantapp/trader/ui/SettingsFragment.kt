@@ -1,6 +1,7 @@
 package com.quantapp.trader.ui
 
 import android.content.Context
+import android.graphics.drawable.GradientDrawable
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
@@ -396,8 +397,7 @@ class SettingsFragment : Fragment() {
             .create().apply {
                 window?.setBackgroundDrawableResource(R.drawable.bg_dialog)
                 setOnShowListener {
-                    getButton(AlertDialog.BUTTON_POSITIVE).setTextColor(ContextCompat.getColor(ctx, R.color.text_primary))
-                    getButton(AlertDialog.BUTTON_NEGATIVE).setTextColor(ContextCompat.getColor(ctx, R.color.text_secondary))
+                    styleDialogFrame(this, ctx)
                     getButton(AlertDialog.BUTTON_POSITIVE).setOnClickListener {
                         try {
                             onSave()
@@ -409,6 +409,53 @@ class SettingsFragment : Fragment() {
                 }
                 show()
             }
+    }
+
+    // ============ 二级弹窗统一排版：四周留白 + 胶囊按钮（适配浅色/深色/红色） ============
+
+    private fun dp(ctx: Context, d: Int): Int = (d * ctx.resources.displayMetrics.density).toInt()
+
+    private fun themeColor(ctx: Context, attrRes: Int, fallback: Int): Int {
+        val ta = ctx.obtainStyledAttributes(intArrayOf(attrRes))
+        val c = ta.getColor(0, fallback)
+        ta.recycle()
+        return c
+    }
+
+    /** 内容四周留白，避免文字贴着圆角卡片边缘；同时统一胶囊按钮样式。 */
+    private fun styleDialogFrame(dialog: AlertDialog, ctx: Context) {
+        val h = dp(ctx, 14)
+        val v = dp(ctx, 8)
+        dialog.window?.decorView?.setPadding(h, v, h, v)
+        val brand = themeColor(ctx, R.attr.brand, ContextCompat.getColor(ctx, R.color.brand))
+        val onBrand = themeColor(ctx, R.attr.onBrand, ContextCompat.getColor(ctx, R.color.on_brand))
+        dialog.getButton(AlertDialog.BUTTON_POSITIVE)?.let { pillButton(it, null, brand, onBrand, ctx) }
+        dialog.getButton(AlertDialog.BUTTON_NEGATIVE)?.let { ghostButton(it, ctx) }
+    }
+
+    /** 实心胶囊按钮：品牌色底 + 对比色文字。 */
+    private fun pillButton(btn: Button, tint: Int?, bg: Int, text: Int, ctx: Context) {
+        val g = GradientDrawable().apply {
+            if (tint != null) setTint(tint) else setColor(bg)
+            cornerRadius = dp(ctx, 24).toFloat()
+        }
+        btn.background = g
+        btn.setTextColor(text)
+        btn.textSize = 14f
+        btn.setPadding(dp(ctx, 24), 0, dp(ctx, 24), 0)
+    }
+
+    /** 幽灵胶囊按钮：卡片底 + 描边。 */
+    private fun ghostButton(btn: Button, ctx: Context) {
+        val g = GradientDrawable().apply {
+            setColor(ContextCompat.getColor(ctx, R.color.card_bg))
+            cornerRadius = dp(ctx, 24).toFloat()
+            setStroke(dp(ctx, 1), ContextCompat.getColor(ctx, R.color.input_border))
+        }
+        btn.background = g
+        btn.setTextColor(ContextCompat.getColor(ctx, R.color.text_secondary))
+        btn.textSize = 14f
+        btn.setPadding(dp(ctx, 24), 0, dp(ctx, 24), 0)
     }
 
     // =========================== 版本更新 ===========================

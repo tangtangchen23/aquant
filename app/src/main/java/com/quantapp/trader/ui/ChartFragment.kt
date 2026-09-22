@@ -2,6 +2,7 @@ package com.quantapp.trader.ui
 
 import android.content.Context
 import android.graphics.Color
+import android.graphics.drawable.GradientDrawable
 import android.os.Bundle
 import android.text.Editable
 import android.text.InputType
@@ -427,14 +428,32 @@ class ChartFragment : Fragment() {
             .create().apply {
                 window?.setBackgroundDrawableResource(R.drawable.bg_dialog)
                 setOnShowListener {
-                    // 确认按钮：买入用红色，卖出用绿色（A股语义）
-                    getButton(AlertDialog.BUTTON_POSITIVE).setTextColor(
-                        ContextCompat.getColor(ctx, if (isBuy) R.color.up else R.color.down)
-                    )
-                    // 取消按钮：用主文字色，保证浅色/红色主题下清晰可读
-                    getButton(AlertDialog.BUTTON_NEGATIVE).setTextColor(
-                        ContextCompat.getColor(ctx, R.color.text_primary)
-                    )
+                    val density = ctx.resources.displayMetrics.density
+                    // 内容四周留白，避免文字贴着圆角卡片边缘
+                    val ins = (12 * density).toInt()
+                    window?.decorView?.setPadding(ins, (8 * density).toInt(), ins, (8 * density).toInt())
+                    // 确认按钮：买入红色 / 卖出绿色（A股语义）实心胶囊
+                    val accent = ContextCompat.getColor(ctx, if (isBuy) R.color.up else R.color.down)
+                    getButton(AlertDialog.BUTTON_POSITIVE).apply {
+                        background = GradientDrawable().apply {
+                            setColor(accent)
+                            cornerRadius = (22 * density).toFloat()
+                        }
+                        setTextColor(Color.WHITE)
+                        textSize = 14f
+                        setPadding((24 * density).toInt(), 0, (24 * density).toInt(), 0)
+                    }
+                    // 取消按钮：卡片底 + 描边幽灵胶囊
+                    getButton(AlertDialog.BUTTON_NEGATIVE).apply {
+                        background = GradientDrawable().apply {
+                            setColor(ContextCompat.getColor(ctx, R.color.card_bg))
+                            cornerRadius = (22 * density).toFloat()
+                            setStroke(density.toInt(), ContextCompat.getColor(ctx, R.color.input_border))
+                        }
+                        setTextColor(ContextCompat.getColor(ctx, R.color.text_secondary))
+                        textSize = 14f
+                        setPadding((24 * density).toInt(), 0, (24 * density).toInt(), 0)
+                    }
                     getButton(AlertDialog.BUTTON_POSITIVE).setOnClickListener {
                         val p = priceEt.text.toString().toDoubleOrNull()
                         if (p == null || p <= 0) { toast("价格无效"); return@setOnClickListener }
