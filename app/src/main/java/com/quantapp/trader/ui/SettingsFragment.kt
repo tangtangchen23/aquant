@@ -178,7 +178,7 @@ class SettingsFragment : Fragment() {
                 .setNegativeButton("取消", null)
                 .show()
         }
-        openSaveDialog("交易设置", v) {
+        openSaveDialog(v) {
             val cap = etCapital.text.toString().toDoubleOrNull() ?: 100000.0
             val poll = etPoll.text.toString().toIntOrNull() ?: 15
             val pct = etPct.text.toString().toDoubleOrNull() ?: 0.8
@@ -202,7 +202,7 @@ class SettingsFragment : Fragment() {
         if (st.tFrequency == 1) rb60.isChecked = true else v.findViewById<RadioButton>(R.id.rb_tfreq_1min_dialog).isChecked = true
         etTBase.setText(st.tBasePct.toString())
         etTBand.setText(st.tBandPct.toString())
-        openSaveDialog("做T设置", v) {
+        openSaveDialog(v) {
             st.tFrequency = if (rb60.isChecked) 1 else 0
             st.tBasePct = etTBase.text.toString().toDoubleOrNull()?.let { it.coerceIn(0.05, 1.0) } ?: st.tBasePct
             st.tBandPct = etTBand.text.toString().toDoubleOrNull()?.let { it.coerceIn(0.05, 1.0) } ?: st.tBandPct
@@ -228,7 +228,7 @@ class SettingsFragment : Fragment() {
             R.id.et_add_thr_dialog to st.addThresholdPct
         )
         fields.forEach { (id, val_) -> et(id).setText(fmtPct(val_)) }
-        openSaveDialog("风控设置", v) {
+        openSaveDialog(v) {
             st.stopLossPct = et(R.id.et_stop_loss_dialog).text.toString().toDoubleOrNull() ?: 0.0
             st.takeProfitPct = et(R.id.et_take_profit_dialog).text.toString().toDoubleOrNull() ?: 0.0
             st.maxDrawdownPct = et(R.id.et_max_dd_dialog).text.toString().toDoubleOrNull() ?: 0.0
@@ -292,7 +292,7 @@ class SettingsFragment : Fragment() {
             Toast.makeText(ctx, "已添加 $sym 到价提醒", Toast.LENGTH_SHORT).show()
         }
         refreshAlerts()
-        openSaveDialog("行情提醒", v, saveText = "完成") { }
+        openSaveDialog(v, saveText = "完成") { }
     }
 
     private fun showAiDialog(st: com.quantapp.trader.trading.AppStore) {
@@ -356,7 +356,7 @@ class SettingsFragment : Fragment() {
                 }
             }
         }
-        openSaveDialog("AI设置", v, saveText = "完成") { }
+        openSaveDialog(v, saveText = "完成") { }
     }
 
     /**
@@ -364,7 +364,7 @@ class SettingsFragment : Fragment() {
      * width 固定为约屏宽 88%，避免系统默认宽度在平板/大屏上过宽。
      * （colorPrimary 在本应用浅色主题下接近白色，默认按钮文字几乎不可见，故修正按钮文字颜色。）
      */
-    private fun openSaveDialog(title: String, view: View, saveText: String = "保存", onSave: () -> Unit) {
+    private fun openSaveDialog(view: View, saveText: String = "保存", onSave: () -> Unit) {
         val ctx = requireContext()
         AlertDialog.Builder(ctx)
             .setView(view)

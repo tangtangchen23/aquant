@@ -3,92 +3,91 @@
     android:layout_width="match_parent" android:layout_height="wrap_content">
 
     <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content"
-        android:orientation="vertical" android:padding="22dp">
+        android:orientation="vertical" android:paddingTop="2dp" android:paddingBottom="4dp">
 
-        <!-- 弹窗头部：图标气泡 + 标题 + 副标题 -->
-        <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content"
-            android:orientation="horizontal" android:gravity="center_vertical">
-            <LinearLayout android:layout_width="42dp" android:layout_height="42dp"
-                android:gravity="center" android:background="@drawable/bg_row_icon"
-                android:backgroundTint="@color/set_tint_trade">
-                <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
-                    android:text="交" android:textSize="18sp" android:textStyle="bold"
-                    android:textColor="@color/set_trade" />
-            </LinearLayout>
-            <LinearLayout android:layout_width="0dp" android:layout_height="wrap_content"
-                android:layout_weight="1" android:layout_marginStart="12dp"
-                android:orientation="vertical">
-                <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
-                    android:text="交易设置" android:textStyle="bold" android:textSize="17sp"
-                    android:textColor="@color/text_primary" />
-                <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
-                    android:layout_marginTop="2dp" android:text="交易模式 · 资金与仓位"
-                    android:textSize="12sp" android:textColor="@color/text_secondary" />
-            </LinearLayout>
-        </LinearLayout>
+        <!-- 分类徽标 -->
+        <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
+            android:paddingStart="14dp" android:paddingEnd="14dp"
+            android:paddingTop="7dp" android:paddingBottom="7dp"
+            android:background="@drawable/chip_trade"
+            android:text="交易设置" android:textSize="15sp" android:textStyle="bold"
+            android:textColor="@color/set_trade" />
+        <TextView android:layout_width="match_parent" android:layout_height="wrap_content"
+            android:layout_marginTop="8dp" android:textSize="12sp"
+            android:textColor="@color/text_secondary"
+            android:text="切换模拟盘 / 实盘信号模式，配置初始资金与下单节奏。" />
 
         <!-- 交易模式 -->
         <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
-            android:layout_marginTop="20dp" android:text="交易模式" android:textStyle="bold"
-            android:textSize="13sp" android:textColor="@color/text_primary" />
+            android:layout_marginTop="18dp" android:text="交易模式" android:textSize="14sp"
+            android:textStyle="bold" android:textColor="@color/set_trade" />
         <RadioGroup android:id="@+id/rg_mode_dialog" android:layout_width="match_parent"
             android:layout_height="wrap_content" android:orientation="horizontal"
             android:layout_marginTop="8dp">
             <RadioButton android:id="@+id/rb_dialog_paper" android:layout_width="0dp"
                 android:layout_height="44dp" android:layout_weight="1"
-                android:button="@null" android:background="@drawable/bg_option"
-                android:gravity="center" android:text="模拟盘（默认）"
-                android:textSize="13sp" android:textColor="@color/option_text" android:minHeight="0dp" />
+                android:minHeight="0dp" android:gravity="center" android:textSize="13sp"
+                android:button="@android:color/transparent"
+                android:background="@drawable/bg_option" android:textColor="@color/t_option"
+                android:text="模拟盘" />
             <RadioButton android:id="@+id/rb_dialog_live" android:layout_width="0dp"
-                android:layout_height="44dp" android:layout_weight="1" android:layout_marginStart="8dp"
-                android:button="@null" android:background="@drawable/bg_option"
-                android:gravity="center" android:text="实盘信号"
-                android:textSize="13sp" android:textColor="@color/option_text" android:minHeight="0dp" />
+                android:layout_height="44dp" android:layout_weight="1"
+                android:minHeight="0dp" android:gravity="center" android:textSize="13sp"
+                android:layout_marginStart="8dp" android:button="@android:color/transparent"
+                android:background="@drawable/bg_option" android:textColor="@color/t_option"
+                android:text="实盘信号" />
         </RadioGroup>
         <TextView android:id="@+id/tv_mode_hint" android:layout_width="match_parent"
-            android:layout_height="wrap_content" android:layout_marginTop="6dp"
-            android:layout_marginStart="6dp" android:textSize="12sp"
+            android:layout_height="wrap_content" android:layout_marginTop="8dp"
+            android:textSize="12sp" android:textColor="@color/text_secondary" />
+
+        <View android:layout_width="match_parent" android:layout_height="1dp"
+            android:layout_marginTop="16dp" android:layout_marginBottom="16dp"
+            android:background="@color/divider" />
+
+        <!-- 资金与下单 -->
+        <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
+            android:text="资金与下单" android:textSize="14sp" android:textStyle="bold"
+            android:textColor="@color/set_trade" />
+        <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
+            android:layout_marginTop="10dp" android:text="模拟初始资金" android:textSize="12sp"
             android:textColor="@color/text_secondary" />
+        <EditText android:id="@+id/et_capital_dialog" android:layout_width="match_parent"
+            android:layout_height="44dp" android:layout_marginTop="6dp"
+            android:minHeight="0dp" android:paddingStart="12dp" android:paddingEnd="12dp"
+            android:background="@drawable/bg_input"
+            android:textSize="13sp" android:textColor="@color/text_primary"
+            android:textColorHint="@color/text_hint" android:hint="如 100000"
+            android:inputType="numberDecimal" android:importantForAutofill="no" />
+        <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
+            android:layout_marginTop="12dp" android:text="轮询间隔（秒，>=5）" android:textSize="12sp"
+            android:textColor="@color/text_secondary" />
+        <EditText android:id="@+id/et_poll_dialog" android:layout_width="match_parent"
+            android:layout_height="44dp" android:layout_marginTop="6dp"
+            android:minHeight="0dp" android:paddingStart="12dp" android:paddingEnd="12dp"
+            android:background="@drawable/bg_input"
+            android:textSize="13sp" android:textColor="@color/text_primary"
+            android:textColorHint="@color/text_hint" android:hint="15"
+            android:inputType="number" android:importantForAutofill="no" />
+        <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
+            android:layout_marginTop="12dp" android:text="单次开仓资金比例（0~1）" android:textSize="12sp"
+            android:textColor="@color/text_secondary" />
+        <EditText android:id="@+id/et_pct_dialog" android:layout_width="match_parent"
+            android:layout_height="44dp" android:layout_marginTop="6dp"
+            android:minHeight="0dp" android:paddingStart="12dp" android:paddingEnd="12dp"
+            android:background="@drawable/bg_input"
+            android:textSize="13sp" android:textColor="@color/text_primary"
+            android:textColorHint="@color/text_hint" android:hint="0.8"
+            android:inputType="numberDecimal" android:importantForAutofill="no" />
 
-        <!-- 模拟资金与交易参数 -->
-        <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content"
-            android:layout_marginTop="18dp" android:background="@drawable/bg_card"
-            android:orientation="vertical" android:padding="14dp">
-            <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
-                android:text="模拟初始资金（元）" android:textSize="13sp"
-                android:textColor="@color/text_secondary" />
-            <EditText android:id="@+id/et_capital_dialog" android:layout_width="match_parent"
-                android:layout_height="46dp" android:layout_marginTop="4dp"
-                android:minHeight="0dp" android:paddingStart="14dp" android:paddingEnd="14dp"
-                android:background="@drawable/bg_input"
-                android:textSize="14sp" android:textColor="@color/text_primary"
-                android:inputType="numberDecimal" />
+        <View android:layout_width="match_parent" android:layout_height="1dp"
+            android:layout_marginTop="16dp" android:layout_marginBottom="14dp"
+            android:background="@color/divider" />
 
-            <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
-                android:layout_marginTop="14dp" android:text="轮询间隔（秒，≥5）" android:textSize="13sp"
-                android:textColor="@color/text_secondary" />
-            <EditText android:id="@+id/et_poll_dialog" android:layout_width="match_parent"
-                android:layout_height="46dp" android:layout_marginTop="4dp"
-                android:minHeight="0dp" android:paddingStart="14dp" android:paddingEnd="14dp"
-                android:background="@drawable/bg_input"
-                android:textSize="14sp" android:textColor="@color/text_primary"
-                android:inputType="number" />
-
-            <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
-                android:layout_marginTop="14dp" android:text="单次开仓资金比例（0~1）" android:textSize="13sp"
-                android:textColor="@color/text_secondary" />
-            <EditText android:id="@+id/et_pct_dialog" android:layout_width="match_parent"
-                android:layout_height="46dp" android:layout_marginTop="4dp"
-                android:minHeight="0dp" android:paddingStart="14dp" android:paddingEnd="14dp"
-                android:background="@drawable/bg_input"
-                android:textSize="14sp" android:textColor="@color/text_primary"
-                android:inputType="numberDecimal" />
-        </LinearLayout>
-
-        <!-- 危险操作 -->
+        <!-- 重置模拟盘（破坏性操作，红色标识） -->
         <Button android:id="@+id/btn_reset" android:layout_width="match_parent"
-            android:layout_height="46dp" android:layout_marginTop="16dp"
+            android:layout_height="46dp" android:minHeight="0dp"
             android:text="重置模拟盘（清空持仓与成交）" android:textSize="14sp"
-            android:background="@drawable/bg_btn_secondary" />
+            android:textColor="#C0392B" android:background="@drawable/bg_btn_secondary" />
     </LinearLayout>
 </ScrollView>
