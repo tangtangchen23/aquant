@@ -1,8 +1,8 @@
 {
   "latest": {
-    "version": "2.17.0",
-    "versionCode": 82,
+    "version": "2.18.0",
+    "versionCode": 83,
     "apkUrl": "https://github.com/tangtangchen23/aquant/releases/latest/download/aquant-release.apk",
-    "changelog": "## v2.17.0\n- 优化设置页二级弹窗与手动买入/卖出弹窗 UI：内容四周留白，不再贴着弹窗边缘\n- 弹窗底部按钮改为统一胶囊样式，配色与浅色/深色/红色主题协调\n- 修正弹窗内文字配色与按钮对比度，整体更美观协调\n\nA股量化机器人 v2.17.0 更新。\n通过一键发布脚本打包并托管到 GitHub Releases。"
+    "changelog": "优化设置页二级弹窗与手动买入/卖出弹窗 UI：统一为'图标+标题+副标题'头部、深色分节标题并引入卡片式内容分组，弹窗对浅色/深色/红色主题适配。"
   }
 }
