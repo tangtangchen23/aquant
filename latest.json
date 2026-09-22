@@ -1,8 +1,8 @@
 {
   "latest": {
-    "version": "2.14.0",
-    "versionCode": 79,
+    "version": "2.15.0",
+    "versionCode": 80,
     "apkUrl": "https://github.com/tangtangchen23/aquant/releases/latest/download/aquant-release.apk",
-    "changelog": "## v2.14.0\n- 回滚到上一个版本（v2.13.3）界面：设置页恢复为单页长式布局，撤销二级弹窗改版\n- 保留挂单、选股、策略确认等其它功能不变"
+    "changelog": "## v2.15.0\n- 设置页重构：交易/做T/风控/行情提醒/AI/实盘设置/外观主题/系统更新 全部改为二级弹窗，UI全面美化\n- 删除设置页底部“保存设置”大按钮，实盘网关改在【实盘设置】弹窗内配置"
   }
 }
