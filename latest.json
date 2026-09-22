@@ -3,6 +3,6 @@
     "version": "2.14.0",
     "versionCode": 79,
     "apkUrl": "https://github.com/tangtangchen23/aquant/releases/latest/download/aquant-release.apk",
-    "changelog": "## v2.14.0\\n- 回滚到上一个版本（v2.13.3）界面：设置页恢复为单页长式布局，撤销二级弹窗改版\\n- 保留挂单、选股、策略确认等其它功能不变"
+    "changelog": "## v2.14.0\n- 回滚到上一个版本（v2.13.3）界面：设置页恢复为单页长式布局，撤销二级弹窗改版\n- 保留挂单、选股、策略确认等其它功能不变"
   }
 }
