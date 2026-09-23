@@ -1,8 +1,8 @@
 {
   "latest": {
-    "version": "2.25.0",
-    "versionCode": 91,
+    "version": "2.26.0",
+    "versionCode": 92,
     "apkUrl": "https://github.com/tangtangchen23/aquant/releases/latest/download/aquant-release.apk",
-    "changelog": "策略页：去掉股票输入框的查询历史/联想下拉，改为普通输入框（可手动输入或从自选选择）；自选股页面改版：列表项三列排版（名称/代码｜最新价｜涨幅/涨跌额）红涨绿跌，并新增表头列。"
+    "changelog": "红色主题下自选股刷新按钮文字改为黑色，其他主题不变；K线页删除重复的指标开关按钮（均线/成交量/MACD/BOLL/KDJ）统一在快捷设置弹窗操作；K线主图快捷设置/全屏悬浮按钮改为浅灰底+细分隔边框、图标改深灰更协调。"
   }
 }
