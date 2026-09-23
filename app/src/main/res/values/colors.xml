@@ -41,6 +41,9 @@
     <!-- K线底部悬浮按钮（快捷设置/全屏）：浅灰底 + 细分隔边框 -->
     <color name="chart_overlay_bg">#E7E8EA</color>
     <color name="chart_overlay_border">#C9CCD1</color>
+    <!-- K线悬浮按钮图标：浅色主题深灰 / 深色主题浅灰 -->
+    <color name="chart_overlay_icon_light">#1A1A1A</color>
+    <color name="chart_overlay_icon_dark">#E7E8EA</color>
 
     <!-- 分段控件 -->
     <color name="seg_bg">#F0F1F3</color>

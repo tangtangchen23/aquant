@@ -175,6 +175,10 @@ class ChartFragment : Fragment() {
         // K线主图快捷设置：点击齿轮弹出设置弹窗（主图指标/提示信号/副图开关）
         root.findViewById<ImageButton>(R.id.btn_chart_settings).setOnClickListener { showChartSettingsDialog() }
 
+        // 深色主题下：K线顶部悬浮按钮改为浅灰图标 + 深色半透明底，避免在深色图上看不清
+        applyChartOverlayTheme(root, R.id.btn_chart_settings)
+        applyChartOverlayTheme(root, R.id.btn_fullscreen)
+
         if (symbol.isBlank()) {
             tvInfo.text = "未指定股票"
         } else {
@@ -198,6 +202,35 @@ class ChartFragment : Fragment() {
         if (symbol.isBlank()) { toast("未指定股票"); return }
         startActivity(Intent(requireContext(), FullscreenChartActivity::class.java)
             .putExtra(FullscreenChartActivity.EXTRA_SYMBOL, symbol))
+    }
+
+    /**
+     * 依据当前主题设置 K线悬浮按钮（快捷设置/全屏）配色：
+     * 深色主题 - 深色半透明底 + 浅灰图标，保证在深色图上清晰；
+     * 浅色/红色主题 - 浅灰底 + 深灰图标。
+     */
+    private fun applyChartOverlayTheme(root: View, id: Int) {
+        val btn = root.findViewById<ImageButton>(id) ?: return
+        val isDark = isDarkTheme()
+        val tint = ContextCompat.getColor(requireContext(),
+            if (isDark) R.color.chart_overlay_icon_dark else R.color.chart_overlay_icon_light)
+        btn.setImageTintList(android.content.res.ColorStateList.valueOf(tint))
+        btn.background = if (isDark) {
+            GradientDrawable().apply {
+                setColor(0x8C000000.toInt())
+                cornerRadius = (22 * resources.displayMetrics.density).toFloat()
+            }
+        } else ContextCompat.getDrawable(requireContext(), R.drawable.bg_chart_overlay)
+    }
+
+    /** 当前是否为深色主题：深色模式返回 true；浅色/红色返回 false；跟随系统时看系统夜间开关。 */
+    private fun isDarkTheme(): Boolean {
+        val mode = com.quantapp.trader.trading.App.appStore.themeMode
+        if (mode == 2) return true
+        if (mode == 3 || mode == 1) return false
+        val night = requireContext().resources.configuration.uiMode and
+            android.content.res.Configuration.UI_MODE_NIGHT_MASK
+        return night == android.content.res.Configuration.UI_MODE_NIGHT_YES
     }
 
     /**
@@ -513,7 +546,9 @@ class ChartFragment : Fragment() {
                             setColor(accent)
                             cornerRadius = (22 * density).toFloat()
                         }
-                        setTextColor(Color.WHITE)
+                        // 浅色/红色主题：黑字；深色主题：白字（保持清晰）
+                        val isDark = isDarkTheme()
+                        setTextColor(if (isDark) Color.WHITE else Color.BLACK)
                         textSize = 14f
                         setPadding((24 * density).toInt(), 0, (24 * density).toInt(), 0)
                     }
