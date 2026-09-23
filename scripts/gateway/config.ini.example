@@ -1,0 +1,24 @@
+# QuantApp Broker Gateway 配置模板
+# 复制为 config.ini 后修改
+
+[gateway]
+# 监听地址：0.0.0.0 = 所有网卡；127.0.0.1 = 仅本机
+host = 0.0.0.0
+# App 端连接的端口
+port = 8765
+# 网关密钥：至少 32 位随机串。留空 = 不强制认证（仅限内网临时使用）。
+# 也可用环境变量 GATEWAY_SECRET 覆盖
+secret = change-me-to-a-long-random-string-at-least-32-chars
+
+[broker]
+# 适配器：auto / easytrader / xtquant / galaxy / avic
+# auto = 先 xtquant 再 easytrader
+# galaxy = 银河证券（默认 EasyTrader）
+# avic   = 中航证券（默认 xtquant）
+backend = auto
+# 会话保活周期（秒）。券商客户端长时间无操作可能被强制断开
+refresh_interval = 300
+
+[logging]
+level = INFO
+dir = logs

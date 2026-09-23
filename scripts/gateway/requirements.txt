@@ -1,0 +1,26 @@
+# QuantApp 实盘网关依赖
+
+# HTTP 服务
+fastapi>=0.115
+uvicorn[standard]>=0.30
+httpx>=0.27
+
+# 配置文件
+PyYAML>=6.0
+
+# 券商适配器（按需启用）
+# EasyTrader: 银河/通达信/同花顺客户端进程内存读取
+easytrader>=0.6
+# 安装：pip install git+https://github.com/shidenggui/easytrader.git
+
+# 迅投 xtquant: QMT 极简版 Python SDK（中航/银河 QMT 通用）
+# xtquant 不托管在 PyPI，需手动安装:
+#   1. 下载 QMT 极简版: https://www.avicsec.com / https://www.chinastock.com.cn
+#   2. 安装后在 QMT 目录下找到 xtquant 文件夹
+#   3. 将整个 xtquant 文件夹拷贝到 <你的虚拟环境>\Lib\site-packages\
+#   4. pip install pandas
+# pandas 是 xtquant 的硬依赖
+pandas>=2.0
+
+# 日志
+loguru>=0.7
