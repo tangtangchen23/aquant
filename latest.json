@@ -1,8 +1,8 @@
 {
   "latest": {
-    "version": "2.27.0",
-    "versionCode": 93,
+    "version": "2.28.0",
+    "versionCode": 94,
     "apkUrl": "https://github.com/tangtangchen23/aquant/releases/latest/download/aquant-release.apk",
-    "changelog": "手动买入/卖出确认按钮字体：浅色/红色主题改为黑色、深色主题保持白色；K线主图快捷设置/全屏按钮在深色主题改为浅灰图标+半透明深底、浅色主题保持浅灰底深灰图标，对比更清晰；K线悬浮按钮移至K线图右上角不遮挡主区。"
+    "changelog": "K线主图快捷设置/全屏按钮移出图表容器，移至页面顶部标题行右侧（齿轮→全屏→＋自选），完全消除对K线图的遮挡。"
   }
 }
