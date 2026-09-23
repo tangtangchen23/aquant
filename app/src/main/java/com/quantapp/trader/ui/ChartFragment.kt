@@ -82,11 +82,6 @@ class ChartFragment : Fragment() {
     private lateinit var volChart: BarChart
     private lateinit var macdChart: CombinedChart
     private lateinit var kdjChart: CombinedChart
-    private lateinit var tvMA: TextView
-    private lateinit var tvVOL: TextView
-    private lateinit var tvMACD: TextView
-    private lateinit var tvBOLL: TextView
-    private lateinit var tvKDJ: TextView
     private lateinit var tvInfo: TextView
 
     private val UP_COLOR = "#E53935"
@@ -115,11 +110,6 @@ class ChartFragment : Fragment() {
         volChart = root.findViewById(R.id.vol_chart)
         macdChart = root.findViewById(R.id.macd_chart)
         kdjChart = root.findViewById(R.id.kdj_chart)
-        tvMA = root.findViewById(R.id.tv_ma)
-        tvVOL = root.findViewById(R.id.tv_vol)
-        tvMACD = root.findViewById(R.id.tv_macd)
-        tvBOLL = root.findViewById(R.id.tv_boll)
-        tvKDJ = root.findViewById(R.id.tv_kdj)
         tvInfo = root.findViewById(R.id.tv_chart_info)
         tvInfo.setTextColor(ContextCompat.getColor(requireContext(), R.color.text_secondary))
 
@@ -157,13 +147,8 @@ class ChartFragment : Fragment() {
         periodButtons[Period.YEAR] = root.findViewById(R.id.tv_period_year)
         periodButtons[Period.M120] = root.findViewById(R.id.tv_period_120)
 
-        tvMA.setOnClickListener { showMA = !showMA; refreshIndicatorAppearance(); if (period != Period.MINUTE) renderCharts() }
-        tvVOL.setOnClickListener { showVOL = !showVOL; refreshIndicatorAppearance(); if (period != Period.MINUTE) renderCharts() else renderTrendVolume() }
-        tvMACD.setOnClickListener { showMACD = !showMACD; refreshIndicatorAppearance(); if (period != Period.MINUTE) renderCharts() else renderTrendMacd() }
-        tvBOLL.setOnClickListener { showBOLL = !showBOLL; refreshIndicatorAppearance(); if (period != Period.MINUTE) renderCharts() }
-        tvKDJ.setOnClickListener { showKDJ = !showKDJ; refreshIndicatorAppearance(); if (period != Period.MINUTE) renderCharts() else renderTrendKdj() }
-        refreshIndicatorAppearance()
-
+        // 指标开关已移除：均线/成交量/MACD/BOLL/KDJ 开关统一收敛到 K线主图快捷设置 弹窗内操作
+        
         // 去除了输入股票代码加载——该功能与行情页重复。symbol 由行情页点击自选股/卡片时注入。
         symbol = MainActivity.pendingChartSymbol ?: ""
         MainActivity.pendingChartSymbol = null
@@ -587,13 +572,7 @@ class ChartFragment : Fragment() {
         Toast.makeText(requireContext(), msg, Toast.LENGTH_SHORT).show()
     }
 
-    private fun refreshIndicatorAppearance() {
-        tvMA.setBackgroundResource(if (showMA) R.drawable.bg_indicator_on else R.drawable.bg_indicator_off)
-        tvVOL.setBackgroundResource(if (showVOL) R.drawable.bg_indicator_on else R.drawable.bg_indicator_off)
-        tvMACD.setBackgroundResource(if (showMACD) R.drawable.bg_indicator_on else R.drawable.bg_indicator_off)
-        tvBOLL.setBackgroundResource(if (showBOLL) R.drawable.bg_indicator_on else R.drawable.bg_indicator_off)
-        tvKDJ.setBackgroundResource(if (showKDJ) R.drawable.bg_indicator_on else R.drawable.bg_indicator_off)
-    }
+    private fun refreshIndicatorAppearance() { }
 
     /** 分时图：以折线绘制每分钟价格。 */
     private fun renderTrend() {
