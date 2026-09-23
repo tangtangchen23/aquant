@@ -1,8 +1,8 @@
 {
   "latest": {
-    "version": "2.24.0",
-    "versionCode": 90,
+    "version": "2.25.0",
+    "versionCode": 91,
     "apkUrl": "https://github.com/tangtangchen23/aquant/releases/latest/download/aquant-release.apk",
-    "changelog": "K线页改造：新增 K线主图快捷设置 弹窗（对照同花顺交互），支持主图指标单选（不显示/均线MA/布林BOLL）、提示信号开关（买卖点B/S）、副图指标开关（成交量/MACD/KDJ），弹窗沿用设置页二级弹窗美化风格。"
+    "changelog": "策略页：去掉股票输入框的查询历史/联想下拉，改为普通输入框（可手动输入或从自选选择）；自选股页面改版：列表项三列排版（名称/代码｜最新价｜涨幅/涨跌额）红涨绿跌，并新增表头列。"
   }
 }
