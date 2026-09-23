@@ -1,0 +1,144 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  K线主图快捷设置（对照同花顺 K线主图快捷设置 弹窗）。
+  结构：头部标题+关闭键 → 主图指标（单选网格） → 提示信号（开关） → 副图指标（开关）。
+  风格与设置页二级弹窗一致（分类徽标/分段选卡/圆角卡片）。
+-->
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent" android:layout_height="wrap_content">
+
+    <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content"
+        android:orientation="vertical" android:paddingTop="2dp" android:paddingBottom="4dp">
+
+        <!-- 头部：分类徽标 + 标题 + 关闭按钮 -->
+        <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content"
+            android:orientation="horizontal" android:gravity="center_vertical">
+            <LinearLayout android:layout_width="44dp" android:layout_height="44dp"
+                android:gravity="center" android:background="@drawable/bg_dialog_icon"
+                android:backgroundTint="@color/set_tint_alert">
+                <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
+                    android:text="K" android:textSize="16sp" android:textStyle="bold"
+                    android:textColor="@color/set_alert" />
+            </LinearLayout>
+            <LinearLayout android:layout_width="0dp" android:layout_height="wrap_content"
+                android:layout_weight="1" android:layout_marginStart="12dp"
+                android:orientation="vertical">
+                <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
+                    android:text="K线主图快捷设置" android:textSize="17sp" android:textStyle="bold"
+                    android:textColor="@color/text_primary" />
+                <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
+                    android:layout_marginTop="2dp" android:textSize="12sp"
+                    android:textColor="@color/text_secondary"
+                    android:text="主图指标 · 提示信号 · 副图开关" />
+            </LinearLayout>
+            <ImageButton android:id="@+id/ib_chart_settings_close"
+                android:layout_width="40dp" android:layout_height="40dp"
+                android:padding="12dp" android:background="?attr/selectableItemBackgroundBorderless"
+                android:tint="@color/text_secondary"
+                android:src="@drawable/ic_close" android:contentDescription="关闭" />
+        </LinearLayout>
+
+        <!-- 主图指标（单选） -->
+        <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
+            android:layout_marginTop="18dp" android:text="主图指标" android:textSize="14sp"
+            android:textStyle="bold" android:textColor="@color/text_primary" />
+        <RadioGroup android:id="@+id/rg_main_indicator" android:layout_width="match_parent"
+            android:layout_height="wrap_content" android:orientation="horizontal"
+            android:layout_marginTop="8dp">
+            <RadioButton android:id="@+id/rb_main_none" android:layout_width="0dp"
+                android:layout_height="44dp" android:layout_weight="1"
+                android:minHeight="0dp" android:gravity="center" android:textSize="13sp"
+                android:textColor="?attr/indicatorActiveText"
+                android:button="@android:color/transparent"
+                android:background="@drawable/bg_option" android:text="不显示" />
+            <RadioButton android:id="@+id/rb_main_ma" android:layout_width="0dp"
+                android:layout_height="44dp" android:layout_weight="1"
+                android:minHeight="0dp" android:gravity="center" android:textSize="13sp"
+                android:layout_marginStart="8dp" android:textColor="?attr/indicatorActiveText"
+                android:button="@android:color/transparent"
+                android:background="@drawable/bg_option" android:text="均线 MA" />
+            <RadioButton android:id="@+id/rb_main_boll" android:layout_width="0dp"
+                android:layout_height="44dp" android:layout_weight="1"
+                android:minHeight="0dp" android:gravity="center" android:textSize="13sp"
+                android:layout_marginStart="8dp" android:textColor="?attr/indicatorActiveText"
+                android:button="@android:color/transparent"
+                android:background="@drawable/bg_option" android:text="布林 BOLL" />
+        </RadioGroup>
+
+        <View android:layout_width="match_parent" android:layout_height="1dp"
+            android:layout_marginTop="16dp" android:layout_marginBottom="16dp"
+            android:background="@color/divider" />
+
+        <!-- 提示信号（开关） -->
+        <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
+            android:text="提示信号" android:textSize="14sp" android:textStyle="bold"
+            android:textColor="@color/text_primary" />
+        <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content"
+            android:layout_marginTop="10dp" android:orientation="vertical"
+            android:padding="14dp" android:background="@drawable/bg_card">
+            <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content"
+                android:orientation="horizontal" android:gravity="center_vertical">
+                <LinearLayout android:layout_width="0dp" android:layout_height="wrap_content"
+                    android:layout_weight="1" android:orientation="vertical">
+                    <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
+                        android:text="买卖点信号" android:textSize="14sp"
+                        android:textColor="@color/text_primary" />
+                    <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
+                        android:layout_marginTop="2dp" android:textSize="12sp"
+                        android:textColor="@color/text_secondary"
+                        android:text="MA5/MA10 金叉买点 B · 死叉卖点 S" />
+                </LinearLayout>
+                <androidx.appcompat.widget.SwitchCompat android:id="@+id/sw_buy_sell"
+                    android:layout_width="wrap_content" android:layout_height="wrap_content"
+                    android:minWidth="0dp" android:showText="false" />
+            </LinearLayout>
+        </LinearLayout>
+
+        <View android:layout_width="match_parent" android:layout_height="1dp"
+            android:layout_marginTop="16dp" android:layout_marginBottom="16dp"
+            android:background="@color/divider" />
+
+        <!-- 副图指标（开关） -->
+        <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
+            android:text="副图指标" android:textSize="14sp" android:textStyle="bold"
+            android:textColor="@color/text_primary" />
+        <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content"
+            android:layout_marginTop="10dp" android:orientation="vertical"
+            android:padding="6dp" android:background="@drawable/bg_card">
+            <LinearLayout android:id="@+id/row_vol_switch" android:layout_width="match_parent"
+                android:layout_height="wrap_content" android:orientation="horizontal"
+                android:gravity="center_vertical" android:paddingTop="8dp" android:paddingBottom="8dp">
+                <TextView android:layout_width="0dp" android:layout_height="wrap_content"
+                    android:layout_weight="1" android:text="成交量" android:textSize="14sp"
+                    android:textColor="@color/text_primary" />
+                <androidx.appcompat.widget.SwitchCompat android:id="@+id/sw_vol"
+                    android:layout_width="wrap_content" android:layout_height="wrap_content"
+                    android:minWidth="0dp" android:showText="false" />
+            </LinearLayout>
+            <View android:layout_width="match_parent" android:layout_height="1dp"
+                android:background="@color/divider" />
+            <LinearLayout android:id="@+id/row_macd_switch" android:layout_width="match_parent"
+                android:layout_height="wrap_content" android:orientation="horizontal"
+                android:gravity="center_vertical" android:paddingTop="8dp" android:paddingBottom="8dp">
+                <TextView android:layout_width="0dp" android:layout_height="wrap_content"
+                    android:layout_weight="1" android:text="MACD" android:textSize="14sp"
+                    android:textColor="@color/text_primary" />
+                <androidx.appcompat.widget.SwitchCompat android:id="@+id/sw_macd"
+                    android:layout_width="wrap_content" android:layout_height="wrap_content"
+                    android:minWidth="0dp" android:showText="false" />
+            </LinearLayout>
+            <View android:layout_width="match_parent" android:layout_height="1dp"
+                android:background="@color/divider" />
+            <LinearLayout android:id="@+id/row_kdj_switch" android:layout_width="match_parent"
+                android:layout_height="wrap_content" android:orientation="horizontal"
+                android:gravity="center_vertical" android:paddingTop="8dp" android:paddingBottom="8dp">
+                <TextView android:layout_width="0dp" android:layout_height="wrap_content"
+                    android:layout_weight="1" android:text="KDJ" android:textSize="14sp"
+                    android:textColor="@color/text_primary" />
+                <androidx.appcompat.widget.SwitchCompat android:id="@+id/sw_kdj"
+                    android:layout_width="wrap_content" android:layout_height="wrap_content"
+                    android:minWidth="0dp" android:showText="false" />
+            </LinearLayout>
+        </LinearLayout>
+    </LinearLayout>
+</ScrollView>

@@ -15,9 +15,12 @@ import android.widget.Button
 import android.widget.EditText
 import android.widget.ImageButton
 import android.widget.LinearLayout
+import android.widget.RadioButton
+import android.widget.RadioGroup
 import android.widget.TextView
 import android.widget.Toast
 import androidx.appcompat.app.AlertDialog
+import androidx.appcompat.widget.SwitchCompat
 import androidx.core.content.ContextCompat
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.lifecycleScope
@@ -71,6 +74,8 @@ class ChartFragment : Fragment() {
     private var showMACD = true
     private var showBOLL = false
     private var showKDJ = false
+    // 买卖点提示信号（MA5/MA10 金叉/死叉）开关
+    private var showSignal = true
     private var signals: List<BuySellSignal> = emptyList()
 
     private lateinit var chart: CombinedChart
@@ -182,6 +187,9 @@ class ChartFragment : Fragment() {
         // 全屏横看K线：点击右下角全屏图标进入横屏全屏K线页
         root.findViewById<ImageButton>(R.id.btn_fullscreen).setOnClickListener { openFullscreen() }
 
+        // K线主图快捷设置：点击齿轮弹出设置弹窗（主图指标/提示信号/副图开关）
+        root.findViewById<ImageButton>(R.id.btn_chart_settings).setOnClickListener { showChartSettingsDialog() }
+
         if (symbol.isBlank()) {
             tvInfo.text = "未指定股票"
         } else {
@@ -205,6 +213,80 @@ class ChartFragment : Fragment() {
         if (symbol.isBlank()) { toast("未指定股票"); return }
         startActivity(Intent(requireContext(), FullscreenChartActivity::class.java)
             .putExtra(FullscreenChartActivity.EXTRA_SYMBOL, symbol))
+    }
+
+    /**
+     * K线主图快捷设置弹窗（对照同花顺"K线主图快捷设置"）。
+     * 结构：主图指标（单选：不显示/均线/布林）+ 提示信号（买卖点开关）+ 副图指标（成交量/MACD/KDJ开关）。
+     * 选项改变即实时生效并重绘主图/子图。
+     */
+    private fun showChartSettingsDialog() {
+        val ctx = requireContext()
+        val v = LayoutInflater.from(ctx).inflate(R.layout.dialog_chart_settings, null)
+        val rgMain = v.findViewById<RadioGroup>(R.id.rg_main_indicator)
+        val rbNone = v.findViewById<RadioButton>(R.id.rb_main_none)
+        val rbMa = v.findViewById<RadioButton>(R.id.rb_main_ma)
+        val rbBoll = v.findViewById<RadioButton>(R.id.rb_main_boll)
+        val swSignal = v.findViewById<SwitchCompat>(R.id.sw_buy_sell)
+        val swVol = v.findViewById<SwitchCompat>(R.id.sw_vol)
+        val swMacd = v.findViewById<SwitchCompat>(R.id.sw_macd)
+        val swKdj = v.findViewById<SwitchCompat>(R.id.sw_kdj)
+
+        // 已有状态同步到弹窗
+        when {
+            showMA && !showBOLL -> rbMa.isChecked = true
+            showBOLL && !showMA -> rbBoll.isChecked = true
+            else -> rbNone.isChecked = true
+        }
+        swSignal.isChecked = showSignal
+        swVol.isChecked = showVOL
+        swMacd.isChecked = showMACD
+        swKdj.isChecked = showKDJ
+
+        // 主图指标：单选互斥 -> 均线/布林
+        rgMain.setOnCheckedChangeListener { _, _ ->
+            when (rgMain.checkedRadioButtonId) {
+                R.id.rb_main_ma -> { showMA = true; showBOLL = false }
+                R.id.rb_main_boll -> { showBOLL = true; showMA = false }
+                else -> { showMA = false; showBOLL = false }
+            }
+            refreshIndicatorAppearance()
+            if (period != Period.MINUTE) renderCharts() else renderTrend()
+        }
+        // 提示信号 / 副图开关：即时重绘
+        swSignal.setOnCheckedChangeListener { _, checked ->
+            showSignal = checked
+            if (period != Period.MINUTE) renderPriceChart()
+        }
+        swVol.setOnCheckedChangeListener { _, checked ->
+            showVOL = checked
+            refreshIndicatorAppearance()
+            if (period != Period.MINUTE) renderVolume() else renderTrendVolume()
+        }
+        swMacd.setOnCheckedChangeListener { _, checked ->
+            showMACD = checked
+            refreshIndicatorAppearance()
+            if (period != Period.MINUTE) renderMacd() else renderTrendMacd()
+        }
+        swKdj.setOnCheckedChangeListener { _, checked ->
+            showKDJ = checked
+            refreshIndicatorAppearance()
+            if (period != Period.MINUTE) renderKdj() else renderTrendKdj()
+        }
+
+        val dialog = AlertDialog.Builder(ctx)
+            .setView(v)
+            .create().apply {
+                window?.setBackgroundDrawableResource(R.drawable.bg_dialog)
+                setOnShowListener {
+                    val density = ctx.resources.displayMetrics.density
+                    val ins = (12 * density).toInt()
+                    window?.decorView?.setPadding(ins, (8 * density).toInt(), ins, (12 * density).toInt())
+                }
+                show()
+            }
+        // 关闭按钮：关闭弹窗
+        v.findViewById<ImageButton>(R.id.ib_chart_settings_close).setOnClickListener { dialog.dismiss() }
     }
 
     private fun switchPeriod(p: Period) {
@@ -698,8 +780,8 @@ class ChartFragment : Fragment() {
             styleDateAxis(this)
             axisRight.isEnabled = true
             styleChart(this)
-            // B/S 买卖点标记（叠加在主图之上）
-            signals = detectBuySell()
+            // B/S 买卖点标记（叠加在主图之上），可被主图快捷设置弹窗关闭
+            signals = if (showSignal) detectBuySell() else emptyList()
             renderer = SignalRenderer(this, animator, viewPortHandler) { signals }
             invalidate()
         }
