@@ -9,17 +9,33 @@
         <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content"
             android:orientation="vertical">
 
-            <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
-                android:text="模拟账户" android:textSize="22sp" android:textStyle="bold"
-                android:textColor="@color/text_primary" />
+            <TextView android:id="@+id/tv_account_title" android:layout_width="wrap_content"
+                android:layout_height="wrap_content" android:text="模拟账户" android:textSize="22sp"
+                android:textStyle="bold" android:textColor="@color/text_primary" />
+
+            <!-- 模拟盘 / 实盘 分段切换 -->
+            <RadioGroup android:id="@+id/rg_account_scope" android:layout_width="match_parent"
+                android:layout_height="wrap_content" android:layout_marginTop="10dp"
+                android:orientation="horizontal">
+                <RadioButton android:id="@+id/rb_scope_paper" android:layout_width="0dp"
+                    android:layout_height="40dp" android:layout_weight="1" android:minHeight="0dp"
+                    android:gravity="center" android:textSize="13sp"
+                    android:button="@android:color/transparent"
+                    android:background="@drawable/bg_option" android:text="模拟盘" />
+                <RadioButton android:id="@+id/rb_scope_live" android:layout_width="0dp"
+                    android:layout_height="40dp" android:layout_weight="1" android:layout_marginStart="8dp"
+                    android:minHeight="0dp" android:gravity="center" android:textSize="13sp"
+                    android:button="@android:color/transparent"
+                    android:background="@drawable/bg_option" android:text="实盘" />
+            </RadioGroup>
 
             <TextView android:id="@+id/tv_account_summary" android:layout_width="match_parent"
                 android:layout_height="wrap_content" android:layout_marginTop="8dp" android:padding="14dp"
                 android:background="@drawable/bg_card" android:textSize="15sp" />
 
-            <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content"
+            <LinearLayout android:id="@+id/section_pos_header" android:layout_width="match_parent" android:layout_height="wrap_content"
                 android:layout_marginTop="12dp" android:orientation="horizontal" android:gravity="center_vertical">
-                <TextView android:layout_width="0dp" android:layout_height="wrap_content"
+                <TextView android:id="@+id/tv_pos_header" android:layout_width="0dp" android:layout_height="wrap_content"
                     android:layout_weight="1" android:text="持仓(点击查看K线)" android:textStyle="bold" android:textSize="16sp" />
                 <TextView android:id="@+id/btn_clear_positions" android:layout_width="wrap_content"
                     android:layout_height="wrap_content" android:padding="6dp" android:textColor="@color/text_primary"
@@ -33,15 +49,15 @@
                 android:layout_height="wrap_content" android:background="@drawable/bg_card"
                 android:orientation="vertical" android:padding="2dp" />
 
-            <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
+            <TextView android:id="@+id/tv_pending_header" android:layout_width="wrap_content" android:layout_height="wrap_content"
                 android:text="挂单（等待成交）" android:layout_marginTop="12dp" android:textStyle="bold" android:textSize="16sp" />
             <LinearLayout android:id="@+id/list_pending_container" android:layout_width="match_parent"
                 android:layout_height="wrap_content" android:layout_marginTop="4dp"
                 android:background="@drawable/bg_card" android:orientation="vertical" android:padding="2dp" />
 
-            <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
+            <TextView android:id="@+id/tv_trade_header" android:layout_width="wrap_content" android:layout_height="wrap_content"
                 android:text="成交记录" android:layout_marginTop="12dp" android:textStyle="bold" android:textSize="16sp" />
-            <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content"
+            <LinearLayout android:id="@+id/btn_trade_bar" android:layout_width="match_parent" android:layout_height="wrap_content"
                 android:layout_marginTop="4dp" android:orientation="horizontal">
                 <Button android:id="@+id/btn_trade_all" android:layout_width="0dp" android:layout_height="40dp"
                     android:layout_weight="1" android:text="全部" android:textSize="13sp"
