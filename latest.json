@@ -1,8 +1,8 @@
 {
   "latest": {
-    "version": "2.29.0",
-    "versionCode": 95,
+    "version": "2.30.0",
+    "versionCode": 96,
     "apkUrl": "https://github.com/tangtangchen23/aquant/releases/latest/download/aquant-release.apk",
-    "changelog": "红色主题下交易页「一键清仓」「刷新市值」按钮字体改为黑色，提升可读性。"
+    "changelog": "实盘网关升级：新增网关密钥(X-Secret) + 券商选择(自动/银河/中航/EasyTrader通用) + 连接测试按钮；策略信号推送走标准 POST /trade 端点；手动买入/卖出实盘模式下直接发送网关下单，成功返回委托号，网关未配置时自动降级为模拟盘挂单；网关契约对齐 gateway.py（/trade、/account、/cancel/{id}、/ping）。"
   }
 }
