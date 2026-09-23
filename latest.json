@@ -3,6 +3,6 @@
     "version": "2.31.0",
     "versionCode": 98,
     "apkUrl": "https://github.com/tangtangchen23/aquant/releases/latest/download/aquant-release.apk",
-    "changelog": "新增 Windows 侧实盘网关完整交付（scripts/gateway/）：gateway.py（FastAPI + X-Secret）、broker_adapter.py（EasyTrader/xtquant 多券商）、一键 install.bat、NSSM 开机自启脚本、完整 README 部署手册；v2.30.0 App 端实盘网关升级（liveGatewaySecret/broker 字段 + 手动下单走网关）。"
+    "changelog": "账户页改造：顶部分段切换模拟盘/实盘；实盘Tab展示资产汇总/持仓/委托列表，委托支持撤销并二次确认；实盘数据自动轮询LiveGateway.account()刷新；手动下单与策略信号走网关/trade通道（mode=live且网关已填即生效）；新增quantapp-dev-release skill固化构建发布套路。"
   }
 }
