@@ -1,8 +1,8 @@
 {
   "latest": {
-    "version": "2.31.1",
-    "versionCode": 99,
+    "version": "2.31.2",
+    "versionCode": 100,
     "apkUrl": "https://github.com/tangtangchen23/aquant/releases/latest/download/aquant-release.apk",
-    "changelog": "修复：实盘Tab仍显示模拟盘成交记录的bug（隐藏成交记录列表容器并清空内容）。"
+    "changelog": "修复一键清仓/撤单确认弹窗右下角按钮颜色看不清的bug，自动适配浅色/深色/红色主题。"
   }
 }
