@@ -429,6 +429,9 @@ class AccountFragment : Fragment() {
         v.findViewById<TextView>(R.id.tv_pending_header).text = if (isLive) "实盘委托（点击撤销）" else "挂单（等待成交）"
         v.findViewById<View>(R.id.tv_trade_header).visibility = if (isLive) View.GONE else View.VISIBLE
         v.findViewById<View>(R.id.btn_trade_bar).visibility = if (isLive) View.GONE else View.VISIBLE
+        v.findViewById<View>(R.id.list_trades_container).visibility = if (isLive) View.GONE else View.VISIBLE
+        // 清掉模拟盘成交数据，避免残留到实盘Tab
+        if (isLive) tradeContainer?.removeAllViews()
     }
 
     // ------------------------- 实盘渲染 -------------------------
