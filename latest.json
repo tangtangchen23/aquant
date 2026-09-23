@@ -1,8 +1,8 @@
 {
   "latest": {
-    "version": "2.28.0",
-    "versionCode": 94,
+    "version": "2.29.0",
+    "versionCode": 95,
     "apkUrl": "https://github.com/tangtangchen23/aquant/releases/latest/download/aquant-release.apk",
-    "changelog": "K线主图快捷设置/全屏按钮移出图表容器，移至页面顶部标题行右侧（齿轮→全屏→＋自选），完全消除对K线图的遮挡。"
+    "changelog": "红色主题下交易页「一键清仓」「刷新市值」按钮字体改为黑色，提升可读性。"
   }
 }
