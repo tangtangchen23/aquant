@@ -30,29 +30,72 @@
         <TextView android:layout_width="match_parent" android:layout_height="wrap_content"
             android:layout_marginTop="8dp" android:textSize="12sp"
             android:textColor="@color/text_secondary"
-            android:text="对接自有网关（QMT/EasyTrader 等）接收买卖信号并执行下单，风险自担。" />
+            android:text="对接 Windows 端网关（EasyTrader/银河 QMT/中航 QMT 等），网关负责登录券商并执行下单，风险自担。" />
 
         <!-- 网关配置 -->
         <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
-            android:layout_marginTop="18dp" android:text="实盘网关URL" android:textSize="14sp"
+            android:layout_marginTop="18dp" android:text="网关配置" android:textSize="14sp"
             android:textStyle="bold" android:textColor="@color/text_primary" />
         <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content"
             android:orientation="vertical" android:layout_marginTop="8dp"
             android:padding="14dp" android:background="@drawable/bg_card">
-        <TextView android:layout_width="match_parent" android:layout_height="wrap_content"
-            android:textSize="12sp"
-            android:textColor="@color/text_secondary"
-            android:text="引擎将把买卖信号 POST 到该地址（可选，留空则不发送信号）。" />
-        <EditText android:id="@+id/et_gateway_dialog" android:layout_width="match_parent"
-            android:layout_height="46dp" android:layout_marginTop="8dp"
-            android:minHeight="0dp" android:paddingStart="12dp" android:paddingEnd="12dp"
-            android:background="@drawable/bg_input"
-            android:textSize="13sp" android:textColor="@color/text_primary"
-            android:textColorHint="@color/text_hint" android:hint="http://127.0.0.1:8080/order"
-            android:inputType="textUri" android:singleLine="true" android:importantForAutofill="no" />
-        <TextView android:id="@+id/tv_gateway_status_dialog" android:layout_width="match_parent"
-            android:layout_height="wrap_content" android:layout_marginTop="6dp"
-            android:textSize="12sp" android:textColor="@color/text_secondary" />
+
+            <!-- 网关 URL -->
+            <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
+                android:textSize="13sp" android:textStyle="bold" android:textColor="@color/text_primary"
+                android:text="网关 URL" />
+            <EditText android:id="@+id/et_gateway_dialog" android:layout_width="match_parent"
+                android:layout_height="46dp" android:layout_marginTop="6dp"
+                android:minHeight="0dp" android:paddingStart="12dp" android:paddingEnd="12dp"
+                android:background="@drawable/bg_input"
+                android:textSize="13sp" android:textColor="@color/text_primary"
+                android:textColorHint="@color/text_hint"
+                android:hint="http://192.168.x.x:8765"
+                android:inputType="textUri" android:singleLine="true" android:importantForAutofill="no" />
+
+            <!-- 网关密钥 -->
+            <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
+                android:textSize="13sp" android:textStyle="bold"
+                android:textColor="@color/text_primary"
+                android:layout_marginTop="12dp" android:text="网关密钥" />
+            <EditText android:id="@+id/et_gateway_secret_dialog" android:layout_width="match_parent"
+                android:layout_height="46dp" android:layout_marginTop="6dp"
+                android:minHeight="0dp" android:paddingStart="12dp" android:paddingEnd="12dp"
+                android:background="@drawable/bg_input"
+                android:textSize="13sp" android:textColor="@color/text_primary"
+                android:textColorHint="@color/text_hint"
+                android:hint="与 Windows 端 gateway.py 的 GATEWAY_SECRET 一致"
+                android:inputType="textPassword" android:singleLine="true"
+                android:importantForAutofill="no" />
+
+            <!-- 券商选择 -->
+            <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
+                android:textSize="13sp" android:textStyle="bold"
+                android:textColor="@color/text_primary"
+                android:layout_marginTop="12dp" android:text="券商" />
+            <Spinner android:id="@+id/spinner_broker" android:layout_width="match_parent"
+                android:layout_height="42dp" android:layout_marginTop="6dp"
+                android:background="@drawable/bg_input"
+                android:paddingStart="12dp" android:paddingEnd="8dp"
+                android:paddingTop="6dp" android:paddingBottom="6dp" />
+
+            <!-- 连接状态 + 测试按钮 -->
+            <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content"
+                android:layout_marginTop="12dp" android:orientation="horizontal"
+                android:gravity="center_vertical">
+                <TextView android:id="@+id/tv_gateway_status_dialog"
+                    android:layout_width="0dp" android:layout_height="wrap_content"
+                    android:layout_weight="1" android:textSize="12sp"
+                    android:textColor="@color/text_secondary"
+                    android:text="正在探测…" />
+                <Button android:id="@+id/btn_test_gateway"
+                    android:layout_width="wrap_content" android:layout_height="32dp"
+                    android:background="@drawable/bg_input"
+                    android:text="连接测试" android:textSize="12sp"
+                    android:textColor="@color/text_primary"
+                    android:paddingStart="12dp" android:paddingEnd="12dp"
+                    android:paddingTop="4dp" android:paddingBottom="4dp" />
+            </LinearLayout>
         </LinearLayout><!-- /网关配置卡片 -->
 
         <View android:layout_width="match_parent" android:layout_height="1dp"
@@ -65,6 +108,6 @@
         <TextView android:layout_width="match_parent" android:layout_height="wrap_content"
             android:layout_marginTop="6dp" android:textSize="12sp"
             android:textColor="@color/text_secondary" android:lineSpacingExtra="3dp"
-            android:text="实盘信号模式下引擎只输出信号并发送到网关，不直接成交。\n请务必先在网关侧接入券商通道，并做好失败重试与人工监控。" />
+            android:text="实盘模式下，策略信号 + 手动买入/卖出都会发送到网关 /trade 端点子券商下单。\n请务必先在 Windows 电脑上部署 gateway.py + 登录券商 QMT/银河API/通达信客户端。\n建议局域网同网段部署；公网部署请配置内网穿透并设置强密钥。" />
     </LinearLayout>
 </ScrollView>

@@ -607,18 +607,19 @@ object TradingEngine {
         val gw = App.appStore.liveGateway
         if (gw.isBlank()) { gatewayStatus = null; return }
         try {
-            val json = org.json.JSONObject().put("symbol", symbol).put("name", name)
-                .put("side", side).put("price", price).put("reason", reason).toString()
-            val body = json.toRequestBody("application/json; charset=utf-8".toMediaType())
-            val resp = okhttp3.OkHttpClient().newCall(
-                okhttp3.Request.Builder().url(gw).post(body).build()
-            ).execute()
-            resp.close()
-            gatewayStatus = true
-            gatewayLastError = ""
+            val result = LiveGateway.trade(
+                symbol = symbol, side = side, price = price, reason = reason
+            )
+            if (result.ok) {
+                gatewayStatus = true
+                gatewayLastError = ""
+            } else {
+                gatewayStatus = false
+                gatewayLastError = result.message
+            }
         } catch (e: Exception) {
             gatewayStatus = false
-            gatewayLastError = e.message ?: "连接失败"
+            gatewayLastError = e.message ?: "网关异常"
         }
     }
 

@@ -581,15 +581,37 @@ class ChartFragment : Fragment() {
                             if (qty <= 0) qty = maxQty
                             if (qty <= 0) { toast("当前无可卖持仓"); return@setOnClickListener }
                         }
-                        // 挂单模式：现价触及挂单价格后才成交
                         val side = if (isBuy) "买入" else "卖出"
-                        val order = PendingOrder(code, name, side, p,
-                            qtyTarget = if (!isBuy) qty else 0,
-                            amountTarget = if (isBuy) buyAmount else 0.0)
-                        store.addPendingOrder(order)
-                        store.save()
-                        toast("已挂单：现价触及 ${"%.2f".format(p)} 后自动$side（可在账户页查看/撤销）")
-                        dismiss()
+                        // 实盘模式：直接发送到网关下单；模拟盘：挂单等待触及价格
+                        if (App.appStore.mode == "live" && App.appStore.liveGateway.isNotBlank()) {
+                            toast("发送到网关下单中…")
+                            viewLifecycleOwner.lifecycleScope.launch(Dispatchers.IO) {
+                                val result = com.quantapp.trader.trading.LiveGateway.trade(
+                                    symbol = code, side = side, price = p, qty = qty,
+                                    reason = "手动$side"
+                                )
+                                withContext(Dispatchers.Main) {
+                                    if (result.ok) {
+                                        toast("实盘${side}成功${result.orderId?.let { "（委托号：$it" } ?: ""}")
+                                    } else {
+                                        toast("实盘${side}失败：${result.message}")
+                                    }
+                                    dismiss()
+                                }
+                            }
+                        } else {
+                            val order = PendingOrder(code, name, side, p,
+                                qtyTarget = if (!isBuy) qty else 0,
+                                amountTarget = if (isBuy) buyAmount else 0.0)
+                            store.addPendingOrder(order)
+                            store.save()
+                            if (App.appStore.mode == "live") {
+                                toast("已记录：网关未配置，仍按模拟盘挂单")
+                            } else {
+                                toast("已挂单：现价触及 ${"%.2f".format(p)} 后自动$side（可在账户页查看/撤销）")
+                            }
+                            dismiss()
+                        }
                     }
                 }
                 show()

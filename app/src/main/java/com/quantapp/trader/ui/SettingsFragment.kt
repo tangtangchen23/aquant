@@ -333,16 +333,54 @@ class SettingsFragment : Fragment() {
         openSaveDialog(v, saveText = "完成") { }
     }
 
-    /** 实盘设置：网关 URL + 连通性探测。 */
+    /** 实盘设置：网关 URL + 密钥 + 券商 + 连通性探测。 */
     private fun showLiveDialog(st: com.quantapp.trader.trading.AppStore) {
         val ctx = requireContext()
         val v = LayoutInflater.from(ctx).inflate(R.layout.dialog_settings_live, null)
         val etGateway = v.findViewById<EditText>(R.id.et_gateway_dialog)
+        val etSecret = v.findViewById<EditText>(R.id.et_gateway_secret_dialog)
+        val spinner = v.findViewById<Spinner>(R.id.spinner_broker)
         val tvStatus = v.findViewById<TextView>(R.id.tv_gateway_status_dialog)
+        val btnTest = v.findViewById<Button>(R.id.btn_test_gateway)
+
         etGateway.setText(st.liveGateway)
-        probeGateway(tvStatus)
+        etSecret.setText(st.liveGatewaySecret)
+
+        // 券商下拉：auto / 银河证券 / 中航证券 / EasyTrader（通用）
+        val brokers = arrayOf(
+            "自动探测 (auto)",
+            "银河证券 (galaxy)",
+            "中航证券 (avic)",
+            "EasyTrader 通用 (easytrader)"
+        )
+        val adapter = ArrayAdapter(ctx, android.R.layout.simple_spinner_item, brokers)
+        adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item)
+        spinner.adapter = adapter
+        val currentBroker = st.broker
+        spinner.setSelection(brokers.indexOfFirst { it.substringAfterLast('(').substringBefore(')') == currentBroker }
+            .coerceAtLeast(0))
+
+        val doProbe = {
+            tvStatus.text = "正在探测…"
+            scope.launch(Dispatchers.IO) {
+                App.appStore.liveGateway = etGateway.text.toString().trim()
+                App.appStore.liveGatewaySecret = etSecret.text.toString().trim()
+                val (ok, msg) = com.quantapp.trader.trading.LiveGateway.ping()
+                withContext(Dispatchers.Main) {
+                    tvStatus.text = msg
+                    tvStatus.setTextColor(ContextCompat.getColor(ctx,
+                        if (ok) R.color.up else R.color.text_secondary))
+                }
+            }
+        }
+        btnTest.setOnClickListener { doProbe() }
+        doProbe() // 打开弹窗即探测一次
+
         openSaveDialog(v) {
             st.liveGateway = etGateway.text.toString().trim()
+            st.liveGatewaySecret = etSecret.text.toString().trim()
+            st.broker = (spinner.selectedItem?.toString() ?: brokers.first())
+                .substringAfterLast('(').substringBefore(')')
             st.save()
         }
     }

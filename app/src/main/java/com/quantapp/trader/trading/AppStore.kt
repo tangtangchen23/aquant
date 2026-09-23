@@ -103,6 +103,16 @@ class AppStore(context: Context) {
         get() = prefs.getString("live_gateway", "") ?: ""
         set(v) { prefs.edit().putString("live_gateway", v).apply() }
 
+    /** 实盘网关密钥（与 Windows 端 gateway.py 的 GATEWAY_SECRET 一致）。留空则不认证。 */
+    var liveGatewaySecret: String
+        get() = prefs.getString("live_gateway_secret", "") ?: ""
+        set(v) { prefs.edit().putString("live_gateway_secret", v).apply() }
+
+    /** 券商标识，传递给网关用作适配器路由。auto / galaxy(银河) / avic(中航) / easytrader(通用) */
+    var broker: String
+        get() = prefs.getString("broker", "auto") ?: "auto"
+        set(v) { prefs.edit().putString("broker", v).apply() }
+
     var pollSeconds: Int
         get() = prefs.getInt("poll_seconds", 15)
         set(v) { prefs.edit().putInt("poll_seconds", v.coerceIn(5, 300)).apply() }
