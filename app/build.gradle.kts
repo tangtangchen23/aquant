@@ -11,8 +11,8 @@ android {
         applicationId = "com.quantapp.trader"
         minSdk = 26
         targetSdk = 34
-        versionCode = 90
-        versionName = "2.24.0"
+        versionCode = 91
+        versionName = "2.25.0"
     }
 
     buildTypes {

@@ -36,18 +36,27 @@ class WatchAdapter(
         val code = symbols[position]
         val q = quotes[code]
         val name = nameMap[code] ?: ""
-        val label = if (name.isNotEmpty()) "$name  $code" else code
         val t1 = v.findViewById<TextView>(R.id.tv_w_name)
-        val t2 = v.findViewById<TextView>(R.id.tv_w_price)
-        t1.text = label
+        val tCode = v.findViewById<TextView>(R.id.tv_w_code)
+        val tPrice = v.findViewById<TextView>(R.id.tv_w_price)
+        val tChange = v.findViewById<TextView>(R.id.tv_w_change)
+        t1.text = if (name.isNotEmpty()) name else code
+        tCode.text = code
         if (q != null) {
-            val sign = if (q.changePct >= 0) "+" else ""
-            t2.text = "${String.format("%.2f", q.price)}\t${sign}${String.format("%.2f", q.changePct)}%"
-            val c = ctx.getColor(if (q.changePct >= 0) R.color.up else R.color.down)
-            t2.setTextColor(c)
+            val up = q.changePct >= 0
+            val c = ctx.getColor(if (up) R.color.up else R.color.down)
+            val sign = if (up) "+" else ""
+            tPrice.text = String.format("%.2f", q.price)
+            tPrice.setTextColor(c)
+            // 涨跌幅 + 涨跌额（红涨绿跌）
+            val pct = "${sign}${String.format("%.2f", q.changePct)}%"
+            val amt = q.price - q.prevClose
+            tChange.text = "$pct  ${sign}${String.format("%.2f", amt)}"
+            tChange.setTextColor(c)
         } else {
-            t2.text = if (quotes.containsKey(code)) "价格加载中" else "加载中..."
-            t2.setTextColor(ctx.getColor(R.color.down))
+            tPrice.text = if (quotes.containsKey(code)) "加载中..." else "加载中..."
+            tPrice.setTextColor(ctx.getColor(R.color.down))
+            tChange.text = ""
         }
         return v
     }

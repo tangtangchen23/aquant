@@ -107,6 +107,20 @@
             android:textSize="14sp" android:text="↻ 刷新" />
     </LinearLayout>
 
+    <!-- 自选股列表表头（参照同花顺·自选股列标题） -->
+    <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content"
+        android:layout_marginTop="2dp" android:orientation="horizontal"
+        android:paddingStart="14dp" android:paddingEnd="14dp" android:paddingTop="6dp" android:paddingBottom="6dp">
+        <TextView android:layout_width="0dp" android:layout_height="wrap_content"
+            android:layout_weight="1" android:text="名称 / 代码" android:textSize="11sp"
+            android:textColor="@color/text_hint" />
+        <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
+            android:text="最新价" android:textSize="11sp" android:textColor="@color/text_hint" />
+        <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
+            android:layout_marginStart="18dp" android:text="涨幅 / 涨跌" android:textSize="11sp"
+            android:textColor="@color/text_hint" />
+    </LinearLayout>
+
     <FrameLayout android:layout_width="match_parent" android:layout_height="0dp"
         android:layout_weight="1" android:layout_marginTop="4dp">
         <ListView android:id="@+id/list_watch" android:layout_width="match_parent"

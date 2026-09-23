@@ -1,15 +1,10 @@
 package com.quantapp.trader.ui
 
 import android.os.Bundle
-import android.os.Handler
-import android.os.Looper
-import android.text.Editable
-import android.text.TextWatcher
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.ArrayAdapter
-import android.widget.AutoCompleteTextView
 import android.widget.Button
 import android.widget.EditText
 import android.widget.LinearLayout
@@ -52,45 +47,9 @@ class StrategyFragment : Fragment() {
 
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View {
         val root = inflater.inflate(R.layout.fragment_strategy, container, false)
-        val etSymbol = root.findViewById<AutoCompleteTextView>(R.id.et_strat_symbol)
+        val etSymbol = root.findViewById<EditText>(R.id.et_strat_symbol)
         val btnPickWatch = root.findViewById<Button>(R.id.btn_pick_watch)
         val spinner = root.findViewById<Spinner>(R.id.spinner_strategy)
-
-        // 股票名称/代码联想搜索
-        val searchHandler = Handler(Looper.getMainLooper())
-        val searchCodes = mutableListOf<String>()
-        val searchTask = object : Runnable {
-            override fun run() {
-                val q = etSymbol.text.toString().trim()
-                if (q.isEmpty()) return
-                AppScope.launch {
-                    val res = try { withContext(Dispatchers.IO) { MarketService.search(q) } }
-                        catch (e: Exception) { emptyList() }
-                    if (etSymbol.text.toString().trim() == q) {
-                        searchCodes.clear()
-                        res.forEach { searchCodes.add(it.code) }
-                        etSymbol.setAdapter(ArrayAdapter(requireContext(),
-                            android.R.layout.simple_dropdown_item_1line,
-                            res.map { "${it.name}  ${it.code}" }))
-                        if (res.isNotEmpty()) etSymbol.showDropDown()
-                    }
-                }
-            }
-        }
-        etSymbol.addTextChangedListener(object : TextWatcher {
-            override fun afterTextChanged(s: Editable?) {
-                searchHandler.removeCallbacks(searchTask)
-                if (!s.isNullOrBlank()) searchHandler.postDelayed(searchTask, 250)
-            }
-            override fun beforeTextChanged(s: CharSequence?, a: Int, b: Int, c: Int) {}
-            override fun onTextChanged(s: CharSequence?, a: Int, b: Int, c: Int) {}
-        })
-        etSymbol.setOnItemClickListener { _, _, pos, _ ->
-            if (pos in searchCodes.indices) {
-                etSymbol.setText(searchCodes[pos])
-                etSymbol.dismissDropDown()
-            }
-        }
 
         // 从自选股列表选择
         btnPickWatch.setOnClickListener {

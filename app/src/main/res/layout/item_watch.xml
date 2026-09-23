@@ -1,16 +1,33 @@
 <?xml version="1.0" encoding="utf-8"?>
+<!-- 自选股列表项（参照同花顺·自选股排版）：
+     左列 名称+代码，右列 最新价 + 涨跌幅（红涨绿跌） -->
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent" android:layout_height="wrap_content"
-    android:orientation="vertical"
+    android:orientation="horizontal" android:gravity="center_vertical"
+    android:minHeight="60dp"
     android:background="@drawable/bg_item"
-    android:paddingLeft="14dp" android:paddingTop="12dp"
-    android:paddingRight="14dp" android:paddingBottom="12dp">
+    android:paddingLeft="14dp" android:paddingRight="14dp">
 
-    <TextView android:id="@+id/tv_w_name" android:layout_width="wrap_content"
-        android:layout_height="wrap_content" android:textSize="16sp" android:textStyle="bold"
-        android:textColor="@color/text_primary" android:text="--" />
+    <!-- 左列：名称 + 代码 -->
+    <LinearLayout android:layout_width="0dp" android:layout_height="wrap_content"
+        android:layout_weight="1" android:orientation="vertical">
+        <TextView android:id="@+id/tv_w_name" android:layout_width="wrap_content"
+            android:layout_height="wrap_content" android:textSize="16sp" android:textStyle="bold"
+            android:maxLines="1" android:ellipsize="end"
+            android:textColor="@color/text_primary" android:text="--" />
+        <TextView android:id="@+id/tv_w_code" android:layout_width="wrap_content"
+            android:layout_height="wrap_content" android:layout_marginTop="3dp"
+            android:textSize="11sp" android:textColor="@color/text_hint" android:text="--" />
+    </LinearLayout>
 
-    <TextView android:id="@+id/tv_w_price" android:layout_width="wrap_content"
-        android:layout_height="wrap_content" android:layout_marginTop="4dp"
-        android:textSize="15sp" android:textColor="@color/text_primary" android:text="--" />
+    <!-- 右列：最新价 + 涨跌幅 -->
+    <LinearLayout android:layout_width="wrap_content" android:layout_height="wrap_content"
+        android:orientation="vertical" android:gravity="end">
+        <TextView android:id="@+id/tv_w_price" android:layout_width="wrap_content"
+            android:layout_height="wrap_content" android:textSize="16sp" android:textStyle="bold"
+            android:textColor="@color/text_primary" android:text="--" />
+        <TextView android:id="@+id/tv_w_change" android:layout_width="wrap_content"
+            android:layout_height="wrap_content" android:layout_marginTop="3dp"
+            android:textSize="13sp" android:textColor="@color/text_primary" android:text="--" />
+    </LinearLayout>
 </LinearLayout>
