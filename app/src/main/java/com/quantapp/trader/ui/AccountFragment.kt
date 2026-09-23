@@ -10,6 +10,7 @@ import android.widget.RadioButton
 import android.widget.RadioGroup
 import android.widget.TextView
 import android.widget.Toast
+import androidx.appcompat.app.AlertDialog
 import androidx.core.content.ContextCompat
 import androidx.fragment.app.Fragment
 import com.quantapp.trader.R
@@ -87,7 +88,7 @@ class AccountFragment : Fragment() {
                 Toast.makeText(requireContext(), "当前无持仓", Toast.LENGTH_SHORT).show()
                 return@setOnClickListener
             }
-            android.app.AlertDialog.Builder(requireContext())
+            AlertDialog.Builder(requireContext())
                 .setTitle("一键清仓")
                 .setMessage("确定以当前行情价卖出全部 ${pos.size} 只持仓吗？")
                 .setPositiveButton("全部卖出") { _, _ ->
@@ -95,7 +96,15 @@ class AccountFragment : Fragment() {
                     refreshAll()
                 }
                 .setNegativeButton("取消", null)
-                .show()
+                .create().apply {
+                    setOnShowListener {
+                        getButton(AlertDialog.BUTTON_POSITIVE).setTextColor(
+                            ContextCompat.getColor(requireContext(), R.color.text_primary))
+                        getButton(AlertDialog.BUTTON_NEGATIVE)?.setTextColor(
+                            ContextCompat.getColor(requireContext(), R.color.text_secondary))
+                    }
+                    show()
+                }
         }
 
         // 成交记录筛选
@@ -632,12 +641,20 @@ class AccountFragment : Fragment() {
                 themeAttrColor(context, R.attr.onBrand).also { setTextColor(it) }
                 if (isClickable && id.isNotBlank()) {
                     setOnClickListener {
-                        android.app.AlertDialog.Builder(requireContext())
+                        AlertDialog.Builder(requireContext())
                             .setTitle("确认撤单")
                             .setMessage("撤销委托 $name ${side} @${fmt(price)}，委托号：$id？")
                             .setPositiveButton("撤销") { _, _ -> doCancel(id, name) }
                             .setNegativeButton("取消", null)
-                            .show()
+                            .create().apply {
+                                setOnShowListener {
+                                    getButton(AlertDialog.BUTTON_POSITIVE).setTextColor(
+                                        ContextCompat.getColor(requireContext(), R.color.text_primary))
+                                    getButton(AlertDialog.BUTTON_NEGATIVE)?.setTextColor(
+                                        ContextCompat.getColor(requireContext(), R.color.text_secondary))
+                                }
+                                show()
+                            }
                     }
                 }
             }
