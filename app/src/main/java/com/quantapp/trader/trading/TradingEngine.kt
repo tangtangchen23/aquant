@@ -282,11 +282,15 @@ object TradingEngine {
             val target = positionTarget(store) * addPct
             if (store.mode == "paper") {
                 store.paper.buy(symbol, name, price, target)?.let {
-                    // 下一档 = 当前盈利 + 阈值
-                    val updated = store.paper.positions[symbol]!!.copy(
-                        nextAddPct = (pnl + threshold) * 100.0,
-                        addCount = store.paper.positions[symbol]!!.addCount + 1)
-                    store.paper.positions[symbol] = updated
+                    // 下一档 = 当前盈利 + 阈值。加仓成功后持仓通常存在，
+                    // 但挂单撮合/一键清仓可能在并发下移除此持仓，用空值安全访问兜底，
+                    // 避免 !! 抛 NPE 中断整轮 tick。
+                    val cur = store.paper.positions[symbol]
+                    if (cur != null) {
+                        store.paper.positions[symbol] = cur.copy(
+                            nextAddPct = (pnl + threshold) * 100.0,
+                            addCount = cur.addCount + 1)
+                    }
                     store.addLog("盈利加仓：$name($symbol) 盈利 ${String.format("%.1f", pnl * 100)}% @ ${fmt(price)}")
                     onTrade?.invoke("盈利加仓 $name @ ${fmt(price)}")
                 }
@@ -565,7 +569,7 @@ object TradingEngine {
     }
 
     /** 趋势过滤：1=个股价格高于其自身 MA40 才允许开多；2=进一步要求上证指数趋势向上。 */
-    private fun confirmTrend(store: AppStore, bars: List<KLine>): Boolean {
+    private suspend fun confirmTrend(store: AppStore, bars: List<KLine>): Boolean {
         val mode = store.requireTrend
         if (mode == 0) return true
         val closes = bars.map { it.close }
@@ -579,17 +583,13 @@ object TradingEngine {
     }
 
     /** 上证指数趋势：最新收盘 > MA20 视为多头。带缓存，5 分钟刷新一次。 */
-    private fun shIndexTrendOk(): Boolean {
+    private suspend fun shIndexTrendOk(): Boolean {
         val now = System.currentTimeMillis()
         if (now - shTrendCheckedAt < 5 * 60_000L) return shTrendOk
         shTrendCheckedAt = now
         return try {
-            val bars = kotlinx.coroutines.runBlocking(kotlinx.coroutines.Dispatchers.IO) {
-                com.quantapp.trader.data.MarketService.fetchKlineBy("000001", klt = 101, limit = 60).let {
-                    // 上证指数 secid 需走 1.000001
-                    it
-                }.let { it.ifEmpty { com.quantapp.trader.data.MarketService.fetchKlineBy("000001", klt = 101, limit = 60).let { x -> x } } }
-            }
+            // 上证指数 secid 固定 1.000001，避免被误解析为深市 000001(平安银行)
+            val bars = com.quantapp.trader.data.MarketService.fetchShanghaiIndexKline(60)
             val idx = bars.lastIndex
             if (idx < 20) { shTrendOk = true; true }
             else {

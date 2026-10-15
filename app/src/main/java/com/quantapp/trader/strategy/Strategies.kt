@@ -369,18 +369,24 @@ fun strategyParams(id: String): List<StrategyParam> = when (id) {
     else -> emptyList()
 }
 
-/** 依据参数 map 构建策略实例；缺失项回退默认值。 */
-fun buildStrategy(id: String, v: Map<String, Double>): Strategy = when (id) {
-    "ma" -> MaCrossStrategy(v["short"]?.toInt() ?: 5, v["long"]?.toInt() ?: 20)
-    "rsi" -> RsiStrategy(
-        v["period"]?.toInt() ?: 14, v["oversold"] ?: 30.0, v["overbought"] ?: 70.0)
-    "macd" -> MacdStrategy(
-        v["fast"]?.toInt() ?: 12, v["slow"]?.toInt() ?: 26, v["signal"]?.toInt() ?: 9)
-    "boll" -> BollStrategy(
-        v["period"]?.toInt() ?: 20, v["mult"] ?: 2.0)
-    "t_ma" -> DivideAverageTStrategy(v["devPct"] ?: 5.0)
-    "t_boll" -> BollGridTStrategy(
-        v["period"]?.toInt() ?: 20, v["mult"] ?: 2.0, v["devPct"] ?: 3.0)
-    "t_vwap" -> VwapTStrategy(v["devPct"] ?: 2.0)
-    else -> MaCrossStrategy()
+/**
+ * 依据参数 map 构建策略实例；缺失项回退默认值。
+ * 对周期/倍数等参数做安全钳制：非法（负数/0/极端值）会令指标计算越界或产生 NaN，
+ * 用户可在策略页手工输入任意数值，这里作为统一入口兜底。
+ */
+fun buildStrategy(id: String, v: Map<String, Double>): Strategy {
+    fun period(key: String, def: Int, min: Int = 1) = (v[key]?.toInt() ?: def).coerceIn(min, 500)
+    fun ratio(key: String, def: Double, min: Double) = (v[key] ?: def).coerceIn(min, 100.0)
+    return when (id) {
+        "ma" -> MaCrossStrategy(period("short", 5), period("long", 20))
+        "rsi" -> RsiStrategy(period("period", 14, 2),
+            ratio("oversold", 30.0, 0.0), ratio("overbought", 70.0, 0.0))
+        "macd" -> MacdStrategy(period("fast", 12), period("slow", 26), period("signal", 9))
+        "boll" -> BollStrategy(period("period", 20, 2), ratio("mult", 2.0, 0.1))
+        "t_ma" -> DivideAverageTStrategy(ratio("devPct", 5.0, 0.1))
+        "t_boll" -> BollGridTStrategy(period("period", 20, 2), ratio("mult", 2.0, 0.1),
+            ratio("devPct", 3.0, 0.1))
+        "t_vwap" -> VwapTStrategy(ratio("devPct", 2.0, 0.1))
+        else -> MaCrossStrategy()
+    }
 }

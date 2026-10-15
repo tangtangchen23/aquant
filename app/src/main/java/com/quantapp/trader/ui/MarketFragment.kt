@@ -78,7 +78,7 @@ class MarketFragment : Fragment() {
         loadNames()
 
         // 自选股列表：显示名称 + 代码 + 实时行情（红涨绿跌）
-        val watchAdapter = WatchAdapter(requireContext(), watchSymbols, watchNames)
+        val watchAdapter = WatchAdapter(requireContext(), watchSymbols, watchNames, viewLifecycleOwner.lifecycleScope)
         list.adapter = watchAdapter
         list.emptyView = root.findViewById(R.id.tv_watch_empty)
         watchAdapter.refresh()
@@ -101,7 +101,7 @@ class MarketFragment : Fragment() {
             if (raw.isEmpty()) return
             btnQuery.isEnabled = false
             setQuoteLoading()
-            AppScope.launch {
+            viewLifecycleOwner.lifecycleScope.launch {
                 try {
                     val code = MarketService.resolveCode(raw)
                     if (code != raw) etCode.setText(code)
@@ -162,7 +162,7 @@ class MarketFragment : Fragment() {
             val raw = etCode.text.toString().trim()
             if (raw.isEmpty()) { Toast.makeText(requireContext(), "请输入代码或名称", Toast.LENGTH_SHORT).show(); return }
             btnAdd.isEnabled = false
-            AppScope.launch {
+            viewLifecycleOwner.lifecycleScope.launch {
                 try {
                     // 解析成代码存储，保证点击跳转K线用代码
                     val code = MarketService.resolveCode(raw)
@@ -249,6 +249,7 @@ class MarketFragment : Fragment() {
         if (allCodes.isEmpty()) { Toast.makeText(ctx, "自选股列表已空", Toast.LENGTH_SHORT).show(); return }
         val v = LayoutInflater.from(ctx).inflate(R.layout.dialog_batch_delete_watch, null)
         val listContainer = v.findViewById<LinearLayout>(R.id.ll_batch_watch_list)
+        val scroll = v.findViewById<android.widget.ScrollView>(R.id.sv_batch_watch)
         val btnSelectAll = v.findViewById<TextView>(R.id.btn_select_all)
         val btnSelectInvert = v.findViewById<TextView>(R.id.btn_select_invert)
         val d = ctx.resources.displayMetrics.density
@@ -266,6 +267,15 @@ class MarketFragment : Fragment() {
             listContainer.addView(cb)
             checkboxes.add(cb to code)
         }
+
+        // 按内容测量后把列表钳制到最大高度，避免长列表撑爆弹窗、短列表也留白
+        val maxH = (280 * d).toInt()
+        val availW = ctx.resources.displayMetrics.widthPixels - (64 * d).toInt()
+        listContainer.measure(
+            View.MeasureSpec.makeMeasureSpec(availW, View.MeasureSpec.AT_MOST),
+            View.MeasureSpec.makeMeasureSpec(maxH, View.MeasureSpec.AT_MOST))
+        scroll.layoutParams = LinearLayout.LayoutParams(
+            ViewGroup.LayoutParams.MATCH_PARENT, listContainer.measuredHeight.coerceAtMost(maxH))
 
         val dlg = AlertDialog.Builder(ctx)
             .setTitle("批量删除自选（勾选后确定）")
@@ -307,7 +317,7 @@ class MarketFragment : Fragment() {
     }
 
     private fun requireWatchAdapter(): WatchAdapter {
-        val list = view?.findViewById<ListView>(R.id.list_watch) ?: return WatchAdapter(requireContext(), watchSymbols, watchNames)
+        val list = view?.findViewById<ListView>(R.id.list_watch) ?: return WatchAdapter(requireContext(), watchSymbols, watchNames, viewLifecycleOwner.lifecycleScope)
         return list.adapter as WatchAdapter
     }
 

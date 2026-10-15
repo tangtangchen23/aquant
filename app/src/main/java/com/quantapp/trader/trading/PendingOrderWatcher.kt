@@ -57,28 +57,35 @@ object PendingOrderWatcher {
 
     private fun fill(store: AppStore, o: PendingOrder, marketPrice: Double, quoteName: String) {
         val fillPrice = o.limitPrice // 以挂单价成交（买入更优/卖出更保守，简单且安全）
-        var ok = false
-        var fillQty = 0
+        val name = o.name.ifBlank { quoteName.ifBlank { o.symbol } }
+
         if (o.side == "买入") {
             val target = if (o.amountTarget > 0) o.amountTarget else o.qtyTarget * o.limitPrice
-            val t = store.paper.buy(o.symbol, o.name, fillPrice, target)
-            if (t != null) { ok = true; fillQty = t.qty }
-        } else {
-            val pos = store.paper.positions[o.symbol]
-            if (pos != null) {
-                val maxSellable = pos.sellableQty()
-                val q = if (o.qtyTarget > 0) o.qtyTarget.coerceIn(1, maxSellable) else maxSellable
-                val t = store.paper.sell(o.symbol, o.name, fillPrice, q)
-                if (t != null) { ok = true; fillQty = t.qty }
-            }
+            // 资金不足等导致无法成交：保留挂单，待下轮资金可用后再撮合，避免静默丢单
+            val t = store.paper.buy(o.symbol, o.name, fillPrice, target) ?: return
+            store.removePendingOrderById(o.id())
+            store.save()
+            fireNotification(name, o.symbol, o.side, fillPrice, t.qty, marketPrice)
+            mainThread { TradingEngine.onTrade?.invoke(name) }
+            return
         }
+
+        val pos = store.paper.positions[o.symbol]
+        if (pos == null) {
+            // 无可卖持仓：该卖出挂单已失效，撤销之
+            store.removePendingOrderById(o.id())
+            store.save()
+            mainThread { TradingEngine.onTrade?.invoke(name) }
+            return
+        }
+        val maxSellable = pos.sellableQty()
+        // A股 T+1：当日无可用底仓时不成交，但保留挂单，待次日底仓可卖后继续撮合
+        if (maxSellable <= 0) return
+        val q = if (o.qtyTarget > 0) o.qtyTarget.coerceIn(1, maxSellable) else maxSellable
+        val t = store.paper.sell(o.symbol, o.name, fillPrice, q) ?: return
         store.removePendingOrderById(o.id())
         store.save()
-        val name = o.name.ifBlank { quoteName.ifBlank { o.symbol } }
-        if (ok) {
-            fireNotification(name, o.symbol, o.side, fillPrice, fillQty, marketPrice)
-        }
-        // 触发界面刷新（账户页/策略页监听 onTrade）
+        fireNotification(name, o.symbol, o.side, fillPrice, t.qty, marketPrice)
         mainThread { TradingEngine.onTrade?.invoke(name) }
     }
 

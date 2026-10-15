@@ -201,14 +201,22 @@ object MarketService {
         emptyList()
     }
 
+    /** 东财 K 线 URL（按显式 secid 构造）。 */
+    private fun emKlineUrl(secid: String, klt: Int, limit: Int): String =
+        "https://push2his.eastmoney.com/api/qt/stock/kline/get?" +
+        "secid=$secid&klt=$klt&fqt=1&lmt=$limit&end=20500101&fields1=f1,f2,f3,f4,f5,f6&" +
+        "fields2=f51,f52,f53,f54,f55,f56,f57&ut=fa5fd1943c7b386f172d6893dbfba10b"
+
     /** 东财 K 线（前复权）。限流/网络异常时抛错或返回空，由 fetchKlineBy 降级到备用源。 */
-    private fun fetchEmKline(code: String, klt: Int, limit: Int): List<KLine> {
-        val secid = toSecid(code)
-        val url = "https://push2his.eastmoney.com/api/qt/stock/kline/get?" +
-            "secid=$secid&klt=$klt&fqt=1&lmt=$limit&end=20500101&fields1=f1,f2,f3,f4,f5,f6&" +
-            "fields2=f51,f52,f53,f54,f55,f56,f57&ut=fa5fd1943c7b386f172d6893dbfba10b"
-        val json = JSONObject(http(url))
-        return parseKlines(json)
+    private fun fetchEmKline(code: String, klt: Int, limit: Int): List<KLine> =
+        parseKlines(JSONObject(http(emKlineUrl(toSecid(code), klt, limit))))
+
+    /**
+     * 上证指数日线：secid 固定为 1.000001，避免 toSecid("000001") 被解析为深市 000001(平安银行)。
+     * 供交易引擎的大盘趋势过滤使用；失败返回空。
+     */
+    suspend fun fetchShanghaiIndexKline(limit: Int = 60): List<KLine> = withContext(Dispatchers.IO) {
+        try { parseKlines(JSONObject(http(emKlineUrl("1.000001", 101, limit)))) } catch (e: Exception) { emptyList() }
     }
 
     // 腾讯K线独立节流：与东财限流退避隔离，作为 K 线备用数据源

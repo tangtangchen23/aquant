@@ -9,7 +9,9 @@ import android.widget.TextView
 import com.quantapp.trader.R
 import com.quantapp.trader.data.MarketService
 import com.quantapp.trader.data.Quote
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
 /**
@@ -17,11 +19,13 @@ import kotlinx.coroutines.withContext
  * 红涨绿跌配色（中国习惯：涨红跌绿）。
  * 名称优先取自 nameMap（本地缓存/搜索接口，不依赖行情接口），
  * 价格后台异步从实时行情接口逐条加载，加载完成后刷新当前行。
+ * [scope] 由宿主 Fragment 传入其 view 生命周期作用域，页面销毁时协程随之取消。
  */
 class WatchAdapter(
     private val ctx: Context,
     private val symbols: MutableList<String>,
-    private val nameMap: MutableMap<String, String>
+    private val nameMap: MutableMap<String, String>,
+    private val scope: CoroutineScope
 ) : BaseAdapter() {
 
     /** 置位后 refresh 协程应立即停止（列表被删除/清空时用），避免并发下标越界。 */
@@ -73,7 +77,7 @@ class WatchAdapter(
     fun refresh(onDone: (() -> Unit)? = null) {
         cancelled = false
         val pending = symbols.toList()
-        AppScope.launch {
+        scope.launch {
             for (code in pending) {
                 if (cancelled) return@launch
                 if (!symbols.contains(code)) continue // 已被移除的跳过

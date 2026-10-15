@@ -66,7 +66,8 @@ object Backtester {
                         if (cost + fee <= cash) {
                             cash -= cost + fee
                             holding = true
-                            costPrice = (cost) / qty // 不含手续费的成本，便于对账
+                            // 含买入手续费的成本，使单笔盈亏与胜率把买入端费用也计入
+                            costPrice = (cost + fee) / qty
                             buyDate = bar.date
                         }
                     }
@@ -128,7 +129,7 @@ object Backtester {
     }
 
     private fun computeMaxDrawdown(curve: List<Double>): Double {
-        var peak = Double.MIN_VALUE
+        var peak = Double.NEGATIVE_INFINITY
         var maxDD = 0.0
         for (v in curve) {
             if (v > peak) peak = v

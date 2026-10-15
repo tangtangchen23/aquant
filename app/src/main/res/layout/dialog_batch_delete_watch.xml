@@ -4,8 +4,9 @@
     android:layout_width="match_parent" android:layout_height="wrap_content"
     android:orientation="vertical" android:paddingTop="10dp" android:paddingBottom="6dp">
 
+    <!-- 高度由代码按内容测量后钳制到最大值：wrap_content 的父容器里 0dp+weight 会被测量成 0 高度 -->
     <ScrollView android:id="@+id/sv_batch_watch" android:layout_width="match_parent"
-        android:layout_height="0dp" android:layout_weight="1" android:maxHeight="300dp">
+        android:layout_height="wrap_content">
         <LinearLayout android:id="@+id/ll_batch_watch_list"
             android:layout_width="match_parent" android:layout_height="wrap_content"
             android:orientation="vertical" android:paddingHorizontal="8dp" />

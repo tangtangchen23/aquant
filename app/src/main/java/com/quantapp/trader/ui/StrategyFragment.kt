@@ -14,6 +14,7 @@ import android.widget.TextView
 import android.widget.Toast
 import androidx.appcompat.app.AlertDialog
 import androidx.fragment.app.Fragment
+import androidx.lifecycle.lifecycleScope
 import com.github.mikephil.charting.charts.LineChart
 import com.github.mikephil.charting.components.XAxis
 import com.github.mikephil.charting.data.Entry
@@ -36,6 +37,7 @@ import com.quantapp.trader.trading.ActiveStrategy
 import com.quantapp.trader.trading.App
 import com.quantapp.trader.trading.TradingEngine
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import org.json.JSONArray
 import org.json.JSONObject
@@ -224,7 +226,7 @@ class StrategyFragment : Fragment() {
             if (raw.isEmpty()) return@setOnClickListener
             b.isEnabled = false
             tvBacktest.text = "回测中..."
-            AppScope.launch {
+            viewLifecycleOwner.lifecycleScope.launch {
                 try {
                     val fee = (etFee.text.toString().toDoubleOrNull() ?: 0.0)
                         .coerceIn(0.0, 0.1)
@@ -252,7 +254,7 @@ class StrategyFragment : Fragment() {
             }
             b.isEnabled = false
             tvBacktest.text = "AI 识别走势中..."
-            AppScope.launch {
+            viewLifecycleOwner.lifecycleScope.launch {
                 try {
                     val (_, bars) = fetchBars(raw) ?: return@launch
                     if (bars.size < 40) { tvBacktest.text = "数据不足，无法分析"; return@launch }
@@ -285,7 +287,7 @@ class StrategyFragment : Fragment() {
                     d.dismiss()
                     b.isEnabled = false
                     tvBacktest.text = "AI 寻优中（网格搜索）..."
-                    AppScope.launch {
+                    viewLifecycleOwner.lifecycleScope.launch {
                         try {
                             val fee = (etFee.text.toString().toDoubleOrNull() ?: 0.0)
                                 .coerceIn(0.0, 0.1)
@@ -294,9 +296,12 @@ class StrategyFragment : Fragment() {
                             val (_, bars) = fetchBars(raw) ?: return@launch
                             if (bars.size < 40) { tvBacktest.text = "数据不足，无法寻优"; return@launch }
                             val modeKey = arrayOf("conservative", "balanced", "aggressive")[which]
-                            val best = optimizeParams(sid, bars, modeKey, feeRate = fee,
-                                slippagePct = slip) { done, total ->
-                                activity?.runOnUiThread { tvBacktest.text = "AI 寻优中... $done/$total" }
+                            // 网格寻优是纯 CPU 计算，放到 Default 线程，避免阻塞主线程导致 ANR
+                            val best = withContext(Dispatchers.Default) {
+                                optimizeParams(sid, bars, modeKey, feeRate = fee,
+                                    slippagePct = slip) { done, total ->
+                                    activity?.runOnUiThread { tvBacktest.text = "AI 寻优中... $done/$total" }
+                                }
                             }
                             if (best == null) {
                                 tvBacktest.text = "该策略在此区间没有找到合格参数（交易次数偏少）"
@@ -343,7 +348,7 @@ class StrategyFragment : Fragment() {
             }
             b.isEnabled = false
             tvBacktest.text = "AI 深度解读中（${st.aiModel}）..."
-            AppScope.launch {
+            viewLifecycleOwner.lifecycleScope.launch {
                 try {
                     val fee = (etFee.text.toString().toDoubleOrNull() ?: 0.0).coerceIn(0.0, 0.1)
                     val slip = (etSlip.text.toString().toDoubleOrNull() ?: 0.0).coerceIn(0.0, 0.1)
@@ -391,7 +396,7 @@ class StrategyFragment : Fragment() {
             val inputs = raw.split(',', '，', ';', '；', ' ', '\t', '\n')
                 .map { it.trim() }.filter { it.isNotEmpty() }
             if (inputs.isEmpty()) return@setOnClickListener
-            AppScope.launch {
+            viewLifecycleOwner.lifecycleScope.launch {
                 val added = mutableListOf<Pair<String, String>>() // code to name
                 for (input in inputs) {
                     val code = try { withContext(Dispatchers.IO) { MarketService.resolveCode(input) } }
@@ -421,12 +426,20 @@ class StrategyFragment : Fragment() {
 
         TradingEngine.onTicker = { _, _, _, runningCount ->
             activity?.runOnUiThread {
+                // 引擎回调来自后台线程，投递到主线程时页面可能已销毁，需再校验视图可用
+                if (!isAdded || view == null) return@runOnUiThread
                 refreshStatus(tvStatus)
                 refreshActive(listActive)
                 refreshLog()
             }
         }
         return root
+    }
+
+    override fun onDestroyView() {
+        // 页面销毁后引擎回调不应再更新已销毁的视图，避免 requireContext() 抛异常
+        TradingEngine.onTicker = null
+        super.onDestroyView()
     }
 
     private fun refreshLog() {

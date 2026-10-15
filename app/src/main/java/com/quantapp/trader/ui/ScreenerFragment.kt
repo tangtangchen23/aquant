@@ -15,6 +15,7 @@ import android.widget.Spinner
 import android.widget.TextView
 import android.widget.Toast
 import androidx.fragment.app.Fragment
+import androidx.lifecycle.lifecycleScope
 import com.quantapp.trader.R
 import com.quantapp.trader.data.MarketService
 import com.quantapp.trader.data.WatchStore
@@ -97,7 +98,7 @@ class ScreenerFragment : Fragment() {
         tvProgress.text = "读取股票池中..."
         tvStats.text = ""
         list.adapter = ArrayAdapter(requireContext(), android.R.layout.simple_list_item_1, emptyList<String>())
-        scanJob = AppScope.launch {
+        scanJob = viewLifecycleOwner.lifecycleScope.launch {
             try {
                 val pool = com.quantapp.trader.data.MarketService.fetchAStockList(fs, limit)
                 if (pool.isEmpty()) {

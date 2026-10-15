@@ -293,7 +293,7 @@ class AppStore(context: Context) {
         return out
     }
 
-    private var strategies = loadActive()
+    @Volatile private var strategies = loadActive()
 
     // =========================== 数据备份 / 恢复 ===========================
 
@@ -350,9 +350,14 @@ class AppStore(context: Context) {
     }
 
     // ---------- 引擎运行/信号日志 ----------
-    private var engineLogs = loadLogs()
+    @Volatile private var engineLogs = loadLogs()
 
-    /** 追加一条引擎日志（保留最近 300 条）。 */
+    /**
+     * 追加一条引擎日志（保留最近 300 条）。
+     * 交易引擎(Default线程)与 UI(主线程)会并发写入/读取，必须加锁，
+     * 否则遍历时被另一线程修改会抛 ConcurrentModificationException 导致闪退。
+     */
+    @Synchronized
     fun addLog(msg: String) {
         engineLogs.add(formatLogTime() + "  " + msg)
         if (engineLogs.size > 300) engineLogs.removeAt(0)
@@ -361,8 +366,10 @@ class AppStore(context: Context) {
         prefs.edit().putString("engine_logs", arr.toString()).apply()
     }
 
+    @Synchronized
     fun engineLogText(): String = engineLogs.joinToString("\n")
 
+    @Synchronized
     fun clearLogs() {
         engineLogs.clear()
         prefs.edit().putString("engine_logs", "[]").apply()
@@ -382,7 +389,7 @@ class AppStore(context: Context) {
         return f.format(java.util.Date())
     }
 
-    private var alerts = loadAlerts()
+    @Volatile private var alerts = loadAlerts()
 
     fun alerts(): List<PriceAlert> = alerts
 
@@ -416,7 +423,7 @@ class AppStore(context: Context) {
     }
 
     // ---------- 挂单 ----------
-    private var pendingOrders = loadPendingOrders()
+    @Volatile private var pendingOrders = loadPendingOrders()
 
     fun pendingOrders(): List<PendingOrder> = pendingOrders
 
@@ -478,8 +485,13 @@ class AppStore(context: Context) {
     fun activeStrategies(): List<ActiveStrategy> = strategies
 
     fun addStrategy(s: ActiveStrategy) {
-        if (strategies.none { it.symbol == s.symbol }) strategies.add(s)
-        else strategies = strategies.map { if (it.symbol == s.symbol) s else it }.toMutableList()
+        // 整体替换为一份新列表（而非在原列表上 in-place add），
+        // 避免交易引擎(Default线程)正在遍历时被主线程修改导致 ConcurrentModificationException
+        strategies = if (strategies.none { it.symbol == s.symbol }) {
+            (strategies + s).toMutableList()
+        } else {
+            strategies.map { if (it.symbol == s.symbol) s else it }.toMutableList()
+        }
         prefs.edit().putString("active_strategies", saveActive()).apply()
     }
 

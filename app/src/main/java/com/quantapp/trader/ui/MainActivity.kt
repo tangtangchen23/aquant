@@ -8,12 +8,9 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import androidx.fragment.app.Fragment
-import androidx.lifecycle.lifecycleScope
 import com.google.android.material.bottomnavigation.BottomNavigationView
 import com.quantapp.trader.R
 import com.quantapp.trader.trading.EngineService
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.launch
 
 /**
  * 统一普通 AlertDialog 动作按钮文字色，修复浅色主题下按钮呈浅灰看不清的问题。
@@ -52,7 +49,6 @@ class MainActivity : AppCompatActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        AppScope.attach(lifecycleScope)
         // 应用主题模式（跟随系统/浅色/深色/红色），需在 setContentView 前调用
         when (com.quantapp.trader.trading.App.appStore.themeMode) {
             3 -> {
@@ -116,11 +112,4 @@ class MainActivity : AppCompatActivity() {
                 arrayOf(android.Manifest.permission.POST_NOTIFICATIONS), 1001)
         }
     }
-}
-
-/** Activity 生命周期绑定的协程作用域，供各 Fragment 使用。 */
-object AppScope {
-    @Volatile private var s: CoroutineScope? = null
-    fun attach(scope: CoroutineScope) { s = scope }
-    fun launch(block: suspend CoroutineScope.() -> Unit) = s?.launch { block() }
 }

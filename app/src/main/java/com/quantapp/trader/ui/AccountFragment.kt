@@ -13,6 +13,7 @@ import android.widget.Toast
 import androidx.appcompat.app.AlertDialog
 import androidx.core.content.ContextCompat
 import androidx.fragment.app.Fragment
+import androidx.lifecycle.lifecycleScope
 import com.quantapp.trader.R
 import com.quantapp.trader.data.MarketService
 import com.quantapp.trader.data.Quote
@@ -111,6 +112,8 @@ class AccountFragment : Fragment() {
         // 发生交易时：重新拉取行情，让市值/权益/浮动盈亏随最新价刷新
         TradingEngine.onTrade = { _ ->
             activity?.runOnUiThread {
+                // 引擎回调来自后台线程，经主线程投递时页面可能已销毁，需再校验视图可用
+                if (!isAdded || view == null) return@runOnUiThread
                 reloadPositions()
                 renderPending()
                 refreshQuotes()
@@ -139,6 +142,12 @@ class AccountFragment : Fragment() {
         super.onPause()
     }
 
+    override fun onDestroyView() {
+        // 页面销毁后引擎交易回调不应再更新已销毁的视图，避免 requireContext() 抛异常
+        TradingEngine.onTrade = null
+        super.onDestroyView()
+    }
+
     /** 页面可见时按当前 scope 启动对应轮询。 */
     private fun startRefreshLoop() {
         if (currentScope == "live") startLiveRefreshLoop() else startPaperRefreshLoop()
@@ -147,7 +156,7 @@ class AccountFragment : Fragment() {
     private fun startPaperRefreshLoop() {
         refreshJob?.cancel()
         liveRefreshJob?.cancel()
-        refreshJob = com.quantapp.trader.ui.AppScope.launch {
+        refreshJob = viewLifecycleOwner.lifecycleScope.launch {
             while (isActive) {
                 refreshQuotes()
                 delay(App.appStore.pollSeconds.coerceIn(5, 600) * 1000L)
@@ -158,7 +167,7 @@ class AccountFragment : Fragment() {
     private fun startLiveRefreshLoop() {
         refreshJob?.cancel()
         liveRefreshJob?.cancel()
-        liveRefreshJob = com.quantapp.trader.ui.AppScope.launch {
+        liveRefreshJob = viewLifecycleOwner.lifecycleScope.launch {
             while (isActive) {
                 refreshLive()
                 delay(App.appStore.pollSeconds.coerceIn(5, 600) * 1000L)
@@ -377,7 +386,7 @@ class AccountFragment : Fragment() {
             updateTitle()
             updateSectionVisibility()
             startRefreshLoop()
-            com.quantapp.trader.ui.AppScope.launch { refreshLive() }
+            viewLifecycleOwner.lifecycleScope.launch { refreshLive() }
         } else {
             updateTitle()
             updateSectionVisibility()
@@ -397,14 +406,15 @@ class AccountFragment : Fragment() {
             refreshSummary()
             return
         }
-        AppScope.launch {
+        viewLifecycleOwner.lifecycleScope.launch {
             pending.forEach { pos ->
                 try {
                     quotes[pos.symbol] = withContext(Dispatchers.IO) { MarketService.fetchQuote(pos.symbol) }
                 } catch (e: Exception) {
                     quotes[pos.symbol] = null
                 }
-                activity?.runOnUiThread {
+                // 已在 view 生命周期作用域（主线程）中，无需再切回主线程，仅需校验视图仍可用
+                if (isAdded && view != null) {
                     refreshPositionsRows()
                     refreshSummary()
                 }
@@ -663,7 +673,7 @@ class AccountFragment : Fragment() {
     }
 
     private fun doCancel(orderId: String, orderLabel: String) {
-        com.quantapp.trader.ui.AppScope.launch {
+        viewLifecycleOwner.lifecycleScope.launch {
             val (ok, msg) = withContext(Dispatchers.IO) { LiveGateway.cancel(orderId) }
             withContext(Dispatchers.Main) {
                 if (ok) {

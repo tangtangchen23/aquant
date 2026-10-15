@@ -29,21 +29,21 @@ import com.quantapp.trader.trading.PriceAlert
 import com.quantapp.trader.update.DEFAULT_UPDATE_MANIFEST_URL
 import com.quantapp.trader.update.DownloadHelper
 import com.quantapp.trader.update.UpdateChecker
-import kotlinx.coroutines.CoroutineScope
+import androidx.lifecycle.lifecycleScope
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
 class SettingsFragment : Fragment() {
 
-    private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Main)
+    // 协程统一挂在 Fragment 生命周期作用域（lifecycleScope）：随 Fragment 销毁自动取消，
+    // 避免页面/弹窗销毁后回调仍更新已失效的视图或 requireContext() 抛异常。
 
     /** 导出备份：创建文件（SAF）。 */
     private val exportBackupLauncher =
         registerForActivityResult(ActivityResultContracts.CreateDocument("application/json")) { uri ->
             if (uri == null) return@registerForActivityResult
-            scope.launch(Dispatchers.IO) {
+            lifecycleScope.launch(Dispatchers.IO) {
                 val ok = try {
                     val json = App.appStore.exportJson()
                     requireContext().contentResolver.openOutputStream(uri)?.use { it.write(json.toByteArray()) } != null
@@ -59,7 +59,7 @@ class SettingsFragment : Fragment() {
     private val importBackupLauncher =
         registerForActivityResult(ActivityResultContracts.OpenDocument()) { uri ->
             if (uri == null) return@registerForActivityResult
-            scope.launch(Dispatchers.IO) {
+            lifecycleScope.launch(Dispatchers.IO) {
                 val text = try {
                     requireContext().contentResolver.openInputStream(uri)?.bufferedReader()?.use { it.readText() }
                 } catch (e: Exception) { null }
@@ -322,7 +322,7 @@ class SettingsFragment : Fragment() {
             btnTest.text = "测试中..."
             tvStatus.text = "正在请求 $model ..."
             tvStatus.setTextColor(android.graphics.Color.parseColor("#CCB400"))
-            scope.launch(Dispatchers.IO) {
+            lifecycleScope.launch(Dispatchers.IO) {
                 val ok = runCatching { LlmClient.chat(pid, key, model, "你是A股量化助手", "请回复：连接正常，模型可用。") }
                 withContext(Dispatchers.Main) {
                     ok.onSuccess { rep ->
@@ -366,7 +366,7 @@ class SettingsFragment : Fragment() {
 
         val doProbe = {
             tvStatus.text = "正在探测…"
-            scope.launch(Dispatchers.IO) {
+            lifecycleScope.launch(Dispatchers.IO) {
                 App.appStore.liveGateway = etGateway.text.toString().trim()
                 App.appStore.liveGatewaySecret = etSecret.text.toString().trim()
                 val (ok, msg) = com.quantapp.trader.trading.LiveGateway.ping()
@@ -448,7 +448,7 @@ class SettingsFragment : Fragment() {
             }
             btnCheck.isEnabled = false
             btnCheck.text = "检查中..."
-            scope.launch {
+            lifecycleScope.launch {
                 try {
                     val url = st.updateUrl
                     val checkUrl = if (url.contains("/releases/")) DEFAULT_UPDATE_MANIFEST_URL else url
@@ -640,7 +640,7 @@ class SettingsFragment : Fragment() {
         if (gw.isEmpty()) { tv.text = "网关：未配置，实盘模式不会发送信号"; return }
         tv.text = "网关检测中..."
         tv.setTextColor(android.graphics.Color.parseColor("#CCB400"))
-        scope.launch(Dispatchers.IO) {
+        lifecycleScope.launch(Dispatchers.IO) {
             val ok = com.quantapp.trader.trading.TradingEngine.pingGateway()
             kotlinx.coroutines.withContext(Dispatchers.Main) {
                 if (ok) {

@@ -366,7 +366,7 @@ class ChartFragment : Fragment() {
     private fun addToWatch(btn: Button) {
         if (symbol.isBlank()) return
         btn.isEnabled = false
-        AppScope.launch {
+        viewLifecycleOwner.lifecycleScope.launch {
             val name = try {
                 withContext(Dispatchers.IO) { MarketService.fetchName(symbol) }
             } catch (e: Exception) { "" }
@@ -381,7 +381,7 @@ class ChartFragment : Fragment() {
             symbol.isBlank() -> "未指定股票"
             else -> "加载${p.label}中..."
         }
-        AppScope.launch {
+        viewLifecycleOwner.lifecycleScope.launch {
             try {
                 when (p) {
                     Period.MINUTE -> {
@@ -437,7 +437,7 @@ class ChartFragment : Fragment() {
     }
 
     private fun loadTrend(silent: Boolean) {
-        AppScope.launch {
+        viewLifecycleOwner.lifecycleScope.launch {
             try {
                 val t = withContext(Dispatchers.IO) { MarketService.fetchTrend(symbol) }
                 if (t.isNotEmpty()) { trend = t; renderTrend() }
@@ -452,7 +452,7 @@ class ChartFragment : Fragment() {
     private fun manualTrade(isBuy: Boolean) {
         if (symbol.isBlank()) { toast("未指定股票"); return }
         val code = symbol
-        AppScope.launch {
+        viewLifecycleOwner.lifecycleScope.launch {
             val quote = try {
                 withContext(Dispatchers.IO) { MarketService.fetchQuote(code) }
             } catch (e: Exception) { null }
@@ -613,7 +613,7 @@ class ChartFragment : Fragment() {
                                 )
                                 withContext(Dispatchers.Main) {
                                     if (result.ok) {
-                                        toast("实盘${side}成功${result.orderId?.let { "（委托号：$it" } ?: ""}")
+                                        toast("实盘${side}成功${result.orderId?.let { "（委托号：$it）" } ?: ""}")
                                     } else {
                                         toast("实盘${side}失败：${result.message}")
                                     }

@@ -2,6 +2,8 @@ package com.quantapp.trader.trading
 
 import org.json.JSONArray
 import org.json.JSONObject
+import java.util.concurrent.ConcurrentHashMap
+import java.util.concurrent.CopyOnWriteArrayList
 
 /** 单只股票持仓。 */
 data class Position(
@@ -49,21 +51,27 @@ data class Trade(
 class PaperAccount(initialCapital: Double = 100000.0) {
 
     var cash: Double = initialCapital
-    val positions = mutableMapOf<String, Position>()
-    val trades = mutableListOf<Trade>()
+    // 线程安全容器：账户会被交易引擎(Default)、挂单监听(IO) 与 UI(主线程) 并发读写，
+    // 用并发容器避免遍历期间其它线程修改导致的 ConcurrentModificationException，
+    // 并对买/卖等复合操作加锁避免现金丢失更新。
+    val positions = ConcurrentHashMap<String, Position>()
+    val trades = CopyOnWriteArrayList<Trade>()
 
     val holdings: List<Position> get() = positions.values.toList()
 
+    @Synchronized
     fun equity(realtimePrices: Map<String, Double>): Double {
         var mv = 0.0
         for (p in positions.values) {
-            val price = realtimePrices[p.symbol]
-            if (price != null) mv += p.marketValue(price)
+            // 缺少实时价时回退成本价：避免单只行情拉取失败把持仓从权益中剔除而误判回撤
+            val price = realtimePrices[p.symbol] ?: p.costPrice
+            mv += p.marketValue(price)
         }
         return cash + mv
     }
 
     /** 买入：totalTarget 为要投入的总资金（整取100股）。返回是否成交。 */
+    @Synchronized
     fun buy(symbol: String, name: String, price: Double, totalTarget: Double, intraday: Boolean = false): Trade? {
         if (price <= 0) return null
         val qty = (totalTarget / (price * 100)).toInt() * 100
@@ -79,12 +87,14 @@ class PaperAccount(initialCapital: Double = 100000.0) {
             val today = todayStr()
             // 当日买入计入 intradayQty（T+1 当日不可卖）
             val iq = if (cur.intradayDay == today) cur.intradayQty + qty else qty
+            // 保留做T网格锚点 tLastBuy/tLastSell，避免加仓/低吸时被清零导致网格失效
             positions[symbol] = Position(symbol, name, newQty, newCost,
                 if (price > cur.roundTripHigh) price else cur.roundTripHigh,
-                cur.nextAddPct, cur.addCount, iq, today)
+                cur.nextAddPct, cur.addCount, iq, today, cur.tLastBuy, cur.tLastSell)
         } else {
+            // 新开仓：当日买入全部计入 intradayQty，当日不可卖出（A股 T+1）
             positions[symbol] = Position(symbol, name, qty, price,
-                intradayDay = todayStr())
+                intradayQty = qty, intradayDay = todayStr())
         }
         val t = Trade(System.currentTimeMillis(), symbol, name, "买入", price, qty, amount)
         trades.add(t)
@@ -92,21 +102,21 @@ class PaperAccount(initialCapital: Double = 100000.0) {
     }
 
     /** 卖出持仓。默认卖出全部；传入 [qty] 可部分平仓（不足100股的零股可一次卖出）。 */
+    @Synchronized
     fun sell(symbol: String, name: String, price: Double, qty: Int = Int.MAX_VALUE): Trade? {
         val pos = positions[symbol] ?: return null
         if (price <= 0 || pos.qty <= 0) return null
-        val sellQty = qty.coerceIn(1, pos.qty)
+        // A股 T+1：当日买入（intradayQty）不可卖出，可卖上限为隔日底仓 sellableQty()
+        val maxSellable = pos.sellableQty()
+        if (maxSellable <= 0) return null
+        val sellQty = qty.coerceIn(1, maxSellable)
         val amount = sellQty * price
         cash += amount
         if (sellQty >= pos.qty) {
             positions.remove(symbol)
         } else {
-            // 部分平仓：成本价不变，仅扣减数量；若卖出的是当日仓位，同步扣减 intradayQty
-            val today = todayStr()
-            val iq = if (pos.intradayDay == today && pos.intradayQty > 0) {
-                (pos.intradayQty - sellQty).coerceAtLeast(0)
-            } else pos.intradayQty
-            positions[symbol] = pos.copy(qty = pos.qty - sellQty, intradayQty = iq)
+            // 部分平仓：成本价不变，仅扣减数量（卖出的是隔日底仓，当日仓位 intradayQty 不受影响）
+            positions[symbol] = pos.copy(qty = pos.qty - sellQty)
         }
         val t = Trade(System.currentTimeMillis(), symbol, name, "卖出", price, sellQty, amount)
         trades.add(t)
@@ -114,6 +124,7 @@ class PaperAccount(initialCapital: Double = 100000.0) {
     }
 
     /** 跨交易日时，把昨日当日买入转化为隔日可卖底仓：最新一次下单日期非今日则清零 intraday。 */
+    @Synchronized
     fun rollIntraday() {
         val today = todayStr()
         for ((k, p) in positions) {
@@ -128,6 +139,7 @@ class PaperAccount(initialCapital: Double = 100000.0) {
         return java.text.SimpleDateFormat("yyyy-MM-dd", java.util.Locale.getDefault()).format(java.util.Date())
     }
 
+    @Synchronized
     fun reset(initialCapital: Double) {
         cash = initialCapital
         positions.clear()
@@ -138,6 +150,7 @@ class PaperAccount(initialCapital: Double = 100000.0) {
         // 用于加载持久化状态后校正：现金 = 初始资金 - 买入总额 + 卖出总额
     }
 
+    @Synchronized
     fun toJson(): String {
         val pos = JSONArray()
         for (p in positions.values) {
@@ -156,6 +169,7 @@ class PaperAccount(initialCapital: Double = 100000.0) {
         return JSONObject().put("cash", cash).put("positions", pos).put("trades", tr).toString()
     }
 
+    @Synchronized
     fun fromJson(s: String) {
         try {
             val o = JSONObject(s)
