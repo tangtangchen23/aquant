@@ -1,8 +1,8 @@
 {
   "latest": {
-    "version": "2.31.2",
-    "versionCode": 100,
+    "version": "2.32.0",
+    "versionCode": 101,
     "apkUrl": "https://github.com/tangtangchen23/aquant/releases/latest/download/aquant-release.apk",
-    "changelog": "修复一键清仓/撤单确认弹窗右下角按钮颜色看不清的bug，自动适配浅色/深色/红色主题。"
+    "changelog": "自选股三件套：①修复删除自选偶发闪退（WatchAdapter协程cancel机制防并发越界）；②K线页右上角「已加自选」按钮可点删除；③行情页长按菜单新增「全部清空自选」二次确认；WatchStore补remove/batchRemove持久化接口。"
   }
 }
