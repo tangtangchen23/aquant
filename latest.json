@@ -1,8 +1,8 @@
 {
   "latest": {
-    "version": "2.33.0",
-    "versionCode": 102,
+    "version": "2.33.1",
+    "versionCode": 103,
     "apkUrl": "https://github.com/tangtangchen23/aquant/releases/latest/download/aquant-release.apk",
-    "changelog": "v2.33.0：多选批量删除自选 + 全应用 AlertDialog 按钮颜色根治（统一用 appcompat AlertDialog 继承主题自动适配浅色黑字/深色白字/红色主题）。"
+    "changelog": "v2.33.1：\n- 修复：点击「批量多选删除」闪退（按钮监听在 show() 前注册导致 getButton() 返回 null）\n- 修复：全部确认弹窗按钮文字颜色——浅色主题黑字、深色主题白字、红色主题保持不变\n- 覆盖：自选批量删除 / 移出自选 / 一键清仓 / 实盘撤单 / 取消策略 / AI 配参 / 重置模拟盘 / 删除到价提醒 / 查询历史"
   }
 }
