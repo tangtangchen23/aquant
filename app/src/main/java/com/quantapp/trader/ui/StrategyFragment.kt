@@ -279,7 +279,7 @@ class StrategyFragment : Fragment() {
             }
             val sid = selectedStrategyId()
             val modes = arrayOf("保守", "均衡", "激进")
-            AlertDialog.Builder(requireContext())
+            val modeDlg = AlertDialog.Builder(requireContext())
                 .setTitle("AI 一键配参 · 选择风险偏好")
                 .setSingleChoiceItems(modes, 1) { d, which ->
                     d.dismiss()
@@ -314,7 +314,9 @@ class StrategyFragment : Fragment() {
                     }
                 }
                 .setNegativeButton("取消", null)
-                .show()
+                .create()
+            modeDlg.setOnShowListener { styleDialogActionButtons(modeDlg, requireContext()) }
+            modeDlg.show()
         }
 
         // ---------- AI 深度解读：调大模型解读当前回测 ----------
@@ -326,14 +328,17 @@ class StrategyFragment : Fragment() {
             }
             val st = App.appStore
             if (!st.aiEnabled) {
-                AlertDialog.Builder(requireContext())
+                val ctx = requireContext()
+                val dlg = AlertDialog.Builder(ctx)
                     .setTitle("未配置 AI 大模型")
                     .setMessage("请先在「设置 → AI 大模型」填入 API Key 并保存，再回来使用深度解读。")
                     .setPositiveButton("去设置") { _, _ ->
                         (requireActivity() as? MainActivity)?.switchTab(R.id.nav_settings)
                     }
                     .setNegativeButton("取消", null)
-                    .show()
+                    .create()
+                dlg.setOnShowListener { styleDialogActionButtons(dlg, ctx) }
+                dlg.show()
                 return@setOnClickListener
             }
             b.isEnabled = false
@@ -452,22 +457,23 @@ class StrategyFragment : Fragment() {
             val text = "${s.symbol}  ${s.name}  ${strategyLabel(s.strategyId)}  [${s.lastAction.ifEmpty { "未触发" }}] ${s.lastReason}"
             container.addView(activeRow(requireContext(), s.symbol, text) { code ->
                 // 二次确认，防止误触取消正在运行的策略
-                AlertDialog.Builder(requireContext())
+                val c = requireContext()
+                val dlg = AlertDialog.Builder(c)
                     .setTitle("取消策略")
                     .setMessage("确定取消策略“${s.symbol} ${s.name.ifEmpty { "" }}”吗？\n取消后该标的不再自动交易。")
                     .setPositiveButton("确定取消", null)
                     .setNegativeButton("取消", null)
-                    .create().apply {
-                        setOnShowListener {
-                            // 让 Material3 自动跟随主题色，只保留自定义 click 校验
-                            getButton(AlertDialog.BUTTON_POSITIVE).setOnClickListener {
-                                App.appStore.removeStrategy(code)
-                                refreshActive(container)
-                                Toast.makeText(requireContext(), "已取消 $code", Toast.LENGTH_SHORT).show()
-                                dismiss()
-                            }
-                        }
-                    }.show()
+                    .create()
+                dlg.setOnShowListener {
+                    styleDialogActionButtons(dlg, c)
+                    dlg.getButton(AlertDialog.BUTTON_POSITIVE).setOnClickListener {
+                        App.appStore.removeStrategy(code)
+                        refreshActive(container)
+                        Toast.makeText(requireContext(), "已取消 $code", Toast.LENGTH_SHORT).show()
+                        dlg.dismiss()
+                    }
+                }
+                dlg.show()
             })
         }
     }

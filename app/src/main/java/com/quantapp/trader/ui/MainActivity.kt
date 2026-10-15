@@ -15,6 +15,20 @@ import com.quantapp.trader.trading.EngineService
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 
+/**
+ * 统一普通 AlertDialog 动作按钮文字色，修复浅色主题下按钮呈浅灰看不清的问题。
+ * 浅色主题 = 黑字、深色主题 = 白字（text_primary 由资源夜间限定符自动解析）；
+ * 红色主题保持系统默认（品牌红）不做覆盖。必须在 dialog.show() 之后调用。
+ */
+fun styleDialogActionButtons(dialog: androidx.appcompat.app.AlertDialog, ctx: Context) {
+    if (com.quantapp.trader.trading.App.appStore.themeMode == 3) return
+    val positive = ContextCompat.getColor(ctx, R.color.text_primary)
+    val secondary = ContextCompat.getColor(ctx, R.color.text_secondary)
+    dialog.getButton(androidx.appcompat.app.AlertDialog.BUTTON_POSITIVE)?.setTextColor(positive)
+    dialog.getButton(androidx.appcompat.app.AlertDialog.BUTTON_NEGATIVE)?.setTextColor(secondary)
+    dialog.getButton(androidx.appcompat.app.AlertDialog.BUTTON_NEUTRAL)?.setTextColor(secondary)
+}
+
 /** 解析当前主题属性所指向的具体颜色（支持 ?attr 引用 color 资源）。 */
 fun themeAttrColor(ctx: Context, attrRes: Int): Int {
     val tv = android.util.TypedValue()

@@ -88,7 +88,8 @@ class AccountFragment : Fragment() {
                 Toast.makeText(requireContext(), "当前无持仓", Toast.LENGTH_SHORT).show()
                 return@setOnClickListener
             }
-            AlertDialog.Builder(requireContext())
+            val ctx = requireContext()
+            val dlg = AlertDialog.Builder(ctx)
                 .setTitle("一键清仓")
                 .setMessage("确定以当前行情价卖出全部 ${pos.size} 只持仓吗？")
                 .setPositiveButton("全部卖出") { _, _ ->
@@ -96,7 +97,9 @@ class AccountFragment : Fragment() {
                     refreshAll()
                 }
                 .setNegativeButton("取消", null)
-                .show()
+                .create()
+            dlg.setOnShowListener { styleDialogActionButtons(dlg, ctx) }
+            dlg.show()
         }
 
         // 成交记录筛选
@@ -633,12 +636,15 @@ class AccountFragment : Fragment() {
                 themeAttrColor(context, R.attr.onBrand).also { setTextColor(it) }
                 if (isClickable && id.isNotBlank()) {
                     setOnClickListener {
-                        AlertDialog.Builder(requireContext())
+                        val c = requireContext()
+                        val dlg = AlertDialog.Builder(c)
                             .setTitle("确认撤单")
                             .setMessage("撤销委托 $name ${side} @${fmt(price)}，委托号：$id？")
                             .setPositiveButton("撤销") { _, _ -> doCancel(id, name) }
                             .setNegativeButton("取消", null)
-                            .show()
+                            .create()
+                        dlg.setOnShowListener { styleDialogActionButtons(dlg, c) }
+                        dlg.show()
                     }
                 }
             }

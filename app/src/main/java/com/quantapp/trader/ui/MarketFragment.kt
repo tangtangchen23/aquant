@@ -267,10 +267,15 @@ class MarketFragment : Fragment() {
             checkboxes.add(cb to code)
         }
 
-        var dialog: AlertDialog? = null
+        val dlg = AlertDialog.Builder(ctx)
+            .setTitle("批量删除自选（勾选后确定）")
+            .setView(v)
+            .setPositiveButton("删除已选", null)
+            .setNegativeButton("取消", null)
+            .create()
         val updateCount = {
             val count = checkboxes.count { it.first.isChecked }
-            dialog?.getButton(AlertDialog.BUTTON_POSITIVE)?.text =
+            dlg.getButton(AlertDialog.BUTTON_POSITIVE)?.text =
                 if (count > 0) "删除已选 $count 只" else "删除已选"
         }
         checkboxes.forEach { (cb, _) -> cb.setOnCheckedChangeListener { _, _ -> updateCount() } }
@@ -279,29 +284,26 @@ class MarketFragment : Fragment() {
             checkboxes.forEach { it.first.isChecked = !it.first.isChecked }
             updateCount()
         }
-
-        dialog = AlertDialog.Builder(ctx)
-            .setTitle("批量删除自选（勾选后确定）")
-            .setView(v)
-            .setPositiveButton("删除已选", null)
-            .setNegativeButton("取消", null)
-            .create()
-        dialog!!.setOnShowListener { updateCount() }
-        dialog!!.getButton(AlertDialog.BUTTON_POSITIVE).setOnClickListener {
-            val removedCodes = checkboxes.filter { it.first.isChecked }.map { it.second }
-            if (removedCodes.isEmpty()) { Toast.makeText(ctx, "请先勾选要删除的股票", Toast.LENGTH_SHORT).show(); return@setOnClickListener }
-            val adapter = requireWatchAdapter()
-            adapter.cancel()
-            val remaining = watchSymbols.toMutableList().apply { removeAll(removedCodes) }
-            watchSymbols.clear(); watchSymbols.addAll(remaining)
-            saveWatch()
-            com.quantapp.trader.data.WatchStore.batchRemove(removedCodes)
-            adapter.notifyDataSetChanged()
-            adapter.reset()
-            Toast.makeText(ctx, "已移除 ${removedCodes.size} 只自选股", Toast.LENGTH_SHORT).show()
-            dialog?.dismiss()
+        // 按钮监听必须在 show() 之后注册：show() 之前 getButton() 返回 null，会直接 NPE 闪退
+        dlg.setOnShowListener {
+            updateCount()
+            styleDialogActionButtons(dlg, ctx)
+            dlg.getButton(AlertDialog.BUTTON_POSITIVE).setOnClickListener {
+                val removedCodes = checkboxes.filter { it.first.isChecked }.map { it.second }
+                if (removedCodes.isEmpty()) { Toast.makeText(ctx, "请先勾选要删除的股票", Toast.LENGTH_SHORT).show(); return@setOnClickListener }
+                val adapter = requireWatchAdapter()
+                adapter.cancel()
+                val remaining = watchSymbols.toMutableList().apply { removeAll(removedCodes) }
+                watchSymbols.clear(); watchSymbols.addAll(remaining)
+                saveWatch()
+                com.quantapp.trader.data.WatchStore.batchRemove(removedCodes)
+                adapter.notifyDataSetChanged()
+                adapter.reset()
+                Toast.makeText(ctx, "已移除 ${removedCodes.size} 只自选股", Toast.LENGTH_SHORT).show()
+                dlg.dismiss()
+            }
         }
-        dialog!!.show()
+        dlg.show()
     }
 
     private fun requireWatchAdapter(): WatchAdapter {

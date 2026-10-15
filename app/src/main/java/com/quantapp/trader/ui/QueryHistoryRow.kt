@@ -104,12 +104,14 @@ object QueryHistoryRow {
     }
 
     private fun showAllDialog(ctx: Context, histories: List<String>, onClick: (String) -> Unit) {
-        AlertDialog.Builder(ctx)
+        val dlg = AlertDialog.Builder(ctx)
             .setTitle("查询历史")
             .setItems(histories.toTypedArray()) { _, index ->
                 if (index in histories.indices) onClick(histories[index])
             }
             .setNegativeButton("取消", null)
-            .show()
+            .create()
+        dlg.setOnShowListener { styleDialogActionButtons(dlg, ctx) }
+        dlg.show()
     }
 }

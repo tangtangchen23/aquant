@@ -140,7 +140,7 @@ class SettingsFragment : Fragment() {
             updateHint(id == R.id.rb_dialog_live, tvModeHint)
         }
         btnReset.setOnClickListener {
-            AlertDialog.Builder(ctx)
+            val dlg = AlertDialog.Builder(ctx)
                 .setTitle("重置模拟盘")
                 .setMessage("确定清空当前模拟盘的持仓与成交记录，并重新注入 ${st.initialCapital().toLong()} 元初始资金吗？\n此操作不可撤销。")
                 .setPositiveButton("确认重置") { _, _ ->
@@ -150,7 +150,9 @@ class SettingsFragment : Fragment() {
                     Toast.makeText(ctx, "模拟盘已重置", Toast.LENGTH_SHORT).show()
                 }
                 .setNegativeButton("取消", null)
-                .show()
+                .create()
+            dlg.setOnShowListener { styleDialogActionButtons(dlg, ctx) }
+            dlg.show()
         }
         openSaveDialog(v) {
             val cap = etCapital.text.toString().toDoubleOrNull() ?: 100000.0
@@ -242,13 +244,15 @@ class SettingsFragment : Fragment() {
         tvAlerts.setOnClickListener {
             val list = st.alerts()
             if (list.isEmpty()) return@setOnClickListener
-            AlertDialog.Builder(ctx)
+            val dlg = AlertDialog.Builder(ctx)
                 .setTitle("删除到价提醒")
                 .setItems(list.map { "${it.symbol} ${String.format("%.2f", it.target)} ${if (it.above) "上穿" else "跌破"}" }.toTypedArray()) { _, which ->
                     st.removeAlert(list[which]); refreshAlerts()
                 }
                 .setNeutralButton("取消", null)
-                .show()
+                .create()
+            dlg.setOnShowListener { styleDialogActionButtons(dlg, ctx) }
+            dlg.show()
         }
         tvAlerts.setOnLongClickListener {
             val list = st.alerts()

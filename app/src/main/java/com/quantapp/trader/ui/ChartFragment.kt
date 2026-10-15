@@ -345,7 +345,8 @@ class ChartFragment : Fragment() {
     private fun toggleWatch(btn: Button) {
         if (symbol.isBlank()) return
         if (WatchStore.contains(symbol)) {
-            AlertDialog.Builder(requireContext())
+            val ctx = requireContext()
+            val dlg = AlertDialog.Builder(ctx)
                 .setTitle("移出自选")
                 .setMessage("将 $symbol 从自选股中移除？")
                 .setPositiveButton("移出") { _, _ ->
@@ -354,7 +355,9 @@ class ChartFragment : Fragment() {
                     updateWatchButton(btn)
                 }
                 .setNegativeButton("取消", null)
-                .show()
+                .create()
+            dlg.setOnShowListener { styleDialogActionButtons(dlg, ctx) }
+            dlg.show()
         } else {
             addToWatch(btn)
         }
