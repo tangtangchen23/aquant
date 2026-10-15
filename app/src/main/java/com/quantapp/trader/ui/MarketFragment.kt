@@ -207,10 +207,10 @@ class MarketFragment : Fragment() {
         return root
     }
 
-    /** 长按自选股的菜单：置顶 / 删除。 */
+    /** 长按自选股的菜单：置顶 / 删除 / 全部清空。 */
     private fun showWatchActions(position: Int) {
         val code = watchSymbols[position]
-        val options = arrayOf("置顶", "删除")
+        val options = arrayOf("置顶", "删除", "全部清空自选")
         AlertDialog.Builder(requireContext())
             .setTitle(code)
             .setItems(options) { _, which ->
@@ -220,16 +220,46 @@ class MarketFragment : Fragment() {
                         watchSymbols.add(0, code)
                         saveWatch()
                         val adapter = requireWatchAdapter()
+                        adapter.cancel()
+                        adapter.reset()
                         adapter.refresh()
                     }
                     1 -> {
+                        // 先停掉旧协程，避免删除后 adapter 越界（闪退根因）
+                        val adapter = requireWatchAdapter()
+                        adapter.cancel()
                         watchSymbols.removeAt(position)
                         saveWatch()
-                        requireWatchAdapter().refresh()
+                        com.quantapp.trader.data.WatchStore.remove(code)
+                        adapter.notifyDataSetChanged()
+                        adapter.reset()
+                        adapter.refresh()
                         Toast.makeText(requireContext(), "已移除自选 $code", Toast.LENGTH_SHORT).show()
                     }
+                    2 -> showClearAllWatchDialog()
                 }
             }
+            .show()
+    }
+
+    private fun showClearAllWatchDialog() {
+        val size = watchSymbols.size
+        if (size == 0) { Toast.makeText(requireContext(), "自选股列表已空", Toast.LENGTH_SHORT).show(); return }
+        AlertDialog.Builder(requireContext())
+            .setTitle("全部清空自选")
+            .setMessage("确定删除全部 $size 只自选股吗？")
+            .setPositiveButton("全部删除") { _, _ ->
+                val adapter = requireWatchAdapter()
+                adapter.cancel()
+                val removedCodes = watchSymbols.toList()
+                watchSymbols.clear()
+                saveWatch()
+                com.quantapp.trader.data.WatchStore.batchRemove(removedCodes)
+                adapter.notifyDataSetChanged()
+                adapter.reset()
+                Toast.makeText(requireContext(), "已清空全部 $size 只自选股", Toast.LENGTH_SHORT).show()
+            }
+            .setNegativeButton("取消", null)
             .show()
     }
 

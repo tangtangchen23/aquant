@@ -156,7 +156,7 @@ class ChartFragment : Fragment() {
         // 未加入自选时显示“＋ 自选”按钮，点击后写入自选
         val btnAddWatch = root.findViewById<Button>(R.id.btn_add_watch)
         updateWatchButton(btnAddWatch)
-        btnAddWatch.setOnClickListener { addToWatch(btnAddWatch) }
+        btnAddWatch.setOnClickListener { toggleWatch(btnAddWatch) }
 
         // 周期切换
         periodButtons.forEach { (p, tv) ->
@@ -325,23 +325,41 @@ class ChartFragment : Fragment() {
         }
     }
 
-    /** 刷新“＋自选”按钮：已加入自选时置灰禁用，未加入时高亮可点击。 */
+    /** 刷新自选按钮：未加自选时显示“＋自选”（可点击加入），已加自选时显示“已加自选”（可点击删除）。 */
     private fun updateWatchButton(btn: Button) {
         val added = symbol.isNotBlank() && WatchStore.contains(symbol)
         val ctx = requireContext()
         btn.text = if (added) "已加自选" else "＋ 自选"
-        btn.isEnabled = !added
+        btn.isEnabled = symbol.isNotBlank()
         btn.backgroundTintList = android.content.res.ColorStateList.valueOf(
-            if (added) ContextCompat.getColor(ctx, R.color.text_disabled)
+            if (added) ContextCompat.getColor(ctx, R.color.card_bg)
             else themeAttrColor(ctx, R.attr.brand)
         )
         btn.setTextColor(
-            if (added) ContextCompat.getColor(ctx, R.color.text_secondary)
+            if (added) ContextCompat.getColor(ctx, R.color.text_primary)
             else themeAttrColor(ctx, R.attr.onBrand)
         )
     }
 
-    /** 加入自选：先取名称（行情接口失败则回退代码），再写入自选存储。 */
+    /** 自选按钮：未加则加入，已加则确认删除。 */
+    private fun toggleWatch(btn: Button) {
+        if (symbol.isBlank()) return
+        if (WatchStore.contains(symbol)) {
+            AlertDialog.Builder(requireContext())
+                .setTitle("移出自选")
+                .setMessage("将 $symbol 从自选股中移除？")
+                .setPositiveButton("移出") { _, _ ->
+                    val removed = WatchStore.remove(symbol)
+                    if (removed) toast("已从自选中移除 $symbol")
+                    updateWatchButton(btn)
+                }
+                .setNegativeButton("取消", null)
+                .show()
+        } else {
+            addToWatch(btn)
+        }
+    }
+
     private fun addToWatch(btn: Button) {
         if (symbol.isBlank()) return
         btn.isEnabled = false

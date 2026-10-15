@@ -24,6 +24,14 @@ class WatchAdapter(
     private val nameMap: MutableMap<String, String>
 ) : BaseAdapter() {
 
+    /** 置位后 refresh 协程应立即停止（列表被删除/清空时用），避免并发下标越界。 */
+    @Volatile private var cancelled = false
+
+    fun cancel() { cancelled = true }
+
+    /** 重置取消标记，用于列表变化后重新刷新。 */
+    fun reset() { cancelled = false }
+
     private val inflater = LayoutInflater.from(ctx)
     private val quotes = mutableMapOf<String, Quote?>()
 
@@ -63,9 +71,12 @@ class WatchAdapter(
 
     /** 异步刷新所有自选股：先用搜索接口补全名称，再拉实时行情。完成后回调 onDone（若有）。 */
     fun refresh(onDone: (() -> Unit)? = null) {
+        cancelled = false
         val pending = symbols.toList()
         AppScope.launch {
-            pending.forEach { code ->
+            for (code in pending) {
+                if (cancelled) return@launch
+                if (!symbols.contains(code)) continue // 已被移除的跳过
                 try {
                     if (nameMap[code].isNullOrEmpty()) {
                         val n = withContext(Dispatchers.IO) { MarketService.fetchName(code) }
@@ -77,9 +88,10 @@ class WatchAdapter(
                 } catch (e: Exception) {
                     quotes[code] = null
                 }
-                notifyDataSetChanged()
+                if (cancelled) return@launch
+                try { notifyDataSetChanged() } catch (_: Exception) { }
             }
-            onDone?.invoke()
+            if (!cancelled) onDone?.invoke()
         }
     }
 }

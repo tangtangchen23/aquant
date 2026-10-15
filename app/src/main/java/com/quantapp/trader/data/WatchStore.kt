@@ -39,4 +39,40 @@ object WatchStore {
         }
         return true
     }
+
+
+    /** 从自选移除指定代码，返回是否真的移除了。同时清理名称缓存。 */
+    fun remove(code: String): Boolean {
+        val list = symbols().toMutableList()
+        val removed = list.remove(code)
+        if (removed) {
+            val arr = JSONArray()
+            list.forEach { arr.put(it) }
+            prefs().edit().putString("list", arr.toString()).apply()
+            val obj = JSONObject(prefs().getString("names", "{}") ?: "{}")
+            if (obj.has(code)) {
+                obj.remove(code)
+                prefs().edit().putString("names", obj.toString()).apply()
+            }
+        }
+        return removed
+    }
+
+    /** 批量移除自选股，返回实际移除的数量。 */
+    fun batchRemove(codes: Collection<String>): Int {
+        val set = codes.toSet()
+        val list = symbols().toMutableList()
+        val kept = list.filter { it !in set }
+        val removedCount = list.size - kept.size
+        if (removedCount > 0) {
+            val arr = JSONArray()
+            kept.forEach { arr.put(it) }
+            prefs().edit().putString("list", arr.toString()).apply()
+            val obj = JSONObject(prefs().getString("names", "{}") ?: "{}")
+            for (c in set) if (obj.has(c)) obj.remove(c)
+            prefs().edit().putString("names", obj.toString()).apply()
+        }
+        return removedCount
+    }
+
 }
