@@ -1,8 +1,8 @@
 {
   "latest": {
-    "version": "2.32.0",
-    "versionCode": 101,
+    "version": "2.33.0",
+    "versionCode": 102,
     "apkUrl": "https://github.com/tangtangchen23/aquant/releases/latest/download/aquant-release.apk",
-    "changelog": "自选股三件套：①修复删除自选偶发闪退（WatchAdapter协程cancel机制防并发越界）；②K线页右上角「已加自选」按钮可点删除；③行情页长按菜单新增「全部清空自选」二次确认；WatchStore补remove/batchRemove持久化接口。"
+    "changelog": "v2.33.0：多选批量删除自选 + 全应用 AlertDialog 按钮颜色根治（统一用 appcompat AlertDialog 继承主题自动适配浅色黑字/深色白字/红色主题）。"
   }
 }
