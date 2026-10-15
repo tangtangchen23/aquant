@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- 批量删除自选股：顶部 Checkbox 列表 + 底部全选/反选/确定/取消按钮。 -->
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent" android:layout_height="wrap_content"
+    android:orientation="vertical" android:paddingTop="10dp" android:paddingBottom="6dp">
+
+    <ScrollView android:id="@+id/sv_batch_watch" android:layout_width="match_parent"
+        android:layout_height="0dp" android:layout_weight="1" android:maxHeight="300dp">
+        <LinearLayout android:id="@+id/ll_batch_watch_list"
+            android:layout_width="match_parent" android:layout_height="wrap_content"
+            android:orientation="vertical" android:paddingHorizontal="8dp" />
+    </ScrollView>
+
+    <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content"
+        android:layout_marginTop="8dp" android:orientation="horizontal">
+        <TextView android:id="@+id/btn_select_all" android:layout_width="0dp"
+            android:layout_height="36dp" android:layout_weight="1"
+            android:gravity="center" android:paddingHorizontal="12dp"
+            android:background="@drawable/bg_card" android:textSize="13sp"
+            android:textColor="@color/text_primary" android:text="全选" />
+        <TextView android:id="@+id/btn_select_invert" android:layout_width="0dp"
+            android:layout_height="36dp" android:layout_weight="1"
+            android:layout_marginStart="8dp" android:gravity="center"
+            android:paddingHorizontal="12dp" android:background="@drawable/bg_card"
+            android:textSize="13sp" android:textColor="@color/text_primary"
+            android:text="反选" />
+    </LinearLayout>
+
+</LinearLayout>

@@ -96,15 +96,7 @@ class AccountFragment : Fragment() {
                     refreshAll()
                 }
                 .setNegativeButton("取消", null)
-                .create().apply {
-                    setOnShowListener {
-                        getButton(AlertDialog.BUTTON_POSITIVE).setTextColor(
-                            ContextCompat.getColor(requireContext(), R.color.text_primary))
-                        getButton(AlertDialog.BUTTON_NEGATIVE)?.setTextColor(
-                            ContextCompat.getColor(requireContext(), R.color.text_secondary))
-                    }
-                    show()
-                }
+                .show()
         }
 
         // 成交记录筛选
@@ -646,15 +638,7 @@ class AccountFragment : Fragment() {
                             .setMessage("撤销委托 $name ${side} @${fmt(price)}，委托号：$id？")
                             .setPositiveButton("撤销") { _, _ -> doCancel(id, name) }
                             .setNegativeButton("取消", null)
-                            .create().apply {
-                                setOnShowListener {
-                                    getButton(AlertDialog.BUTTON_POSITIVE).setTextColor(
-                                        ContextCompat.getColor(requireContext(), R.color.text_primary))
-                                    getButton(AlertDialog.BUTTON_NEGATIVE)?.setTextColor(
-                                        ContextCompat.getColor(requireContext(), R.color.text_secondary))
-                                }
-                                show()
-                            }
+                            .show()
                     }
                 }
             }

@@ -140,7 +140,7 @@ class SettingsFragment : Fragment() {
             updateHint(id == R.id.rb_dialog_live, tvModeHint)
         }
         btnReset.setOnClickListener {
-            android.app.AlertDialog.Builder(ctx)
+            AlertDialog.Builder(ctx)
                 .setTitle("重置模拟盘")
                 .setMessage("确定清空当前模拟盘的持仓与成交记录，并重新注入 ${st.initialCapital().toLong()} 元初始资金吗？\n此操作不可撤销。")
                 .setPositiveButton("确认重置") { _, _ ->

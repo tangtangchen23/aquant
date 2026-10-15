@@ -210,7 +210,7 @@ class MarketFragment : Fragment() {
     /** 长按自选股的菜单：置顶 / 删除 / 全部清空。 */
     private fun showWatchActions(position: Int) {
         val code = watchSymbols[position]
-        val options = arrayOf("置顶", "删除", "全部清空自选")
+        val options = arrayOf("置顶", "删除", "批量多选删除")
         AlertDialog.Builder(requireContext())
             .setTitle(code)
             .setItems(options) { _, which ->
@@ -236,31 +236,72 @@ class MarketFragment : Fragment() {
                         adapter.refresh()
                         Toast.makeText(requireContext(), "已移除自选 $code", Toast.LENGTH_SHORT).show()
                     }
-                    2 -> showClearAllWatchDialog()
+                    2 -> showBatchDeleteWatchDialog()
                 }
             }
             .show()
     }
 
-    private fun showClearAllWatchDialog() {
-        val size = watchSymbols.size
-        if (size == 0) { Toast.makeText(requireContext(), "自选股列表已空", Toast.LENGTH_SHORT).show(); return }
-        AlertDialog.Builder(requireContext())
-            .setTitle("全部清空自选")
-            .setMessage("确定删除全部 $size 只自选股吗？")
-            .setPositiveButton("全部删除") { _, _ ->
-                val adapter = requireWatchAdapter()
-                adapter.cancel()
-                val removedCodes = watchSymbols.toList()
-                watchSymbols.clear()
-                saveWatch()
-                com.quantapp.trader.data.WatchStore.batchRemove(removedCodes)
-                adapter.notifyDataSetChanged()
-                adapter.reset()
-                Toast.makeText(requireContext(), "已清空全部 $size 只自选股", Toast.LENGTH_SHORT).show()
+    /** 批量多选删除自选股：弹窗里每只一个 Checkbox，支持全选/反选。 */
+    private fun showBatchDeleteWatchDialog() {
+        val ctx = requireContext()
+        val allCodes = watchSymbols.toList()
+        if (allCodes.isEmpty()) { Toast.makeText(ctx, "自选股列表已空", Toast.LENGTH_SHORT).show(); return }
+        val v = LayoutInflater.from(ctx).inflate(R.layout.dialog_batch_delete_watch, null)
+        val listContainer = v.findViewById<LinearLayout>(R.id.ll_batch_watch_list)
+        val btnSelectAll = v.findViewById<TextView>(R.id.btn_select_all)
+        val btnSelectInvert = v.findViewById<TextView>(R.id.btn_select_invert)
+        val d = ctx.resources.displayMetrics.density
+        val dp10 = (10 * d).toInt(); val dp6 = (6 * d).toInt()
+
+        val checkboxes = mutableListOf<Pair<android.widget.CheckBox, String>>()
+        for (code in allCodes) {
+            val name = watchNames[code].orEmpty()
+            val label = if (name.isNotEmpty()) "$name  $code" else code
+            val cb = android.widget.CheckBox(ctx).apply {
+                text = label
+                textSize = 14f
+                setPadding(dp10, dp6, dp10, dp6)
             }
+            listContainer.addView(cb)
+            checkboxes.add(cb to code)
+        }
+
+        var dialog: AlertDialog? = null
+        val updateCount = {
+            val count = checkboxes.count { it.first.isChecked }
+            dialog?.getButton(AlertDialog.BUTTON_POSITIVE)?.text =
+                if (count > 0) "删除已选 $count 只" else "删除已选"
+        }
+        checkboxes.forEach { (cb, _) -> cb.setOnCheckedChangeListener { _, _ -> updateCount() } }
+        btnSelectAll.setOnClickListener { checkboxes.forEach { it.first.isChecked = true }; updateCount() }
+        btnSelectInvert.setOnClickListener {
+            checkboxes.forEach { it.first.isChecked = !it.first.isChecked }
+            updateCount()
+        }
+
+        dialog = AlertDialog.Builder(ctx)
+            .setTitle("批量删除自选（勾选后确定）")
+            .setView(v)
+            .setPositiveButton("删除已选", null)
             .setNegativeButton("取消", null)
-            .show()
+            .create()
+        dialog!!.setOnShowListener { updateCount() }
+        dialog!!.getButton(AlertDialog.BUTTON_POSITIVE).setOnClickListener {
+            val removedCodes = checkboxes.filter { it.first.isChecked }.map { it.second }
+            if (removedCodes.isEmpty()) { Toast.makeText(ctx, "请先勾选要删除的股票", Toast.LENGTH_SHORT).show(); return@setOnClickListener }
+            val adapter = requireWatchAdapter()
+            adapter.cancel()
+            val remaining = watchSymbols.toMutableList().apply { removeAll(removedCodes) }
+            watchSymbols.clear(); watchSymbols.addAll(remaining)
+            saveWatch()
+            com.quantapp.trader.data.WatchStore.batchRemove(removedCodes)
+            adapter.notifyDataSetChanged()
+            adapter.reset()
+            Toast.makeText(ctx, "已移除 ${removedCodes.size} 只自选股", Toast.LENGTH_SHORT).show()
+            dialog?.dismiss()
+        }
+        dialog!!.show()
     }
 
     private fun requireWatchAdapter(): WatchAdapter {

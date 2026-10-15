@@ -279,7 +279,7 @@ class StrategyFragment : Fragment() {
             }
             val sid = selectedStrategyId()
             val modes = arrayOf("保守", "均衡", "激进")
-            android.app.AlertDialog.Builder(requireContext())
+            AlertDialog.Builder(requireContext())
                 .setTitle("AI 一键配参 · 选择风险偏好")
                 .setSingleChoiceItems(modes, 1) { d, which ->
                     d.dismiss()
@@ -326,7 +326,7 @@ class StrategyFragment : Fragment() {
             }
             val st = App.appStore
             if (!st.aiEnabled) {
-                android.app.AlertDialog.Builder(requireContext())
+                AlertDialog.Builder(requireContext())
                     .setTitle("未配置 AI 大模型")
                     .setMessage("请先在「设置 → AI 大模型」填入 API Key 并保存，再回来使用深度解读。")
                     .setPositiveButton("去设置") { _, _ ->
@@ -459,12 +459,7 @@ class StrategyFragment : Fragment() {
                     .setNegativeButton("取消", null)
                     .create().apply {
                         setOnShowListener {
-                            getButton(AlertDialog.BUTTON_POSITIVE).setTextColor(
-                                android.graphics.Color.parseColor("#E53935"))
-                            getButton(AlertDialog.BUTTON_NEGATIVE).setTextColor(
-                                com.quantapp.trader.R.color.text_primary.let {
-                                    androidx.core.content.ContextCompat.getColor(requireContext(), it)
-                                })
+                            // 让 Material3 自动跟随主题色，只保留自定义 click 校验
                             getButton(AlertDialog.BUTTON_POSITIVE).setOnClickListener {
                                 App.appStore.removeStrategy(code)
                                 refreshActive(container)
